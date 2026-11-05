@@ -15,5 +15,11 @@
   "dependencies": {
     "@rowproof/contracts": "workspace:*",
     "@supabase/supabase-js": "2.118.0"
+  },
+  "exports": {
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    }
   }
 }

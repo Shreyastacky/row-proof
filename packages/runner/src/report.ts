@@ -31,9 +31,9 @@ export function serializeResult(result: RunResult, sensitiveValues: ReadonlyArra
   return text;
 }
 
-export async function writeResultFile(path: string, text: string): Promise<void> {
+export async function writeResultFile(path: string, text: string, replace = false): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
-  const fh = await open(path, 'wx', 0o600);
+  const fh = await open(path, replace ? 'w' : 'wx', 0o600);
   try {
     await fh.writeFile(text, 'utf8');
   } finally {

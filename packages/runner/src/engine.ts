@@ -57,7 +57,7 @@ export interface RunContext {
   targetUrl: string | undefined;
   transport: Transport;
   limits: RunLimits;
-  sourceCommit: string | null;
+  source: RunResult['source'];
   executionContext: RunResult['provenance']['executionContext'];
   runnerVersion: string;
   runId: string;
@@ -165,7 +165,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
         contentHash: rev?.contentHash ?? null,
       },
       runner: { name: 'rowproof-runner', version: ctx.runnerVersion },
-      source: { commit: ctx.sourceCommit },
+      source: ctx.source,
       scope: content?.scope ?? null,
       target: {
         origin: content?.target.allowedOrigin ?? null,

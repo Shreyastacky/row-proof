@@ -5,6 +5,11 @@ import { UsageError, type CliIO } from './io.js';
 
 const HELP = `rowproof <command> [options]
 
+Get started:
+  init                scaffold a rule for a user-owned table (random synthetic ids)
+  fixture             provision|verify synthetic users and records on a LOCAL stack
+  doctor              check keys, tokens, target and route before you run
+
 Approval workflow (writes the local, self-attested approval store):
   validate <file>     validate rule content or a proposal
   hash <rule.json>    print the canonical content hash
@@ -16,6 +21,7 @@ Approval workflow (writes the local, self-attested approval store):
 
 Assessment (reads the approval store only):
   run                 execute the approved matrix; see \`rowproof run --help\`
+  report              build an HTML evidence report from one or more result files
 `;
 
 export async function main(argv: string[], io: CliIO): Promise<number> {
@@ -26,6 +32,23 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
         // Loaded lazily so the assessment path never loads the approval writer.
         const { runCommand } = await import('./commands/run.js');
         return await runCommand(rest, io);
+      }
+      case 'init':
+      case 'report':
+      case 'doctor': {
+        const t = await import('./commands/tools.js');
+        return await { init: t.initCommand, report: t.reportCommand, doctor: t.doctorCommand }[command](rest, io);
+      }
+      case 'fixture': {
+        const { runFixtureCli } = await import('@rowproof/local-fixture/cli');
+        return await runFixtureCli(rest);
+      }
+      case 'version':
+      case '--version':
+      case '-v': {
+        const { RUNNER_VERSION } = await import('./io.js');
+        io.stdout(`rowproof ${RUNNER_VERSION}\n`);
+        return 0;
       }
       case 'validate':
       case 'hash':
@@ -61,7 +84,8 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
       return 2;
     }
     if (e instanceof Error && 'code' in e && (e.code === 'ENOENT' || e.code === 'EEXIST' || e.code === 'EACCES')) {
-      io.stderr(`file error (${String(e.code)})\n`);
+      const path = 'path' in e && typeof e.path === 'string' ? `: ${e.path}` : '';
+      io.stderr(`file error (${String(e.code)})${path}\n`);
       return 2;
     }
     // Never print raw error objects: they can carry request details.

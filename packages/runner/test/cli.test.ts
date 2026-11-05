@@ -148,7 +148,7 @@ describe('run command', () => {
     expect(pinned.controls[0]).toEqual({ id: 'baseline', status: 'failed', diagnostic: 'baseline_pin_mismatch' });
 
     expect(await main(['run', '--store', 'store', '--rule', 'invoice-owner-read', '--out', 'bad.json'], io(baseEnv(fake2)))).toBe(2);
-    expect(err.join('')).toContain('EEXIST');
+    expect(err.join('')).toContain('already exists'); // refused before assessing, not after
   });
 
   it('a run without an approved baseline is blocked and sends nothing', async () => {

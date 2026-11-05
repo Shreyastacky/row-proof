@@ -64,7 +64,7 @@ pnpm rowproof approve --proposal .rowproof/proposal.json --store .rowproof/appro
 ```
 
 ```bash
-pnpm rowproof run --store .rowproof/approvals --rule invoice-owner-read --env-file .rowproof/local.env
+pnpm rowproof run --store .rowproof/approvals --rule invoice-owner-read --credentials .rowproof/local.env
 ```
 
 Exit codes: **0** every required assertion passed with valid controls; **1** at least one demonstrated violation (even if other checks are blocked); **2** blocked or incomplete without a demonstrated violation.

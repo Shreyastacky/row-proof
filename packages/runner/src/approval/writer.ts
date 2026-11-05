@@ -89,7 +89,12 @@ export class LocalApprovalStoreWriter {
       await writeExclusive(join(this.root, rel), proposal);
     } catch (e) {
       if (!isExists(e)) throw e;
-      // Same proposal id already recorded: acceptable only if it is the same content.
+      // Same proposal id already recorded: acceptable only if it records the same content.
+      const { readFile } = await import('node:fs/promises');
+      const existing = JSON.parse(await readFile(join(this.root, rel), 'utf8')) as { contentHash?: unknown };
+      if (existing.contentHash !== proposal.contentHash) {
+        throw new ApprovalError('revision_conflict', `a different proposal with id ${proposal.proposalId} is already recorded`);
+      }
     }
     return rel;
   }

@@ -535,9 +535,13 @@
         "source": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["commit"],
+          "required": ["commit", "dirty"],
           "properties": {
-            "commit": { "oneOf": [{ "$ref": "#/$defs/GitCommit" }, { "type": "null" }] }
+            "commit": { "oneOf": [{ "$ref": "#/$defs/GitCommit" }, { "type": "null" }] },
+            "dirty": {
+              "description": "true when tracked files differed from commit at run time; null when not determinable (e.g. commit supplied explicitly).",
+              "oneOf": [{ "type": "boolean" }, { "type": "null" }]
+            }
           }
         },
         "scope": { "oneOf": [{ "$ref": "#/$defs/RuleScope" }, { "type": "null" }] },

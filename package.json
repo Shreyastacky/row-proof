@@ -17,7 +17,7 @@
     "stack:reset": "node scripts/stack.mjs reset",
     "stack:status": "node scripts/stack.mjs status",
     "fixture:provision": "node packages/local-fixture/dist/cli.js provision --rule examples/invoice-owner-read.rule.json --supabase-bin node_modules/.bin/supabase",
-    "fixture:verify": "node packages/local-fixture/dist/cli.js verify --rule examples/invoice-owner-read.rule.json --env-file .rowproof/local.env --supabase-bin node_modules/.bin/supabase",
+    "fixture:verify": "node packages/local-fixture/dist/cli.js verify --rule examples/invoice-owner-read.rule.json --credentials .rowproof/local.env --supabase-bin node_modules/.bin/supabase",
     "rowproof": "node packages/runner/dist/cli.js",
     "integration": "pnpm run build && node tests/integration/harness.mjs"
   },

@@ -30,7 +30,16 @@ export function syntheticEmail(ruleId: string, actorRef: string): string {
 function fail(step: string, error: { status?: number | undefined; code?: string | undefined } | null): never {
   // Report the step and a status/code, not raw provider payloads.
   const detail = error ? [error.status, error.code].filter((x) => x !== undefined).join('/') : 'no data';
-  throw new StackError(`${step} failed (${detail || 'error'})`);
+  const hints: Record<string, string> = {
+    '23502': 'a required column has no value; pass --fixture-defaults <json> with values for the other NOT NULL columns',
+    '23503': 'a foreign key is not satisfied; give the referenced columns valid values via --fixture-defaults',
+    '23514': 'a CHECK constraint rejected the fixture; adjust --fixture-defaults or the marker column choice',
+    '42501': 'the setup key lacks privileges on this table; grant select/insert/delete to service_role',
+    '42P01': 'the table does not exist; apply your migrations to the local stack first',
+    PGRST205: 'the table is not exposed by the Data API; check the name and [api] schemas',
+  };
+  const hint = error?.code ? hints[error.code] : undefined;
+  throw new StackError(`${step} failed (${detail || 'error'})${hint ? `: ${hint}` : ''}`);
 }
 
 function authActors(rule: RuleContent): AuthenticatedActor[] {
@@ -60,13 +69,70 @@ export async function verifyFixtures(admin: SupabaseClient, rule: RuleContent): 
   }
 }
 
-export async function provision(rule: RuleContent, stack: StackInfo): Promise<ProvisionResult> {
+/** Extra column values for fixture rows, e.g. required NOT NULL columns in a customer table. */
+export type FixtureDefaults = Record<string, string | number | boolean | null>;
+
+const SAFE_COLUMN = /^[a-z_][a-z0-9_]{0,62}$/;
+
+export function checkFixtureDefaults(rule: RuleContent, defaults: unknown): FixtureDefaults {
+  if (defaults === undefined || defaults === null) return {};
+  if (typeof defaults !== 'object' || Array.isArray(defaults)) throw new StackError('fixture defaults must be a JSON object of column -> value');
+  const r = rule.resource;
+  const out: FixtureDefaults = {};
+  for (const [k, v] of Object.entries(defaults as Record<string, unknown>)) {
+    if (!SAFE_COLUMN.test(k)) throw new StackError(`fixture default column ${JSON.stringify(k.slice(0, 64))} is not a plain lowercase identifier`);
+    if (k === r.idColumn || k === r.ownerColumn || k === r.markerColumn) throw new StackError(`fixture defaults cannot set ${k}; it comes from the rule`);
+    if (v !== null && !['string', 'number', 'boolean'].includes(typeof v)) throw new StackError(`fixture default ${k} must be a string, number, boolean or null`);
+    if (typeof v === 'string' && v.length > 500) throw new StackError(`fixture default ${k} is too long`);
+    out[k] = v as FixtureDefaults[string];
+  }
+  return out;
+}
+
+/**
+ * Refuse to delete anything that is not provably one of our synthetic records.
+ * A rule could name the id of a real user or row by mistake; provisioning must never remove it.
+ */
+async function assertOnlySyntheticRecordsWillBeReplaced(admin: SupabaseClient, rule: RuleContent): Promise<void> {
+  for (const a of authActors(rule)) {
+    const { data, error } = await admin.auth.admin.getUserById(a.expectedUserId);
+    if (error) {
+      if (error.status === 404) continue;
+      fail(`look up existing user ${a.ref}`, error);
+    }
+    const email = data.user?.email ?? '';
+    if (data.user && (email !== syntheticEmail(rule.ruleId, a.ref) || data.user.user_metadata?.rowproof_synthetic !== true)) {
+      throw new StackError(`refusing: user id for ${a.ref} already belongs to a non-synthetic account; choose new ids (rowproof init generates random ones)`);
+    }
+  }
+  const r = rule.resource;
+  const { data, error } = await admin.from(r.table).select(`${r.idColumn},${r.markerColumn}`).in(r.idColumn, rule.fixtures.map((f) => f.id));
+  if (error || !data) fail('look up existing fixture rows', error);
+  for (const row of data as unknown as Array<Record<string, unknown>>) {
+    const marker = row[r.markerColumn];
+    if (typeof marker !== 'string' || !/^synthetic-[a-z0-9-]{1,48}$/.test(marker)) {
+      throw new StackError(`refusing: row ${String(row[r.idColumn])} exists and is not a synthetic fixture; choose new fixture ids`);
+    }
+  }
+}
+
+export async function provision(rule: RuleContent, stack: StackInfo, defaultsInput?: unknown): Promise<ProvisionResult> {
   assertLocalTarget(stack.apiUrl, rule.target.allowedOrigin);
+  const defaults = checkFixtureDefaults(rule, defaultsInput);
   const admin = createClient(stack.apiUrl, stack.secretKey, CLIENT_OPTS);
   const actors = authActors(rule);
   const passwords = new Map<string, string>();
+  const r = rule.resource;
+  const ids = rule.fixtures.map((f) => f.id);
 
-  // 1. Users: delete any previous synthetic user with the same id, then create.
+  // 0. Safety: only synthetic users and rows may be replaced.
+  await assertOnlySyntheticRecordsWillBeReplaced(admin, rule);
+
+  // 1. Remove previous synthetic fixture rows first (tables need not cascade on user deletion).
+  const delRows = await admin.from(r.table).delete().in(r.idColumn, ids);
+  if (delRows.error) fail('delete previous fixtures', delRows.error);
+
+  // 2. Users: delete any previous synthetic user with the same id, then create.
   for (const a of actors) {
     const del = await admin.auth.admin.deleteUser(a.expectedUserId);
     if (del.error && del.error.status !== 404) fail(`delete previous user ${a.ref}`, del.error);
@@ -83,17 +149,13 @@ export async function provision(rule: RuleContent, stack: StackInfo): Promise<Pr
     if (data.user.id !== a.expectedUserId) throw new StackError(`created user ${a.ref} has an unexpected id`);
   }
 
-  // 2. Fixtures: remove any rows with these ids, then insert exactly the declared fixtures.
-  const r = rule.resource;
-  const ids = rule.fixtures.map((f) => f.id);
-  const del = await admin.from(r.table).delete().in(r.idColumn, ids);
-  if (del.error) fail('delete previous fixtures', del.error);
+  // 3. Insert exactly the declared fixtures (plus any declared extra column values).
   const owners = new Map(actors.map((a) => [a.ref, a.expectedUserId] as const));
-  const rows = rule.fixtures.map((f) => ({ [r.idColumn]: f.id, [r.ownerColumn]: owners.get(f.ownerRef)!, [r.markerColumn]: f.marker }));
+  const rows = rule.fixtures.map((f) => ({ ...defaults, [r.idColumn]: f.id, [r.ownerColumn]: owners.get(f.ownerRef)!, [r.markerColumn]: f.marker }));
   const ins = await admin.from(r.table).insert(rows).select(r.idColumn);
   if (ins.error || !ins.data || ins.data.length !== rows.length) fail('insert fixtures', ins.error);
 
-  // 3. Sign each user in with an isolated client to obtain an access token.
+  // 4. Sign each user in with an isolated client to obtain an access token.
   const env: Record<string, string> = {
     ROWPROOF_SUPABASE_URL: rule.target.allowedOrigin,
     [rule.target.fixtureVerification.credential.name]: stack.secretKey,
@@ -109,7 +171,7 @@ export async function provision(rule: RuleContent, stack: StackInfo): Promise<Pr
     env[a.credential.name] = data.session.access_token;
   }
 
-  // 4. Independent verification through the setup channel and the Auth service.
+  // 5. Independent verification through the setup channel and the Auth service.
   for (const a of actors) await verifyIdentity(stack, env[a.credential.name]!, a.expectedUserId, a.ref);
   await verifyFixtures(admin, rule);
 

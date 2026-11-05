@@ -67,7 +67,7 @@ pnpm fixture:provision
 ```
 
 ```bash
-pnpm rowproof run --store baseline --rule invoice-owner-read --env-file .rowproof/local.env
+pnpm rowproof run --store baseline --rule invoice-owner-read --credentials .rowproof/local.env
 ```
 
 Expected: six PASS lines and exit 0. `fixture:provision` writes credentials only to `.rowproof/local.env` (mode 0600, git-ignored). Note that `baseline/` currently holds a placeholder approval; see [baseline/README.md](../baseline/README.md).

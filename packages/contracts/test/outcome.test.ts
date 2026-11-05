@@ -60,7 +60,7 @@ function sampleResult(): RunResult {
     runId: '0d000000-0000-4000-8000-000000000001',
     rule: { ruleId: 'invoice-owner-read', revision: 1, contentHash: `sha256:${'a'.repeat(64)}` },
     runner: { name: 'rowproof-runner', version: '0.1.0' },
-    source: { commit: null },
+    source: { commit: null, dirty: null },
     scope: { organizationId: null, projectId: 'invoice-portal-demo', environmentId: 'local-disposable' },
     target: { origin: 'http://127.0.0.1:54321', environmentClass: 'local-disposable', transport: 'supabase-data-api-rest-v1' },
     observedAt: { startedAt: '2026-11-05T12:00:00.000Z', finishedAt: '2026-11-05T12:00:01.000Z' },

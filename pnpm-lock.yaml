@@ -45,6 +45,9 @@ importers:
       '@rowproof/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@rowproof/local-fixture':
+        specifier: workspace:*
+        version: link:../local-fixture
 
   tests/integration:
     dependencies:

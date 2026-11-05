@@ -4,8 +4,9 @@ import { createHmac, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseEnv } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
-export const repo = new URL('../../', import.meta.url).pathname.replace(/\/$/, '');
+export const repo = fileURLToPath(new URL('../../', import.meta.url)).replace(/[\\/]$/, '');
 export const supabaseBin = join(repo, 'node_modules', '.bin', process.platform === 'win32' ? 'supabase.cmd' : 'supabase');
 export const runnerCli = join(repo, 'packages', 'runner', 'dist', 'cli.js');
 export const fixtureCli = join(repo, 'packages', 'local-fixture', 'dist', 'cli.js');

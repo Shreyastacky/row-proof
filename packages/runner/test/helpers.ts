@@ -64,7 +64,7 @@ export async function runEngine(fetchImpl: FetchLike, opts: RunOpts): Promise<Ru
     targetUrl: 'targetUrl' in opts ? opts.targetUrl : opts.env.ROWPROOF_SUPABASE_URL,
     transport,
     limits,
-    sourceCommit: null,
+    source: { commit: null, dirty: null },
     executionContext: 'local-developer',
     runnerVersion: '0.1.0',
     runId: '0d000000-0000-4000-8000-000000000001',

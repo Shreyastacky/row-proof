@@ -3,12 +3,14 @@
  * rowproof-fixture: privileged local-only setup for the disposable demo.
  *
  *   provision --rule <rule.json> [--workdir <dir>] [--out .rowproof/local.env]
- *   verify    --rule <rule.json> [--workdir <dir>] --env-file <file>
+ *   verify    --rule <rule.json> [--workdir <dir>] --credentials <file>
  *
  * Credentials are read from `supabase status` and written only to a 0600 env
  * file. Nothing is printed except non-secret identifiers.
  */
 import { randomUUID } from 'node:crypto';
+import { realpathSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { parseArgs, parseEnv } from 'node:util';
@@ -27,7 +29,7 @@ async function loadRule(path: string): Promise<RuleContent> {
   return v.value;
 }
 
-async function main(argv: string[]): Promise<number> {
+export async function fixtureMain(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
   const { values } = parseArgs({
     args: rest,
@@ -36,8 +38,9 @@ async function main(argv: string[]): Promise<number> {
       rule: { type: 'string' },
       workdir: { type: 'string' },
       out: { type: 'string' },
-      'env-file': { type: 'string' },
+      'credentials': { type: 'string' },
       'supabase-bin': { type: 'string' },
+      'fixture-defaults': { type: 'string' },
     },
   });
   if (!values.rule) throw new StackError('missing --rule');
@@ -45,7 +48,8 @@ async function main(argv: string[]): Promise<number> {
   const stack = await readStackStatus(values['supabase-bin'] ?? 'supabase', resolve(values.workdir ?? '.'));
 
   if (command === 'provision') {
-    const result = await provision(rule, stack);
+    const defaults = values['fixture-defaults'] ? parseStrictJson(await readFile(resolve(values['fixture-defaults']), 'utf8')) : undefined;
+    const result = await provision(rule, stack, defaults);
     const out = resolve(values.out ?? '.rowproof/local.env');
     await mkdir(dirname(out), { recursive: true, mode: 0o700 });
     const body =
@@ -65,21 +69,32 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (command === 'verify') {
-    if (!values['env-file']) throw new StackError('missing --env-file');
-    const env = parseEnv(await readFile(resolve(values['env-file']), 'utf8'));
+    if (!values['credentials']) throw new StackError('missing --credentials');
+    const env = parseEnv(await readFile(resolve(values['credentials']), 'utf8'));
     await verifyOnly(rule, stack, env);
     process.stdout.write(`verified identities and fixtures for ${rule.ruleId}\n`);
     return 0;
   }
-  throw new StackError('usage: rowproof-fixture provision|verify --rule <rule.json> [...]');
+  throw new StackError('usage: rowproof fixture provision|verify --rule <rule.json> [--workdir <dir>] [--out .rowproof/local.env] [--credentials <file>] [--fixture-defaults <json>] [--supabase-bin <path>]');
 }
 
-main(process.argv.slice(2)).then(
-  (code) => {
-    process.exitCode = code;
-  },
-  (e: unknown) => {
+/** CLI wrapper: maps StackError to a clean message and exit 2. */
+export async function runFixtureCli(argv: string[]): Promise<number> {
+  try {
+    return await fixtureMain(argv);
+  } catch (e) {
     process.stderr.write(`${e instanceof StackError ? e.message : `fixture setup failed (${e instanceof Error ? e.name : 'unknown'})`}\n`);
-    process.exitCode = 2;
-  },
-);
+    return 2;
+  }
+}
+
+function isEntrypoint(): boolean {
+  const script = process.argv[1];
+  if (script === undefined) return false;
+  try {
+    return pathToFileURL(realpathSync(script)).href === import.meta.url;
+  } catch {
+    return false;
+  }
+}
+if (isEntrypoint()) process.exitCode = await runFixtureCli(process.argv.slice(2));

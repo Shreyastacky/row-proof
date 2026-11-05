@@ -129,7 +129,7 @@ jobs:
           pnpm rowproof run
           --store "$RUNNER_TEMP/trusted-baseline"
           --rule invoice-owner-read
-          --env-file .rowproof/local.env
+          --credentials .rowproof/local.env
           --execution-context ci-development
           --out artifacts/assessment/result.json
       - name: Upload redacted result

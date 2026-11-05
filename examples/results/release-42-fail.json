@@ -1,0 +1,169 @@
+{
+  "kind": "RunResult",
+  "schemaVersion": 1,
+  "runId": "cf85bba4-5c75-444d-a015-b7cc3979b828",
+  "rule": {
+    "ruleId": "invoice-owner-read",
+    "revision": 1,
+    "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3"
+  },
+  "runner": {
+    "name": "rowproof-runner",
+    "version": "0.1.0"
+  },
+  "source": {
+    "commit": "737252cc0f38ead98247370cab95b1675f36a346",
+    "dirty": true
+  },
+  "scope": {
+    "organizationId": null,
+    "projectId": "invoice-portal-demo",
+    "environmentId": "local-disposable"
+  },
+  "target": {
+    "origin": "http://127.0.0.1:54321",
+    "environmentClass": "local-disposable",
+    "transport": "supabase-data-api-rest-v1"
+  },
+  "observedAt": {
+    "startedAt": "2026-11-05T05:08:48.060Z",
+    "finishedAt": "2026-11-05T05:08:48.114Z"
+  },
+  "limits": {
+    "maxRequests": 32,
+    "requestTimeoutMs": 5000,
+    "runTimeoutMs": 60000,
+    "maxResponseBytes": 65536,
+    "concurrency": 1,
+    "retries": 0
+  },
+  "controls": [
+    {
+      "id": "baseline",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "target",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "api-key",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "setup-key",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "fixture:invoice-a",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "fixture:invoice-b",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "identity:user-a",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "identity:user-b",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "actors-distinct",
+      "status": "ok",
+      "diagnostic": "ok"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a-reads-a",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-a",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "b-reads-b",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-b",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "a-reads-b",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "failed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "fixture_disclosed",
+      "httpStatus": 200
+    },
+    {
+      "id": "b-reads-a",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "failed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "fixture_disclosed",
+      "httpStatus": 200
+    },
+    {
+      "id": "anon-reads-a",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "anon-reads-b",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    }
+  ],
+  "summary": {
+    "outcome": "fail",
+    "completeness": "complete",
+    "exitCode": 1,
+    "counts": {
+      "passed": 4,
+      "failed": 2,
+      "blocked": 0,
+      "not_assessed": 0
+    }
+  },
+  "freshness": {
+    "state": "unknown",
+    "reason": "no_dependency_observer",
+    "dependencies": []
+  },
+  "provenance": {
+    "approvalLevel": "local-self-attested",
+    "executionContext": "ci-development"
+  }
+}

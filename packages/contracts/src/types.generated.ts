@@ -455,6 +455,10 @@ export interface RunResult {
   };
   source: {
     commit: GitCommit | null;
+    /**
+     * true when tracked files differed from commit at run time; null when not determinable (e.g. commit supplied explicitly).
+     */
+    dirty: boolean | null;
   };
   scope: RuleScope | null;
   target: {

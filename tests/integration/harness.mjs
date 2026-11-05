@@ -12,6 +12,7 @@
 // WARNING: stops the local `rowproof-demo` stack and deletes its local data (--no-backup).
 //
 // Usage: pnpm integration      (requires Docker and `pnpm install`)
+import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -127,7 +128,7 @@ function rowproofCli(args) {
 let runCounter = 0;
 function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
   const out = join(work, `${String(++runCounter).padStart(2, '0')}-${label}.json`);
-  const r = rowproofCli(['run', '--store', store, '--rule', rule, '--env-file', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
+  const r = rowproofCli(['run', '--store', store, '--rule', rule, '--credentials', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
   const result = exists(out) ? JSON.parse(readFileSync(out, 'utf8')) : null;
   if (result) resultFiles.push(out);
   return { code: r.code, result, stdout: r.stdout, stderr: r.stderr };
@@ -223,6 +224,74 @@ async function main() {
     check(r.result.controls.every((c) => c.status === 'ok'), 'all controls ok');
     check(r.result.summary.completeness === 'complete', 'complete');
     check(r.result.freshness.state === 'unknown', 'freshness unknown without observer');
+  });
+
+  await scenario('A', 'rowproof init on a customer-shaped table: provision, re-provision, approve, run with HTML/JUnit/Markdown', () => {
+    // project_notes has an extra NOT NULL column and a foreign key WITHOUT cascade.
+    const dir = join(work, 'onboarding');
+    mkdirSync(dir);
+    const ruleFile = join(dir, 'notes.rule.json');
+    const init = rowproofCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', ruleFile]);
+    check(init.code === 0, `init failed: ${init.stderr}`);
+    const envOut = join(dir, 'local.env');
+    const fixtureArgs = ['fixture', 'provision', '--rule', ruleFile, '--workdir', repo, '--out', envOut, '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')];
+    const noDefaults = rowproofCli(fixtureArgs);
+    check(noDefaults.code === 2 && noDefaults.stderr.includes('--fixture-defaults'), 'missing NOT NULL value is explained with a --fixture-defaults hint');
+    const defaults = join(dir, 'defaults.json');
+    writeFileSync(defaults, JSON.stringify({ body: 'synthetic note body' }));
+    for (let i = 0; i < 2; i++) {
+      const p = rowproofCli([...fixtureArgs, '--fixture-defaults', defaults]);
+      check(p.code === 0, `provision ${i + 1} failed (no-cascade FK must not break re-provisioning): ${p.stderr}`);
+    }
+    rememberEnv(readEnvFile(envOut), 'onboarding');
+    const doctor = rowproofCli(['doctor', '--rule', ruleFile, '--credentials', envOut]);
+    check(doctor.code === 0 && doctor.stdout.includes('Everything RowProof needs is in place.'), `doctor not green: ${doctor.stdout}`);
+    const notesStore = join(dir, 'store');
+    check(approve(notesStore, ruleFile).code === 0, 'approval of the generated rule failed');
+    const ruleId = JSON.parse(readFileSync(ruleFile, 'utf8')).ruleId;
+    const html = join(dir, 'report.html');
+    const junit = join(dir, 'junit.xml');
+    const md = join(dir, 'summary.md');
+    const r = run('onboarding-notes', { store: notesStore, envFile: envOut, rule: ruleId, extra: ['--html', html, '--junit', junit, '--summary-md', md] });
+    expectRun(r, { exit: 0, assertions: { 'a-reads-a': 'passed:ok', 'b-reads-a': 'passed:ok', 'anon-reads-b': 'passed:ok' } });
+    for (const f of [html, junit, md]) {
+      check(exists(f), `${f} was written`);
+      captured.push(readFileSync(f, 'utf8'));
+    }
+    check(readFileSync(junit, 'utf8').includes('tests="6" failures="0" errors="0"'), 'JUnit counts');
+    check(readFileSync(html, 'utf8').includes('Proof matrix'), 'HTML report rendered');
+  });
+
+  await scenario('A', 'doctor pinpoints a missing token and a wrong target without printing secrets', () => {
+    const r = rowproofCli(['doctor', '--rule', RULE_FILE, '--credentials', writeEnv(henv, { ROWPROOF_USER_B_TOKEN: undefined, ROWPROOF_SUPABASE_URL: 'http://localhost:54321' }, 'doctor-bad')]);
+    check(r.code === 2, `doctor exit ${r.code}`);
+    check(r.stdout.includes('ROWPROOF_USER_B_TOKEN (user-b): missing') && r.stdout.includes('FIX  target http://localhost:54321'), `doctor output: ${r.stdout}`);
+  });
+
+  await scenario('A', 'fixture provisioning refuses to replace a non-synthetic user or row', () => {
+    const realUser = randomUUID();
+    const created = sh('curl', ['-sS', '-o', '/dev/null', '-w', '%{http_code}', '-X', 'POST', `${ORIGIN}/auth/v1/admin/users`, '-H', `apikey: ${status.SECRET_KEY}`, '-H', `Authorization: Bearer ${status.SECRET_KEY}`, '-H', 'Content-Type: application/json', '-d', JSON.stringify({ id: realUser, email: `real-${realUser.slice(0, 8)}@example.com`, password: 'a-long-real-password-1', email_confirm: true })]);
+    check(created.stdout === '200', `precondition: real user created (${created.stdout})`);
+    const danger = structuredClone(RULE);
+    danger.actors[0].expectedUserId = realUser;
+    const dangerFile = join(work, 'danger.rule.json');
+    writeFileSync(dangerFile, JSON.stringify(danger));
+    const p = rowproofCli(['fixture', 'provision', '--rule', dangerFile, '--workdir', repo, '--out', join(work, 'danger.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
+    check(p.code === 2 && p.stderr.includes('non-synthetic account'), `refused user: ${p.stderr}`);
+    const still = sh('curl', ['-sS', '-o', '/dev/null', '-w', '%{http_code}', `${ORIGIN}/auth/v1/admin/users/${realUser}`, '-H', `apikey: ${status.SECRET_KEY}`, '-H', `Authorization: Bearer ${status.SECRET_KEY}`]);
+    check(still.stdout === '200', 'the real user still exists');
+    // A real (non-synthetic) row under a fixture id is refused too. project_notes.title is free text,
+    // so a realistic customer row needs no schema change on this healthy stack.
+    const realRow = randomUUID();
+    const ins = sh('curl', ['-sS', '-o', '/dev/null', '-w', '%{http_code}', '-X', 'POST', `${ORIGIN}/rest/v1/project_notes`, '-H', `apikey: ${status.SECRET_KEY}`, '-H', 'Content-Type: application/json', '-d', JSON.stringify({ id: realRow, author_id: realUser, title: 'Q3 roadmap (customer data)', body: 'real content' })]);
+    check(ins.stdout === '201', `precondition: row inserted (${ins.stdout})`);
+    const rowFile = join(work, 'danger-row.rule.json');
+    check(rowproofCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', rowFile]).code === 0, 'init');
+    const rowRule = JSON.parse(readFileSync(rowFile, 'utf8'));
+    rowRule.fixtures[0].id = realRow;
+    writeFileSync(rowFile, JSON.stringify(rowRule));
+    const p2 = rowproofCli(['fixture', 'provision', '--rule', rowFile, '--workdir', repo, '--out', join(work, 'danger2.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
+    check(p2.code === 2 && p2.stderr.includes('is not a synthetic fixture'), `refused row: ${p2.stderr}`);
   });
 
   await scenario('A', 'runner identity check agrees with supabase-js getUser(jwt)', async () => {
