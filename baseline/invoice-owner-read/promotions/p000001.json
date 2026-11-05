@@ -1,0 +1,11 @@
+{
+  "kind": "Promotion",
+  "schemaVersion": 1,
+  "ruleId": "invoice-owner-read",
+  "sequence": 1,
+  "revision": 1,
+  "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+  "promotedBy": "demo-placeholder-not-owner",
+  "promotedAt": "2026-11-05T03:59:18.495Z",
+  "previous": null
+}

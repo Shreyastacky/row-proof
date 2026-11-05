@@ -16,6 +16,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
+import { contentHashOf } from '../../packages/contracts/dist/index.js';
 import {
   EXCLUDE,
   exists,
@@ -371,6 +372,49 @@ async function main() {
     // Editing the rule file in the working tree changes nothing either: run reads the approved store.
     const r = run('lab-permissive-after-weakening', { store, envFile: labEnvFile, extra: ['--expect-hash', ap.hash] });
     expectRun(r, { exit: 1, assertions: { 'a-reads-b': 'failed:fixture_disclosed' } });
+  });
+
+  await scenario('B', 'the baseline is read from the protected ref; a forged approval in the PR tree is ignored', () => {
+    // A throwaway git repo: `main` holds the approved store; branch `pr` changes the app AND forges a
+    // fully hash-consistent weakened revision 2 + promotion + active pointer in its own tree.
+    const gitRepo = join(work, 'trusted-repo');
+    mkdirSync(gitRepo);
+    const git = (...args) => {
+      const r = sh('git', ['-C', gitRepo, '-c', 'user.name=ship-safe-it', '-c', 'user.email=it@synthetic.ship-safe.test', '-c', 'commit.gpgsign=false', ...args]);
+      if (r.code !== 0) throw new Error(`git ${args[0]} failed: ${r.stderr}`);
+      return r.stdout;
+    };
+    git('init', '-q', '-b', 'main');
+    cpSync(store, join(gitRepo, 'baseline'), { recursive: true });
+    git('add', '-A');
+    git('commit', '-q', '-m', 'approved baseline');
+    git('checkout', '-q', '-b', 'pr');
+    const ruleDir = join(gitRepo, 'baseline', RULE_ID);
+    const rev1 = JSON.parse(readFileSync(join(ruleDir, 'revisions', 'r000001.json'), 'utf8'));
+    const forged = structuredClone(rev1);
+    for (const e of forged.content.expectations) if (e.id === 'a-reads-b' || e.id === 'b-reads-a') e.expected = 'exact_fixture_returned';
+    const h = contentHashOf(forged.content);
+    Object.assign(forged, { revision: 2, contentHash: h });
+    Object.assign(forged.approval, { revision: 2, contentHash: h, acknowledgedHash: h, supersedes: { revision: 1, contentHash: rev1.contentHash } });
+    writeFileSync(join(ruleDir, 'revisions', 'r000002.json'), JSON.stringify(forged, null, 2));
+    writeFileSync(join(ruleDir, 'promotions', 'p000002.json'), JSON.stringify({ kind: 'Promotion', schemaVersion: 1, ruleId: RULE_ID, sequence: 2, revision: 2, contentHash: h, promotedBy: 'pr-author', promotedAt: new Date().toISOString(), previous: { revision: 1, contentHash: rev1.contentHash } }, null, 2));
+    writeFileSync(join(ruleDir, 'active.json'), JSON.stringify({ kind: 'ActiveBaseline', schemaVersion: 1, ruleId: RULE_ID, revision: 2, contentHash: h, promotionSequence: 2 }, null, 2));
+    writeFileSync(join(gitRepo, 'app-change.sql'), '-- the application change that broke the policy\n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'PR: change app and weaken rule');
+
+    // Trusted assessment: baseline materialized from `main`, never from the PR working tree.
+    const trusted = join(work, 'trusted-from-main');
+    const f = sh('node', [join(repo, 'scripts', 'fetch-trusted-baseline.mjs'), '--repo', gitRepo, '--ref', 'main', '--path', 'baseline', '--out', trusted]);
+    check(f.code === 0, `fetch-trusted-baseline failed: ${f.stderr}`);
+    const t = run('boundary-trusted-main', { store: trusted, envFile: labEnvFile });
+    expectRun(t, { exit: 1, assertions: { 'a-reads-b': 'failed:fixture_disclosed', 'b-reads-a': 'failed:fixture_disclosed' } });
+    check(t.result.rule.revision === 1 && t.result.rule.contentHash === ap.hash, 'assessment used approved revision 1 from main');
+
+    // Even the PR tree's forged store cannot turn the disclosure green: the forged intent is outside v1 scope.
+    const p = run('boundary-pr-tree', { store: join(gitRepo, 'baseline'), envFile: labEnvFile });
+    check(p.code !== 0 && p.result.summary.outcome !== 'pass', 'forged PR baseline never produces a pass');
+    check(p.result.assertions.every((a) => a.status === 'not_assessed' && a.diagnostic === 'unsupported_expectation'), 'forged intent is not assessed');
   });
 
   await scenario('B', 'policy open to anonymous: anonymous disclosures fail', () => {
