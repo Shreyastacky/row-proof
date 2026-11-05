@@ -9,8 +9,6 @@
  * file. Nothing is printed except non-secret identifiers.
  */
 import { randomUUID } from 'node:crypto';
-import { realpathSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { parseArgs, parseEnv } from 'node:util';
@@ -87,14 +85,3 @@ export async function runFixtureCli(argv: string[]): Promise<number> {
     return 2;
   }
 }
-
-function isEntrypoint(): boolean {
-  const script = process.argv[1];
-  if (script === undefined) return false;
-  try {
-    return pathToFileURL(realpathSync(script)).href === import.meta.url;
-  } catch {
-    return false;
-  }
-}
-if (isEntrypoint()) process.exitCode = await runFixtureCli(process.argv.slice(2));

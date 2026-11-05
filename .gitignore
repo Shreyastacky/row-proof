@@ -45,3 +45,7 @@ test-results/
 # RowProof local execution state: generated credentials, approval stores used
 # for local experiments, and run results. Never commit these.
 .rowproof/
+packages/cli/dist/
+packages/cli/schemas/
+packages/cli/LICENSE.md
+*.tgz

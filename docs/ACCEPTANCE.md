@@ -52,4 +52,4 @@ Required behaviours. Status as of 5 November 2026: **U** = covered by unit tests
 
 From a fresh checkout: start a disposable local instance, provision synthetic users/fixtures, run the approved matrix, show correct-policy success, show permissive-policy failure in a separate throwaway local instance, then tear it down. Preserve only redacted artifacts. CI must reproduce those outcomes.
 
-**Status:** met from a fresh clone in a local Linux/Docker environment on 5 November 2026 (`pnpm integration`, 24/24). GitHub Actions reproduction is written (`.github/workflows/rowproof.yml`) but has not run yet.
+**Status:** met from a fresh clone in a local Linux/Docker environment on 5 November 2026 (`pnpm integration`, 24/24; 27/27 after the RowProof product pass). GitHub Actions reproduction is written (`.github/workflows/rowproof.yml`) but has not run yet.

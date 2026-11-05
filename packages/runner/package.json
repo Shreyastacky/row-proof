@@ -24,5 +24,6 @@
   "dependencies": {
     "@rowproof/contracts": "workspace:*",
     "@rowproof/local-fixture": "workspace:*"
-  }
+  },
+  "license": "FSL-1.1-ALv2"
 }

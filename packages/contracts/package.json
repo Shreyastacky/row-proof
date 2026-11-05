@@ -11,7 +11,10 @@
     },
     "./schemas/rowproof.v1.schema.json": "./schemas/rowproof.v1.schema.json"
   },
-  "files": ["dist", "schemas"],
+  "files": [
+    "dist",
+    "schemas"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -24,5 +27,6 @@
   },
   "devDependencies": {
     "json-schema-to-typescript": "16.0.0"
-  }
+  },
+  "license": "FSL-1.1-ALv2"
 }

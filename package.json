@@ -7,24 +7,27 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter \"./packages/*\" run build",
-    "typecheck": "pnpm -r --filter \"./packages/*\" run typecheck",
-    "test": "pnpm run build && pnpm -r --filter \"./packages/*\" run test",
+    "build": "pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run build",
+    "typecheck": "pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run typecheck",
+    "test": "pnpm run build && pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run test",
     "check:generated": "pnpm --filter @rowproof/contracts run check:generated",
     "verify": "pnpm run check:generated && pnpm run test && pnpm run typecheck",
     "stack:up": "node scripts/stack.mjs up",
     "stack:down": "node scripts/stack.mjs down",
     "stack:reset": "node scripts/stack.mjs reset",
     "stack:status": "node scripts/stack.mjs status",
-    "fixture:provision": "node packages/local-fixture/dist/cli.js provision --rule examples/invoice-owner-read.rule.json --supabase-bin node_modules/.bin/supabase",
-    "fixture:verify": "node packages/local-fixture/dist/cli.js verify --rule examples/invoice-owner-read.rule.json --credentials .rowproof/local.env --supabase-bin node_modules/.bin/supabase",
+    "fixture:provision": "node packages/local-fixture/dist/bin.js provision --rule examples/invoice-owner-read.rule.json --supabase-bin node_modules/.bin/supabase",
+    "fixture:verify": "node packages/local-fixture/dist/bin.js verify --rule examples/invoice-owner-read.rule.json --credentials .rowproof/local.env --supabase-bin node_modules/.bin/supabase",
     "rowproof": "node packages/runner/dist/cli.js",
-    "integration": "pnpm run build && node tests/integration/harness.mjs"
+    "integration": "pnpm run build && node tests/integration/harness.mjs",
+    "package": "pnpm run build && pnpm --filter rowproof run smoke",
+    "site": "pnpm run build && node scripts/build-site.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
     "supabase": "2.122.1",
     "typescript": "6.0.3",
     "vitest": "5.0.5"
-  }
+  },
+  "license": "FSL-1.1-ALv2"
 }

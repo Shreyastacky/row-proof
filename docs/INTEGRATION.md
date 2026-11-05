@@ -19,7 +19,11 @@ pnpm install --frozen-lockfile
 pnpm verify
 ```
 
-`verify` checks that generated types match the schema, builds, runs the contract and runner unit tests, and typechecks.
+```bash
+pnpm package
+```
+
+`package` builds the `rowproof` npm tarball and runs it from a clean install. `verify` checks that generated types match the schema, builds, runs the contract and runner unit tests, and typechecks.
 
 ## Full real-HTTP integration gate
 
@@ -38,7 +42,7 @@ It prints one line per scenario, exits 0 only if every scenario behaves as expec
 
 **Warning:** the harness stops the local `rowproof-demo` stack and deletes its local data.
 
-Typical duration after images are cached: about 2.5 minutes.
+Typical duration after images are cached: about 3 minutes. 27 scenarios, including onboarding a customer-shaped table with `init`, `doctor`, all output formats, and refusal to touch non-synthetic users or rows.
 
 ### If Docker image pulls are blocked
 

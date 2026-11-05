@@ -1,0 +1,22 @@
+{
+  "name": "rowproof",
+  "version": "0.1.0",
+  "description": "Owner-approved access rules for Supabase, checked against real requests on every release. Cross-user data leaks fail the build.",
+  "keywords": ["supabase", "rls", "row-level-security", "authorization", "access-control", "security-testing", "ci", "postgrest"],
+  "license": "FSL-1.1-ALv2",
+  "homepage": "https://github.com/Shreyastacky/ship-safe#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/Shreyastacky/ship-safe.git", "directory": "packages/cli" },
+  "bugs": "https://github.com/Shreyastacky/ship-safe/issues",
+  "type": "module",
+  "bin": { "rowproof": "./dist/rowproof.mjs" },
+  "files": ["dist", "schemas", "README.md", "LICENSE.md"],
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "build": "node build.mjs",
+    "smoke": "node build.mjs --smoke"
+  },
+  "devDependencies": {
+    "@rowproof/runner": "workspace:*",
+    "esbuild": "0.28.2"
+  }
+}

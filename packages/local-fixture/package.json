@@ -5,7 +5,7 @@
   "description": "Privileged local-only tooling: provisions and verifies synthetic users and fixtures in a disposable Supabase stack.",
   "type": "module",
   "bin": {
-    "rowproof-fixture": "./dist/cli.js"
+    "rowproof-fixture": "./dist/bin.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -21,5 +21,6 @@
       "types": "./dist/cli.d.ts",
       "default": "./dist/cli.js"
     }
-  }
+  },
+  "license": "FSL-1.1-ALv2"
 }

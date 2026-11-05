@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 export const repo = fileURLToPath(new URL('../../', import.meta.url)).replace(/[\\/]$/, '');
 export const supabaseBin = join(repo, 'node_modules', '.bin', process.platform === 'win32' ? 'supabase.cmd' : 'supabase');
 export const runnerCli = join(repo, 'packages', 'runner', 'dist', 'cli.js');
-export const fixtureCli = join(repo, 'packages', 'local-fixture', 'dist', 'cli.js');
+export const fixtureCli = join(repo, 'packages', 'local-fixture', 'dist', 'bin.js');
 export const EXCLUDE = 'studio,postgres-meta,imgproxy,vector,logflare,supavisor,storage-api,edge-runtime,realtime,mailpit';
 
 const baseEnv = { ...process.env, SUPABASE_TELEMETRY_DISABLED: '1' };

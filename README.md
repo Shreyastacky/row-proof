@@ -1,103 +1,111 @@
 # RowProof
 
-**Keep agreed access rules intact as your app changes.**
+**Owner-approved access rules for Supabase, checked against real requests on every release.**
 
-RowProof is an early-stage tool for recording who should be able to read which records, keeping the owner's approved expectations separate from routine code edits, and rerunning checks after changes to report exactly what passed, failed, or could not be assessed.
+RowProof turns *"Alice reads Alice's invoices, Bob never sees them"* into a versioned rule that the person responsible for the data approves. It then proves the rule through the real Supabase Data API, with real Auth tokens, on a disposable local stack built from your migrations. If a policy change, including one an AI coding tool made, exposes one user's rows to another, the run exits **1** and names the exact record, rule revision and commit.
 
-The first supported integration is Supabase: two synthetic users should each read their own invoice and never receive the other's through the direct Data API; an anonymous client should receive neither.
+- **Approved intent, separate from code.** The owner approves an exact content hash. A pull request can't quietly redefine "correct": CI reads the baseline from your protected branch.
+- **Fails closed.** Owner reads are positive controls. Timeouts, 401/403/404/429, redirects and malformed responses are *blocked*, never a pass.
+- **No production access, no customer data.** Synthetic users and records only. Credentials never appear in any output.
+- **Evidence people can read.** HTML reports (white-label, print-to-PDF), JUnit for CI, and Markdown summaries for pull requests.
 
-## Current status
-
-**A working local prototype of one access boundary.** Phases 1–5 of the [roadmap](ROADMAP.md) are implemented. The contract tests, runner tests and a real-HTTP integration harness pass from a fresh checkout. The harness runs against disposable local Supabase stacks, including a separate throwaway instance with a deliberately broken policy. The CI workflow is written and its steps were reproduced locally, but it has **not yet run on GitHub Actions**.
-
-What this is not: a hosted service, a security certification, a scanner, or evidence about production. There is no approval authority beyond what you configure. The local approval store is self-attested, and base-branch protection for `baseline/` is not configured. See [what remains](ROADMAP.md#maintainer-actions-this-work-cannot-do).
-
-The existing RowProof checklist/kit and the separate `ship-safe-check` secrets scanner are earlier products, not this implementation.
-
-## The supported boundary
-
-| Assertion | Required observation |
-| --- | --- |
-| User A reads invoice A | Exact synthetic fixture returned (id, owner, marker) |
-| User B reads invoice B | Exact synthetic fixture returned |
-| User A reads invoice B | Invoice B not disclosed |
-| User B reads invoice A | Invoice A not disclosed |
-| Anonymous reads invoice A | Not disclosed |
-| Anonymous reads invoice B | Not disclosed |
-
-A denial passes only as a well-formed empty result, and only after the target, keys, fixtures (checked through a separate setup channel), verified identities, and that fixture's owner read have all succeeded. A failed login, missing fixture, timeout, 403/404/429 or redirect never becomes a pass.
+Website: [`apps/web`](apps/web) (static, deploy anywhere). Sample report: [`apps/web/sample-report.html`](apps/web/sample-report.html).
 
 ## Quick start
 
-Requires Node 22.12+, pnpm 10 (`corepack enable`), and Docker. Full details: [docs/INTEGRATION.md](docs/INTEGRATION.md).
+Requires Node 22.12+, Docker and the Supabase CLI, in a Supabase project.
 
 ```bash
-pnpm install --frozen-lockfile
+npm install -g rowproof
 ```
 
 ```bash
-pnpm verify
+supabase start
+```
+
+```bash
+rowproof init --table invoices --owner-column owner_id --marker-column title
+```
+
+```bash
+rowproof fixture provision --rule invoices-owner-read.rule.json
+```
+
+```bash
+rowproof doctor --rule invoices-owner-read.rule.json --credentials .rowproof/local.env
+```
+
+```bash
+rowproof propose --rule invoices-owner-read.rule.json --store .rowproof/approvals --proposed-by you --out proposal.json
+```
+
+```bash
+rowproof diff --proposal proposal.json --store .rowproof/approvals
+```
+
+```bash
+rowproof approve --proposal proposal.json --store .rowproof/approvals --approver owner --acknowledge <hash printed by diff> --promote
+```
+
+```bash
+rowproof run --store .rowproof/approvals --rule invoices-owner-read --credentials .rowproof/local.env --html report.html --junit junit.xml
+```
+
+`init` works for any table with an owner column (uuid of `auth.users`), an id column and a text column that can hold a synthetic marker. If the table has other required columns, pass `--fixture-defaults defaults.json` to `fixture provision`. Provisioning refuses to touch any existing user or row that is not one of RowProof's synthetic records.
+
+For CI in your own repository, copy [`examples/ci/rowproof.yml`](examples/ci/rowproof.yml).
+
+**Exit codes:** `0` every approved expectation held with all controls established · `1` at least one demonstrated violation (even if other checks are blocked) · `2` blocked or incomplete, never a pass.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `init` | Scaffold a six-assertion rule for a user-owned table, with fresh random synthetic ids |
+| `fixture provision \| verify` | Create and independently verify synthetic users and records on a **local** stack |
+| `doctor` | Check Node, rule, baseline, keys, tokens, target, Auth and the Data API route, with fixes |
+| `validate`, `hash` | Validate a rule or proposal; print its canonical content hash |
+| `propose`, `diff`, `approve`, `promote`, `history` | Approval workflow: proposals have no authority; approval binds one acknowledged hash |
+| `run` | Execute the approved matrix (reads the approval store only); `--html`, `--junit`, `--summary-md` |
+| `report` | Build an HTML evidence report from one or more result files (`--client`, `--prepared-by`) |
+
+## Scope, stated plainly
+
+Supported today: SELECT through the Supabase Data API (PostgREST) on single-owner tables, against local disposable stacks. Not supported yet: writes, tenant membership, shared or delegated records, storage, edge functions, custom APIs, remote environments. A pass covers the listed assertions on that target at that time. It is not a penetration test, a certification, or evidence about production. Local approvals are self-attested: anyone who can write the approval store can change them. Protect the store in your repository.
+
+## This repository
+
+```text
+packages/contracts/     JSON Schema bundle (authoritative), RFC 8785 hashing, approval semantics, read-only baseline
+packages/runner/        rowproof CLI source: engine, bounded transport, approvals, reports, design system
+packages/local-fixture/ privileged local-only fixture setup and verification
+packages/cli/           the published `rowproof` npm package (single-file bundle)
+supabase/               disposable demo stack: migrations, lab-only broken policy
+tests/integration/      real-HTTP harness: healthy and throwaway broken-policy instances (27 scenarios)
+apps/web/               the website
+baseline/               demo approval store read by CI from the base branch (placeholder approval)
+examples/               canonical rule, contract corpus, sample results, customer CI template
+docs/                   decisions, integration, acceptance, architecture, product scope
+```
+
+Development:
+
+```bash
+pnpm install --frozen-lockfile && pnpm verify
 ```
 
 ```bash
 pnpm integration
 ```
 
-`pnpm integration` starts and destroys local Supabase stacks (about 2.5 minutes once images are cached) and stops any running `rowproof-demo` stack.
-
-### The workflow, by hand
-
 ```bash
-pnpm build && pnpm stack:up && pnpm fixture:provision
+pnpm package
 ```
 
-```bash
-pnpm rowproof propose --rule examples/invoice-owner-read.rule.json --store .rowproof/approvals --proposed-by you --out .rowproof/proposal.json
-```
+`pnpm integration` runs the real-HTTP harness with Docker. `pnpm package` builds and smoke-tests the npm tarball from a clean install. See [docs/INTEGRATION.md](docs/INTEGRATION.md), [docs/DECISIONS.md](docs/DECISIONS.md) and the [roadmap](ROADMAP.md).
 
-```bash
-pnpm rowproof diff --proposal .rowproof/proposal.json --store .rowproof/approvals
-```
+## License
 
-```bash
-pnpm rowproof approve --proposal .rowproof/proposal.json --store .rowproof/approvals --approver owner --acknowledge <hash printed by diff> --promote
-```
+[FSL-1.1-ALv2](LICENSE.md). You may use, modify and run RowProof for free for any purpose except a competing commercial product or service, including professional services you provide to your own clients. Each release becomes Apache-2.0 two years after it is published.
 
-```bash
-pnpm rowproof run --store .rowproof/approvals --rule invoice-owner-read --credentials .rowproof/local.env
-```
-
-Exit codes: **0** every required assertion passed with valid controls; **1** at least one demonstrated violation (even if other checks are blocked); **2** blocked or incomplete without a demonstrated violation.
-
-## Layout
-
-```text
-packages/contracts/    JSON Schema bundle (authoritative), canonical hashing, approval semantics,
-                       read-only approved-baseline reader, outcome rules
-packages/runner/       rowproof CLI: propose/diff/approve/promote/history and run
-packages/local-fixture/ privileged local-only setup: synthetic users and fixtures
-supabase/              disposable stack config, migration (owner-only RLS), lab-only broken policy
-tests/integration/     real-HTTP harness: healthy and throwaway broken-policy instances
-baseline/              approval store that CI reads from the base branch (placeholder approval)
-examples/              canonical rule and a valid/invalid/unsupported contract corpus
-scripts/               stack lifecycle and trusted-baseline retrieval
-apps/web/              hosted control plane (not implemented; Phase 7)
-docs/                  scope, architecture, acceptance, decisions, integration instructions
-```
-
-## Result language
-
-- **passed / failed**: a supported assertion completed against the named fixtures and environment.
-- **blocked**: execution or setup did not produce a trustworthy assessment.
-- **not assessed**: the requested behaviour is outside supported coverage.
-- **current / stale / unknown**: freshness, kept separate and based only on available observations. v1 has no dependency observer, so every result says `unknown`.
-
-A passing run describes those six checks, on that target, at that time. It does not certify an application, cover other access paths, or establish production parity. A customer-controlled runner can forge results; provenance identifies a producer, not honest execution.
-
-## Further reading
-
-[Product scope](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE.md) · [Acceptance scenarios](docs/ACCEPTANCE.md) · [Decisions and pinned versions](docs/DECISIONS.md) · [Running the checks](docs/INTEGRATION.md) · [Roadmap](ROADMAP.md)
-
-## Repository visibility and rights
-
-This repository is public for development visibility. No open-source license has been selected; public visibility alone does not grant a license to reuse the project. See [contribution guidance](CONTRIBUTING.md) and [security reporting](SECURITY.md).
+Security reports: see [SECURITY.md](SECURITY.md). Earlier, unrelated products by the same author (the Ship Safe checklist/kit and `ship-safe-check`) are not part of RowProof.

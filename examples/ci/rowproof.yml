@@ -1,0 +1,104 @@
+# RowProof for YOUR Supabase repository. Copy to .github/workflows/rowproof.yml.
+#
+# What it does on every pull request:
+#   1. starts a disposable local Supabase stack from YOUR migrations (no production access);
+#   2. provisions synthetic users and records for each rule;
+#   3. reads the APPROVED baseline from the base branch (never from the PR itself);
+#   4. runs the checks: a cross-user leak fails the job (exit 1), anything untrustworthy blocks it (exit 2);
+#   5. posts a summary to the job page and uploads an HTML evidence report.
+#
+# Before you rely on it:
+#   - Commit your approval store (e.g. `.rowproof/approvals/`) to the default branch.
+#   - Protect that path: CODEOWNERS + "require review from code owners" for the data owner.
+#   - Set RULES below to your rule ids (and keep each rule file at rowproof/<rule-id>.rule.json).
+#   - Pin RowProof to the version you evaluated, and review upgrades like any other dependency.
+name: rowproof
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rowproof-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ROWPROOF_VERSION: 0.1.0
+  RULES: invoices-owner-read
+  APPROVAL_STORE: .rowproof/approvals
+  BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.sha }}
+
+jobs:
+  access-rules:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.122.1
+
+      - name: Install RowProof
+        run: npm install --global "rowproof@${ROWPROOF_VERSION}"
+
+      - name: Materialize the approved baseline from the base branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags origin "+refs/heads/${GITHUB_BASE_REF}:refs/remotes/origin/${GITHUB_BASE_REF}"
+            if ! git diff --quiet "origin/${GITHUB_BASE_REF}...HEAD" -- "$APPROVAL_STORE"; then
+              echo "::warning::This PR changes ${APPROVAL_STORE}. Those changes are proposals and are NOT used here; they apply after review and merge."
+            fi
+          fi
+          mkdir -p "$RUNNER_TEMP/baseline"
+          # Copy only the store from the trusted ref, never from the working tree.
+          git archive "$BASE_REF" "$APPROVAL_STORE" | tar -x -C "$RUNNER_TEMP/baseline"
+
+      - name: Start a disposable local stack from your migrations
+        run: supabase start -x studio,postgres-meta,imgproxy,vector,logflare,supavisor,storage-api,edge-runtime,realtime,mailpit > /dev/null
+
+      - name: Run RowProof
+        run: |
+          status=0
+          for rule in $RULES; do
+            rowproof fixture provision --rule "rowproof/${rule}.rule.json" --out ".rowproof/${rule}.env"
+            set +e
+            rowproof run \
+              --store "$RUNNER_TEMP/baseline/$APPROVAL_STORE" \
+              --rule "$rule" \
+              --credentials ".rowproof/${rule}.env" \
+              --execution-context ci-development \
+              --out "rowproof-results/${rule}.json" \
+              --html "rowproof-results/${rule}.html" \
+              --junit "rowproof-results/${rule}.junit.xml" \
+              --summary-md "$GITHUB_STEP_SUMMARY"
+            code=$?
+            set -e
+            # Keep the most severe exit code: 1 (violation) beats 2 (blocked) beats 0.
+            if [ "$code" = "1" ] || { [ "$code" = "2" ] && [ "$status" = "0" ]; }; then status=$code; fi
+          done
+          exit $status
+
+      - name: Upload evidence (redacted)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rowproof-evidence
+          path: rowproof-results/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Tear down
+        if: always()
+        run: |
+          supabase stop --no-backup || true
+          rm -f .rowproof/*.env

@@ -54,3 +54,19 @@ A row with the fixture's id but a different owner or marker is `blocked` (incons
 | Supabase CLI | 2.122.1 (`v2.stable`) | v3.0.0 shipped on 2026-11-02 with breaking target-default and config changes. Supabase still ships security fixes for v2. Only local commands are used (`start`, `stop`, `status`, `db reset`), and they behave the same on both. `config.toml` already uses `[local_smtp]`, the v3-compatible name. Excluded from the release-age gate deliberately. |
 
 Revisit: move CI to Node 26 once 24 nears end of life; evaluate CLI v3 after it has had patch releases.
+
+## D8. Product name: RowProof (5 November 2026)
+
+At least three unrelated security tools for AI-written code already publish as "Ship Safe" (npm `ship-safe`, `@ship-safe/cli`, `@shipsafe/cli`; shipsafe.sh, ship-safe.co, shipsafe.org). Selling under the same name in the same niche would mean buyer confusion, little search visibility and possible trademark friction. The maintainer chose **RowProof**. The npm name `rowproof` was free, and no software product by that name was found. Everything public uses it: CLI, packages, env prefix `ROWPROOF_`, schema `urn:rowproof:schemas:v1`, local state `.rowproof/`. The GitHub repository URL is unchanged. **Not done:** a trademark search. Do one before investing in the brand.
+
+## D9. License: FSL-1.1-ALv2
+
+The business model is a free CLI plus paid services. The Functional Source License allows any use except a competing commercial product or service, explicitly including professional services others provide to their clients. Each release converts to Apache-2.0 after two years. The copyright line names "Shreyastacky (RowProof)": **replace it with your legal name or company.**
+
+## D10. `--credentials`, not `--env-file`
+
+Node 22 intercepts `--env-file` even after the script path. With an existing file it silently loads every credential into `process.env`, so child processes inherit them. With a missing file Node exits 9 before RowProof runs. Our flag is therefore `--credentials <file>`, parsed by RowProof without touching `process.env`.
+
+## D11. Distribution: one bundled npm package
+
+`packages/cli` (`rowproof`) bundles the runner, contracts and fixture tooling with esbuild 0.28.2 into `dist/rowproof.mjs`, about 1.3 MB including supabase-js. supabase-js is loaded only by `fixture`, so it never touches `run`. `pnpm package` builds the tarball and runs it from a clean install. Standalone entry points live in separate `bin` files so bundling never auto-executes another module.

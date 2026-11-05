@@ -9,9 +9,10 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 | 1 Contracts and baseline semantics | **complete** | 147 contract tests; `pnpm check:generated` |
 | 2 Disposable fixture | **complete** | Fresh clone: `pnpm integration` provisions and verifies fixtures on a real stack |
 | 3 Runner | **complete** | 53 runner unit tests + real-HTTP scenarios |
-| 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 24/24 scenarios as expected, real local Supabase |
+| 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 27/27 scenarios as expected, real local Supabase |
 | 5 Reproducible CI | **implemented; locally reproduced; GitHub-hosted run pending** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
 | First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
+| Product pass (RowProof) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
 | 6–9 | not started | — |
 
 ### Milestone gate (run 5 November 2026)
@@ -20,7 +21,27 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 **Not yet verified:** the same workflow on GitHub-hosted runners (default ECR image registry, Node 24). Open a PR to trigger it.
 
+### Product pass: RowProof (5 November 2026)
+
+- **Renamed to RowProof** ([D8](docs/DECISIONS.md)); licensed FSL-1.1-ALv2 ([D9](docs/DECISIONS.md)).
+- **Audit fixes:**
+  - a lost exit-1 when the output file existed;
+  - fixture setup that could delete a real user or row, now refused;
+  - non-cascading foreign keys broke re-provisioning;
+  - Node intercepting `--env-file` (now `--credentials`, [D10](docs/DECISIONS.md));
+  - dirty-tree commits now recorded;
+  - proposal-id collisions;
+  - Windows paths in the harness;
+  - a bundling auto-run bug.
+- **Onboarding:** `init` for any user-owned table, `fixture provision --fixture-defaults`, and `doctor` with fixes.
+- **Outputs:** HTML evidence report (white-label, print-ready), JUnit, Markdown step summary, `report` across runs, and a plain-language meaning and next step for every diagnostic.
+- **Distribution:** single-file npm package `rowproof` (`pnpm package` smoke-tests a clean install; the installed tarball was also run end to end against a real stack), and a customer CI template at `examples/ci/rowproof.yml`.
+- **Website:** `apps/web`, a static site with a liquid-glass dark design shared with the reports, services pricing, CTAs configured in `config.js`, and strict security headers.
+- **Verified:** `pnpm verify` (147 + 11 + 63 tests), `pnpm integration` 27/27, `pnpm package`.
+
 ### Maintainer actions this work cannot do
+
+0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark search on "RowProof".
 
 1. Replace the placeholder approval in `baseline/` with the designated owner's own approval ([baseline/README.md](baseline/README.md)).
 2. Protect `main`: a ruleset or branch protection requiring the owner's review for `baseline/` (for example CODEOWNERS plus required code-owner review). Until then, CI results are development tests, not independent assessments.
