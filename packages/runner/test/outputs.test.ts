@@ -45,7 +45,8 @@ describe('HTML evidence report', () => {
     expect(html).toContain('not a security certification');
     expect(html).not.toMatch(/<script/i);
     expect(html).toContain('Acme &lt;script&gt;');
-    expect(html).not.toMatch(/https?:\/\/(?!127\.0\.0\.1)/); // no external requests or links other than the target origin
+    // No external requests or links other than the target origin. The SVG namespace URI is an identifier, never fetched.
+    expect(html).not.toMatch(/https?:\/\/(?!127\.0\.0\.1|www\.w3\.org\/2000\/svg)/);
     for (const s of secrets) expect(html).not.toContain(s);
   });
 

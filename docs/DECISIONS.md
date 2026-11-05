@@ -70,3 +70,13 @@ Node 22 intercepts `--env-file` even after the script path. With an existing fil
 ## D11. Distribution: one bundled npm package
 
 `packages/cli` (`rowproof`) bundles the runner, contracts and fixture tooling with esbuild 0.28.2 into `dist/rowproof.mjs`, about 1.3 MB including supabase-js. supabase-js is loaded only by `fixture`, so it never touches `run`. `pnpm package` builds the tarball and runs it from a clean install. Standalone entry points live in separate `bin` files so bundling never auto-executes another module.
+
+## D12. Visual identity: "vault" (5 November 2026)
+
+The first design used near-black with a cyan-to-violet gradient, glass on every surface, and pill chips. Those are the defaults of AI-generated developer-tool sites, and the result read as generic. The replacement aims at the restraint of an expensive brand:
+
+- **Palette:** obsidian ground (#0A0B0C), bone type (#ECE6DB), one brushed-brass accent (#C9B38A), and calm signal colours: jade for pass (#86B8A0), vermilion for a leak (#F0524F), amber for blocked (#D9A74A). No gradient text.
+- **Type:** Newsreader (optical-size serif) for display, Schibsted Grotesk for text, IBM Plex Mono for data. All are OFL-licensed and self-hosted in `apps/web/assets/fonts`, so the site still makes no third-party requests. Reports keep system stacks so they stay self-contained.
+- **Mark:** a hallmark, the chamfered stamp that certifies precious metal, containing ledger rows.
+- **Structure:** hairline rules instead of cards. Glass is reserved for the few objects that matter.
+- **Motion:** one instrument with meaning. A liquid-glass lens scans a ledger as user A sees it across three releases and catches release 42 leaking Bob's invoice. Plus a pointer-following sheen, a nav that turns to glass on scroll, and quiet reveals. All of it is disabled under `prefers-reduced-motion`. The instrument rests on the leak frame when motion is off, and pauses when off-screen.

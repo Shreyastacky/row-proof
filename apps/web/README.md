@@ -9,7 +9,8 @@ A static site with no framework, build step, cookies, analytics or third-party r
 | `sample-report.html` | Generated from real runs in `examples/results/` (release 41 pass, release 42 leak) |
 | `privacy.html` | Plain privacy statement |
 | `assets/theme.css` | Generated from `packages/runner/src/design/theme.ts`; do not edit |
-| `assets/site.css`, `assets/site.js` | Site layout and small progressive enhancements |
+| `assets/site.css`, `assets/site.js` | Site layout, the animated ledger instrument, and small progressive enhancements |
+| `assets/fonts/` | Self-hosted Newsreader, Schibsted Grotesk and IBM Plex Mono (OFL-1.1; licence texts alongside) |
 | `assets/og.png`, `assets/report-preview.png` | Rendered by `scripts/render-site-images.mjs` |
 | `_headers`, `vercel.json` | Strict security headers (CSP, no framing, HSTS) |
 
@@ -23,7 +24,7 @@ pnpm build && node scripts/build-site.mjs
 node scripts/render-site-images.mjs
 ```
 
-The second command needs Playwright and is only required when the report design or sample results change.
+The second command serves the site over a local HTTP server (browsers refuse web fonts from `file://`) and needs Playwright and is only required when the report design or sample results change.
 
 ## Deploy (free tiers are enough)
 

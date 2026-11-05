@@ -4,9 +4,11 @@
 //   apps/web/assets/og.png              social share card (1200x630)
 //   [--screens <dir>]                   optional full-page screenshots of the site for review
 import { createRequire } from 'node:module';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { extname, normalize } from 'node:path';
 import { join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 const require = createRequire(import.meta.url);
@@ -20,17 +22,30 @@ try {
 const { values } = parseArgs({ options: { screens: { type: 'string' } } });
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const web = join(repo, 'apps', 'web');
-const url = (f) => pathToFileURL(join(web, f)).href;
+// Serve over http: browsers refuse web fonts from file:// URLs, which would render fallback faces.
+const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2' };
+const server = createServer((req, res) => {
+  const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([/\\])+/, '');
+  const file = join(web, path || 'index.html');
+  if (!file.startsWith(web)) { res.writeHead(403).end(); return; }
+  try { res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' }).end(readFileSync(file)); }
+  catch { res.writeHead(404).end(); }
+});
+await new Promise((r) => server.listen(0, '127.0.0.1', r));
+const base = `http://127.0.0.1:${server.address().port}/`;
+const url = (f) => base + f;
 
 const browser = await playwright.chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 }, deviceScaleFactor: 1 });
   await page.goto(url('sample-report.html'));
+  await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: '.rp-noprint{display:none!important}' });
   await page.screenshot({ path: join(web, 'assets', 'report-preview.png') });
 
   const og = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
   await og.goto(url('og-card.html'));
+  await og.evaluate(() => document.fonts.ready);
   await og.screenshot({ path: join(web, 'assets', 'og.png') });
 
   if (values.screens) {
@@ -50,4 +65,5 @@ try {
   console.log('rendered report-preview.png and og.png');
 } finally {
   await browser.close();
+  server.close();
 }
