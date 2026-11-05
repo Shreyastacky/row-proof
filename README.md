@@ -33,6 +33,8 @@ Positive owner reads must work before denied reads can establish a passing isola
 3. Use [the acceptance scenarios](docs/ACCEPTANCE.md) as the definition of working behavior.
 4. Review [the architecture](docs/ARCHITECTURE.md) before choosing dependencies.
 
+Work is tracked in [nine implementation issues](https://github.com/Shreyastacky/ship-safe/issues). Start with [#1: the rule contract](https://github.com/Shreyastacky/ship-safe/issues/1).
+
 ## Planned layout
 
 ```text

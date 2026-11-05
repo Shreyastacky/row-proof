@@ -2,6 +2,20 @@
 
 Initial plan: 5 November 2026. Every item below is unfinished unless explicitly marked complete. Stack choices are proposals, not implemented dependencies.
 
+## GitHub work tracker
+
+| Order | Work item |
+| --- | --- |
+| 1 | [Rule/result contracts and approval semantics](https://github.com/Shreyastacky/ship-safe/issues/1) |
+| 2 | [Disposable Supabase invoice demo](https://github.com/Shreyastacky/ship-safe/issues/2) |
+| 3 | [Local read-only runner](https://github.com/Shreyastacky/ship-safe/issues/3) |
+| 4 | [Known-bad policy and failure-path validation](https://github.com/Shreyastacky/ship-safe/issues/4) |
+| 5 | [Reproducible customer-run CI](https://github.com/Shreyastacky/ship-safe/issues/5) |
+| 6 | [Rule approval history and intent diffs](https://github.com/Shreyastacky/ship-safe/issues/6) |
+| 7 | [Minimal hosted control plane](https://github.com/Shreyastacky/ship-safe/issues/7) |
+| 8 | [Observed drift and evidence freshness](https://github.com/Shreyastacky/ship-safe/issues/8) |
+| Alongside prototype work | [Design partner validation](https://github.com/Shreyastacky/ship-safe/issues/9) |
+
 ## 0. Repository foundation — complete
 
 - [x] Define the first supported permission boundary.
