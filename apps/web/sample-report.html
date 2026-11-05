@@ -9,28 +9,28 @@
 <style>
 :root {
   color-scheme: dark;
-  --rp-bg: #0a0b0c;
-  --rp-bg-2: #0e0f11;
-  --rp-panel: #121417;
-  --rp-ink: #ece6db;
-  --rp-ink-2: #a8a298;
-  --rp-ink-3: #716c64;
-  --rp-line: rgba(236, 230, 219, 0.085);
-  --rp-line-strong: rgba(236, 230, 219, 0.16);
-  --rp-accent: #c9b38a;
-  --rp-accent-hi: #ecdfbf;
-  --rp-accent-lo: #8f7a55;
-  --rp-pass: #86b8a0;
-  --rp-fail: #f0524f;
-  --rp-block: #d9a74a;
-  --rp-na: #8a857c;
-  --rp-glass: rgba(22, 24, 28, 0.55);
-  --rp-glass-solid: #15171a;
+  --rp-bg: #07080c;
+  --rp-bg-2: #0b0d13;
+  --rp-panel: #121520;
+  --rp-ink: #f4f6fb;
+  --rp-ink-2: #b4bccb;
+  --rp-ink-3: #7c8496;
+  --rp-line: rgba(255, 255, 255, 0.09);
+  --rp-line-strong: rgba(255, 255, 255, 0.17);
+  --rp-accent: #c9d2e4;
+  --rp-accent-hi: #ffffff;
+  --rp-accent-lo: #8e97ab;
+  --rp-pass: #5fe0b0;
+  --rp-fail: #ff6a5c;
+  --rp-block: #ffc457;
+  --rp-na: #8e97ab;
+  --rp-glass: rgba(24, 28, 40, 0.55);
+  --rp-glass-solid: #151926;
   --rp-radius: 18px;
   --rp-radius-sm: 12px;
   --rp-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(0, 0, 0, 0.4);
   --rp-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --rp-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --rp-font-display: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --rp-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
   /* Back-compat aliases used by earlier markup. */
   --rp-cyan: var(--rp-accent);
@@ -47,8 +47,9 @@ body.rp {
   color: var(--rp-ink);
   background-color: var(--rp-bg);
   background-image:
-    radial-gradient(1200px 700px at 78% -12%, rgba(201, 179, 138, 0.075), transparent 62%),
-    radial-gradient(900px 600px at -10% 10%, rgba(134, 184, 160, 0.04), transparent 60%),
+    radial-gradient(1000px 640px at 0% -10%, rgba(255, 112, 104, 0.12), transparent 62%),
+    radial-gradient(1000px 640px at 100% -6%, rgba(96, 140, 255, 0.14), transparent 62%),
+    radial-gradient(900px 600px at 90% 110%, rgba(64, 214, 178, 0.08), transparent 60%),
     linear-gradient(180deg, var(--rp-bg) 0%, var(--rp-bg-2) 100%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
@@ -80,8 +81,8 @@ a:hover { text-decoration: underline; text-decoration-color: var(--rp-accent-lo)
   font-size: 11.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--rp-accent);
 }
-.rp-h1 { font-family: var(--rp-font-display); font-size: clamp(32px, 4.6vw, 58px); line-height: 1.02; letter-spacing: -0.02em; font-weight: 400; margin: 0; text-wrap: balance; }
-.rp-h2 { font-family: var(--rp-font-display); font-size: clamp(26px, 3vw, 40px); line-height: 1.1; letter-spacing: -0.015em; font-weight: 400; margin: 0; text-wrap: balance; }
+.rp-h1 { font-family: var(--rp-font-display); font-size: clamp(32px, 4.6vw, 58px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700; margin: 0; text-wrap: balance; }
+.rp-h2 { font-family: var(--rp-font-display); font-size: clamp(26px, 3vw, 40px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 700; margin: 0; text-wrap: balance; }
 .rp-h3 { font-size: 16.5px; letter-spacing: -0.005em; font-weight: 600; margin: 0; }
 /* Kept for compatibility: no gradient text in this system. */
 .rp-gradient-text { color: var(--rp-ink); }
@@ -175,7 +176,7 @@ a:hover { text-decoration: underline; text-decoration-color: var(--rp-accent-lo)
 .rp-kv dt { color: var(--rp-ink-3); }
 .rp-kv dd { margin: 0; color: var(--rp-ink); overflow-wrap: anywhere; }
 
-.rp-stat__n { font-family: var(--rp-font-display); font-size: 40px; font-weight: 400; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
+.rp-stat__n { font-family: var(--rp-font-display); font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums lining-nums; }
 .rp-stat__l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--rp-ink-3); margin-top: 8px; }
 
 /* ---------- Tables ---------- */
@@ -211,15 +212,15 @@ a:hover { text-decoration: underline; text-decoration-color: var(--rp-accent-lo)
 }
 .rp-btn:hover { text-decoration: none; border-color: rgba(236, 230, 219, 0.34); background: rgba(236, 230, 219, 0.06); }
 .rp-btn--primary {
-  color: #17140f;
+  color: #0a0c12;
   border-color: transparent;
-  background: linear-gradient(180deg, #efe3c5 0%, #d3bd93 55%, #b9a073 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #e7eaf2 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.18), 0 10px 30px -14px rgba(201, 179, 138, 0.55);
 }
-.rp-btn--primary:hover { color: #17140f; background: linear-gradient(180deg, #f5ead0 0%, #dcc79e 55%, #c3aa7c 100%); }
+.rp-btn--primary:hover { color: #0a0c12; background: linear-gradient(180deg, #ffffff 0%, #f0f2f7 100%); }
 
 .rp-logo { width: 26px; height: 26px; flex: none; }
-.rp-brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 600; letter-spacing: 0.22em; font-size: 13px; text-transform: uppercase; color: var(--rp-ink); }
+.rp-brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.03em; font-size: 19px; color: var(--rp-ink); }
 .rp-brand:hover { text-decoration: none; }
 
 .rp-code {
@@ -256,7 +257,7 @@ a:hover { text-decoration: underline; text-decoration-color: var(--rp-accent-lo)
 <div class="rp-noprint" style="text-align:center;padding:10px 16px;font-size:13px;color:#a3b1c4;border-bottom:1px solid rgba(148,170,200,.14)">Sample report generated from a real run against a deliberately broken local policy · <a href="index.html">Back to Pyx</a></div>
 <div class="rp-wrap">
 <header class="rp-spread">
-  <span class="rp-brand"><svg class="rp-logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="rp-brass" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#efe2c2"/><stop offset=".5" stop-color="#c9b38a"/><stop offset="1" stop-color="#8f7a55"/></linearGradient></defs><path d="M9 3.5h14l5.5 5.5v14L23 28.5H9L3.5 23V9L9 3.5Z" fill="none" stroke="url(#rp-brass)" stroke-width="1.5"/><path d="M10 11.5h12" stroke="url(#rp-brass)" stroke-width="2.2" stroke-linecap="round"/><path d="M10 16h12M10 20.5h7" stroke="#ece6db" stroke-opacity=".38" stroke-width="2.2" stroke-linecap="round"/></svg>Pyx</span>
+  <span class="rp-brand"><svg class="rp-logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Pyx</span>
   <span class="rp-faint" style="font-size:13px">Prepared for <strong>Invoice Portal (demo)</strong> by <strong>Pyx</strong></span>
 </header>
 

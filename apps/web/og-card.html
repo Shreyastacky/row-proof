@@ -4,29 +4,28 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
 <title>Pyx social card</title>
-<link rel="stylesheet" href="assets/theme.css">
 <link rel="stylesheet" href="assets/site.css">
 <style>
-  body.rp { width: 1200px; height: 630px; overflow: hidden; }
-  body.rp > .card { position: absolute; inset: 0; padding: 64px 72px; display: flex; flex-direction: column; justify-content: space-between; }
-  .card .display { font-size: 92px; }
-  .row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .ledge { width: 420px; padding: 0; overflow: hidden; }
-  .ledge div { display: flex; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--rp-line); font-size: 15px; }
-  .ledge div:last-child { border-bottom: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; }
+  .card { position: absolute; inset: 0; z-index: 1; padding: 64px 72px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center; }
+  .card h1 { text-align: left; margin: 22px 0 0; font-size: 70px; max-width: 12ch; }
+  .card .changes { width: 100%; }
+  .card .brand { font-size: 26px; }
 </style>
 </head>
-<body class="rp">
-  <div class="card">
-    <span class="rp-brand"><svg class="rp-logo" style="width:34px;height:34px" viewBox="0 0 32 32"><defs><linearGradient id="b1" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#efe2c2"/><stop offset=".5" stop-color="#c9b38a"/><stop offset="1" stop-color="#8f7a55"/></linearGradient></defs><path d="M9 3.5h14l5.5 5.5v14L23 28.5H9L3.5 23V9L9 3.5Z" fill="none" stroke="url(#b1)" stroke-width="1.5"/><path d="M10 11.5h12" stroke="url(#b1)" stroke-width="2.2" stroke-linecap="round"/><path d="M10 16h12M10 20.5h7" stroke="#ece6db" stroke-opacity=".38" stroke-width="2.2" stroke-linecap="round"/></svg>Pyx</span>
-    <div class="row">
-      <h1 class="display">Every user sees<br>their own data.<br><em>Nothing else.</em></h1>
-      <div class="rp-glass ledge">
-        <div><span>Alice → invoice A</span><span class="rp-pass">Returned</span></div>
-        <div><span>Alice → invoice B</span><span class="rp-fail">Disclosed</span></div>
-        <div><span>Anonymous → any</span><span class="rp-muted">Not disclosed</span></div>
-      </div>
-    </div>
+<body>
+<div class="field" aria-hidden="true"></div>
+<div class="card">
+  <div>
+    <span class="brand"><svg viewBox="0 0 32 32" style="width:34px;height:34px"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Pyx</span>
+    <h1>Catch the release that leaks customer data.</h1>
   </div>
+  <div class="glass glass--dim" style="padding:20px;--r:26px">
+    <ul class="changes">
+      <li class="change change--gain"><span class="change__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="change__text"><b>Alice can now open Bob’s invoice</b><small>GET /api/invoices/:id</small></span></li>
+      <li class="change change--ok"><span class="change__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5l4 4L18 8"/></svg></span><span class="change__text"><b>Database rules unchanged</b><small>/rest/v1/invoices</small></span></li>
+    </ul>
+  </div>
+</div>
 </body>
 </html>
