@@ -10,7 +10,7 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 | 2 Disposable fixture | **complete** | Fresh clone: `pnpm integration` provisions and verifies fixtures on a real stack |
 | 3 Runner | **complete** | 93 runner unit tests + real-HTTP scenarios |
 | 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 33/33 scenarios as expected, real local Supabase; [benchmark](docs/BENCHMARK.md) 16/16 as designed |
-| 5 Reproducible CI | **complete: green on GitHub-hosted runners (5 November 2026, [run 1](https://github.com/Shreyastacky/row-proof/actions/runs/41991447363))** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
+| 5 Reproducible CI | **complete: green on GitHub-hosted runners (5 November 2026, [run 1](https://github.com/Shreyastacky/row-proof/actions/runs/41991447363))** | Fresh-clone gate here, then all three jobs green on GitHub-hosted runners (triggers on PRs, `main` and `claude/**` pushes) |
 | First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
 | Product pass (Pyx) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
 | Audit response + release review | **complete; see below** | audit fixes, request paths, `compare` / `--compare-to` / `repro`, benchmark |
