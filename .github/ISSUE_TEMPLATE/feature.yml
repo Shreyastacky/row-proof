@@ -1,0 +1,22 @@
+name: Scoped implementation task
+description: Propose work against the supported Access Rules boundary.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Required behavior
+      description: Describe the user-visible outcome and relevant roadmap step.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include positive controls, failure cases, and unsupported behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and data handling
+      description: Use synthetic examples only. Never include credentials or private customer data.

@@ -1,0 +1,43 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+.npmrc
+.aws/
+
+# Dependencies and generated artifacts
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+.venv/
+__pycache__/
+.DS_Store
+Thumbs.db
+
+# Existing internal workspace material; publish only curated project files
+/research_notes/
+/reports/
+/output/
+/tmp/
+/graphify-out/
+/.claude/
+/.codex/
+/.agents/
+
+# Local execution data and tool state
+.supabase/
+supabase/.temp/
+supabase/.branches/
+*.local.json
+artifacts/
+test-results/

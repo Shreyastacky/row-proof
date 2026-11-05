@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.1-proposal",
+  "status": "proposed",
+  "ruleId": "invoice-owner-read",
+  "revision": 1,
+  "environment": {
+    "label": "disposable-local-demo",
+    "kind": "local",
+    "allowedOrigin": "http://127.0.0.1:54321"
+  },
+  "resource": {
+    "schema": "public",
+    "table": "invoices",
+    "operation": "select",
+    "idColumn": "id",
+    "ownerColumn": "owner_id",
+    "markerColumn": "fixture_marker"
+  },
+  "identities": [
+    { "ref": "user-a", "credentialRef": "SHIPSAFE_USER_A_TOKEN" },
+    { "ref": "user-b", "credentialRef": "SHIPSAFE_USER_B_TOKEN" },
+    { "ref": "anonymous" }
+  ],
+  "fixtures": [
+    { "ref": "invoice-a", "id": "00000000-0000-4000-8000-000000000001", "ownerRef": "user-a", "marker": "synthetic-invoice-a" },
+    { "ref": "invoice-b", "id": "00000000-0000-4000-8000-000000000002", "ownerRef": "user-b", "marker": "synthetic-invoice-b" }
+  ],
+  "expectations": [
+    { "actorRef": "user-a", "fixtureRef": "invoice-a", "expected": "exact_fixture_returned" },
+    { "actorRef": "user-b", "fixtureRef": "invoice-b", "expected": "exact_fixture_returned" },
+    { "actorRef": "user-a", "fixtureRef": "invoice-b", "expected": "fixture_not_disclosed" },
+    { "actorRef": "user-b", "fixtureRef": "invoice-a", "expected": "fixture_not_disclosed" },
+    { "actorRef": "anonymous", "fixtureRef": "invoice-a", "expected": "fixture_not_disclosed" },
+    { "actorRef": "anonymous", "fixtureRef": "invoice-b", "expected": "fixture_not_disclosed" }
+  ],
+  "approval": null
+}
