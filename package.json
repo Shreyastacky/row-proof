@@ -1,0 +1,25 @@
+{
+  "name": "ship-safe",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter ./packages/** run build",
+    "typecheck": "pnpm -r --filter ./packages/** run typecheck",
+    "test": "pnpm run build && pnpm -r --filter ./packages/** run test",
+    "check:generated": "pnpm --filter @ship-safe/contracts run check:generated",
+    "verify": "pnpm run check:generated && pnpm run test && pnpm run typecheck",
+    "integration": "pnpm run build && node tests/integration/harness.mjs",
+    "ship-safe": "node packages/runner/dist/cli.js",
+    "fixture": "node packages/local-fixture/dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "supabase": "2.122.1",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

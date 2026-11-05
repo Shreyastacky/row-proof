@@ -1,0 +1,616 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ship-safe:schemas:v1",
+  "title": "ShipSafeContractsV1",
+  "description": "Authoritative Ship Safe v1 contracts. Every document type is a $defs entry; the root properties exist only so code generation emits every named type. Validate a document against its $defs entry, never against this root.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "ruleContent": { "$ref": "#/$defs/RuleContent" },
+    "ruleProposal": { "$ref": "#/$defs/RuleProposal" },
+    "approval": { "$ref": "#/$defs/Approval" },
+    "approvedRevision": { "$ref": "#/$defs/ApprovedRevision" },
+    "promotion": { "$ref": "#/$defs/Promotion" },
+    "activeBaseline": { "$ref": "#/$defs/ActiveBaseline" },
+    "runResult": { "$ref": "#/$defs/RunResult" }
+  },
+  "$defs": {
+    "Slug": {
+      "title": "Slug",
+      "description": "Lowercase identifier: letters, digits, single hyphens; 1-64 characters.",
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$"
+    },
+    "Uuid": {
+      "title": "Uuid",
+      "description": "Canonical lowercase UUID. Uppercase is rejected so content hashes cannot vary by letter case.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "ContentHash": {
+      "title": "ContentHash",
+      "description": "sha256 over the RFC 8785 canonical JSON of a RuleContent document.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Timestamp": {
+      "title": "Timestamp",
+      "description": "UTC RFC 3339 timestamp with a Z suffix and at most millisecond precision.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,3})?Z$"
+    },
+    "SafeText": {
+      "title": "SafeText",
+      "description": "Short human-readable text without control characters.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+    },
+    "ShortText": {
+      "title": "ShortText",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+    },
+    "SqlIdentifier": {
+      "title": "SqlIdentifier",
+      "description": "Unquoted lowercase Postgres identifier. Quoted or mixed-case identifiers are unsupported in v1.",
+      "type": "string",
+      "pattern": "^[a-z_][a-z0-9_]{0,62}$"
+    },
+    "FixtureMarker": {
+      "title": "FixtureMarker",
+      "description": "Synthetic marker stored on the fixture row. The prefix makes accidental use of real records visible.",
+      "type": "string",
+      "pattern": "^synthetic-[a-z0-9-]{1,48}$"
+    },
+    "Origin": {
+      "title": "Origin",
+      "description": "scheme://host[:port] with no path, query, fragment, or credentials. Exact form is checked semantically.",
+      "type": "string",
+      "maxLength": 200,
+      "pattern": "^https?://[^/?#@\\s]+$"
+    },
+    "GitCommit": {
+      "title": "GitCommit",
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+    },
+    "ActorId": {
+      "title": "ActorId",
+      "description": "Identifier for a person or system that proposed, approved, or promoted something. Not an email address requirement; avoid personal data where possible.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._@+-]{0,99}$"
+    },
+    "CredentialRef": {
+      "title": "CredentialRef",
+      "description": "Reference to a credential supplied at execution time. Credential values never appear in rules or results.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "name"],
+      "properties": {
+        "source": { "const": "env" },
+        "name": {
+          "type": "string",
+          "description": "Environment variable name. The SHIPSAFE_ prefix keeps rules from pointing at unrelated process secrets.",
+          "pattern": "^SHIPSAFE_[A-Z0-9_]{1,56}$"
+        }
+      }
+    },
+    "RuleScope": {
+      "title": "RuleScope",
+      "description": "Hosted-facing identifiers. organizationId is null when the rule is used locally without a hosted account.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organizationId", "projectId", "environmentId"],
+      "properties": {
+        "organizationId": { "oneOf": [{ "$ref": "#/$defs/Slug" }, { "type": "null" }] },
+        "projectId": { "$ref": "#/$defs/Slug" },
+        "environmentId": { "$ref": "#/$defs/Slug" }
+      }
+    },
+    "Target": {
+      "title": "Target",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "environmentClass", "allowedOrigin", "apiKey", "fixtureVerification"],
+      "properties": {
+        "adapter": { "enum": ["supabase"] },
+        "environmentClass": {
+          "description": "v1 supports only local-disposable. remote-non-production is representable but not assessed until separately implemented and tested.",
+          "enum": ["local-disposable", "remote-non-production"]
+        },
+        "allowedOrigin": { "$ref": "#/$defs/Origin" },
+        "apiKey": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "credential"],
+          "properties": {
+            "kind": { "enum": ["publishable", "legacy-anon"] },
+            "credential": { "$ref": "#/$defs/CredentialRef" }
+          }
+        },
+        "fixtureVerification": {
+          "description": "Privileged setup channel used only to verify fixture existence/ownership before assessment. Never used for assertions.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["channel", "credential"],
+          "properties": {
+            "channel": { "enum": ["supabase-secret-key"] },
+            "credential": { "$ref": "#/$defs/CredentialRef" }
+          }
+        }
+      }
+    },
+    "Resource": {
+      "title": "Resource",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "table", "operation", "route", "ownershipModel", "idColumn", "ownerColumn", "markerColumn"],
+      "properties": {
+        "schema": { "$ref": "#/$defs/SqlIdentifier" },
+        "table": { "$ref": "#/$defs/SqlIdentifier" },
+        "operation": { "enum": ["select", "insert", "update", "delete"] },
+        "route": { "enum": ["supabase-data-api-rest-v1"] },
+        "ownershipModel": { "enum": ["single-owner-column", "tenant-membership", "shared-record"] },
+        "idColumn": { "$ref": "#/$defs/SqlIdentifier" },
+        "ownerColumn": { "$ref": "#/$defs/SqlIdentifier" },
+        "markerColumn": { "$ref": "#/$defs/SqlIdentifier" }
+      }
+    },
+    "AuthenticatedActor": {
+      "title": "AuthenticatedActor",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "kind", "expectedUserId", "credential"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/Slug" },
+        "kind": { "const": "authenticated" },
+        "expectedUserId": { "$ref": "#/$defs/Uuid" },
+        "credential": { "$ref": "#/$defs/CredentialRef" }
+      }
+    },
+    "AnonymousActor": {
+      "title": "AnonymousActor",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "kind"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/Slug" },
+        "kind": { "const": "anonymous" }
+      }
+    },
+    "Actor": {
+      "title": "Actor",
+      "oneOf": [{ "$ref": "#/$defs/AuthenticatedActor" }, { "$ref": "#/$defs/AnonymousActor" }]
+    },
+    "Fixture": {
+      "title": "Fixture",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "id", "ownerRef", "marker"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/Slug" },
+        "id": { "$ref": "#/$defs/Uuid" },
+        "ownerRef": { "$ref": "#/$defs/Slug" },
+        "marker": { "$ref": "#/$defs/FixtureMarker" }
+      }
+    },
+    "ExpectedObservation": {
+      "title": "ExpectedObservation",
+      "enum": ["exact_fixture_returned", "fixture_not_disclosed"]
+    },
+    "Expectation": {
+      "title": "Expectation",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "actorRef", "fixtureRef", "expected"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Slug" },
+        "actorRef": { "$ref": "#/$defs/Slug" },
+        "fixtureRef": { "$ref": "#/$defs/Slug" },
+        "expected": { "$ref": "#/$defs/ExpectedObservation" }
+      }
+    },
+    "DeclaredScope": {
+      "title": "DeclaredScope",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covers", "notCovered"],
+      "properties": {
+        "covers": { "$ref": "#/$defs/SafeText" },
+        "notCovered": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/SafeText" } }
+      }
+    },
+    "RuleContent": {
+      "title": "RuleContent",
+      "description": "The permission intent. This exact document, canonicalized, is what a content hash and an approval identify.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "ruleId", "title", "scope", "target", "resource", "actors", "fixtures", "expectations", "declaredScope"],
+      "properties": {
+        "kind": { "const": "RuleContent" },
+        "schemaVersion": { "const": 1 },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "title": { "$ref": "#/$defs/ShortText" },
+        "scope": { "$ref": "#/$defs/RuleScope" },
+        "target": { "$ref": "#/$defs/Target" },
+        "resource": { "$ref": "#/$defs/Resource" },
+        "actors": { "type": "array", "minItems": 2, "maxItems": 8, "items": { "$ref": "#/$defs/Actor" } },
+        "fixtures": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/Fixture" } },
+        "expectations": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/Expectation" } },
+        "declaredScope": { "$ref": "#/$defs/DeclaredScope" }
+      }
+    },
+    "RevisionPointer": {
+      "title": "RevisionPointer",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "contentHash"],
+      "properties": {
+        "revision": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" }
+      }
+    },
+    "RuleProposal": {
+      "title": "RuleProposal",
+      "description": "A proposed change of intent. A proposal is never an approval and carries no authority.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "proposalId", "ruleId", "contentHash", "content", "basedOn", "proposedBy", "proposedAt", "note"],
+      "properties": {
+        "kind": { "const": "RuleProposal" },
+        "schemaVersion": { "const": 1 },
+        "proposalId": { "$ref": "#/$defs/Uuid" },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "content": { "$ref": "#/$defs/RuleContent" },
+        "basedOn": {
+          "description": "The active approved revision this proposal changes, or null for the first revision.",
+          "oneOf": [{ "$ref": "#/$defs/RevisionPointer" }, { "type": "null" }]
+        },
+        "proposedBy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind"],
+          "properties": {
+            "id": { "$ref": "#/$defs/ActorId" },
+            "kind": { "enum": ["local-user", "ai-assistant", "ci"] }
+          }
+        },
+        "proposedAt": { "$ref": "#/$defs/Timestamp" },
+        "note": { "oneOf": [{ "$ref": "#/$defs/SafeText" }, { "type": "null" }] }
+      }
+    },
+    "ApprovalProvenanceLevel": {
+      "title": "ApprovalProvenanceLevel",
+      "description": "local-self-attested: a filesystem owner can bypass it. protected-ref: retrieved from a separately protected Git ref (protection must be verified separately). control-plane-authenticated: recorded by an authenticated hosted reviewer (not implemented).",
+      "enum": ["local-self-attested", "protected-ref", "control-plane-authenticated"]
+    },
+    "Approval": {
+      "title": "Approval",
+      "description": "An explicit acknowledgment that binds one approver to one exact content hash. acknowledgedHash is the hash the approver typed or confirmed and must equal contentHash.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "approvalId", "ruleId", "revision", "contentHash", "acknowledgedHash", "proposalId", "decision", "approvedBy", "approvedAt", "provenance", "supersedes"],
+      "properties": {
+        "kind": { "const": "Approval" },
+        "schemaVersion": { "const": 1 },
+        "approvalId": { "$ref": "#/$defs/Uuid" },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "revision": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "acknowledgedHash": { "$ref": "#/$defs/ContentHash" },
+        "proposalId": { "$ref": "#/$defs/Uuid" },
+        "decision": { "const": "approved" },
+        "approvedBy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind"],
+          "properties": {
+            "id": { "$ref": "#/$defs/ActorId" },
+            "kind": { "enum": ["local-user", "authenticated-reviewer"] }
+          }
+        },
+        "approvedAt": { "$ref": "#/$defs/Timestamp" },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "statement"],
+          "properties": {
+            "level": { "$ref": "#/$defs/ApprovalProvenanceLevel" },
+            "statement": { "$ref": "#/$defs/SafeText" }
+          }
+        },
+        "supersedes": { "oneOf": [{ "$ref": "#/$defs/RevisionPointer" }, { "type": "null" }] }
+      }
+    },
+    "ApprovedRevision": {
+      "title": "ApprovedRevision",
+      "description": "Immutable approved revision: the approved content plus the approval that names its hash.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "ruleId", "revision", "contentHash", "content", "approval"],
+      "properties": {
+        "kind": { "const": "ApprovedRevision" },
+        "schemaVersion": { "const": 1 },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "revision": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "content": { "$ref": "#/$defs/RuleContent" },
+        "approval": { "$ref": "#/$defs/Approval" }
+      }
+    },
+    "Promotion": {
+      "title": "Promotion",
+      "description": "Immutable record that an approved revision became the active baseline.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "ruleId", "sequence", "revision", "contentHash", "promotedBy", "promotedAt", "previous"],
+      "properties": {
+        "kind": { "const": "Promotion" },
+        "schemaVersion": { "const": 1 },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "revision": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "promotedBy": { "$ref": "#/$defs/ActorId" },
+        "promotedAt": { "$ref": "#/$defs/Timestamp" },
+        "previous": { "oneOf": [{ "$ref": "#/$defs/RevisionPointer" }, { "type": "null" }] }
+      }
+    },
+    "ActiveBaseline": {
+      "title": "ActiveBaseline",
+      "description": "Pointer to the currently active approved revision. It must agree with the latest Promotion record.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "ruleId", "revision", "contentHash", "promotionSequence"],
+      "properties": {
+        "kind": { "const": "ActiveBaseline" },
+        "schemaVersion": { "const": 1 },
+        "ruleId": { "$ref": "#/$defs/Slug" },
+        "revision": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "contentHash": { "$ref": "#/$defs/ContentHash" },
+        "promotionSequence": { "type": "integer", "minimum": 1, "maximum": 1000000 }
+      }
+    },
+    "AssertionStatus": {
+      "title": "AssertionStatus",
+      "enum": ["passed", "failed", "blocked", "not_assessed"]
+    },
+    "ControlStatus": {
+      "title": "ControlStatus",
+      "enum": ["ok", "failed", "not_run"]
+    },
+    "Observation": {
+      "title": "Observation",
+      "description": "What the response showed, as a safe enum. Raw rows are never recorded.",
+      "enum": ["exact_fixture_returned", "fixture_returned_inconsistent", "no_rows", "unexpected_rows", "error_response", "no_response", "not_requested"]
+    },
+    "DiagnosticCode": {
+      "title": "DiagnosticCode",
+      "description": "Allowlisted diagnostic codes. Raw SDK errors, headers, bodies, and tokens are never serialized.",
+      "enum": [
+        "ok",
+        "fixture_disclosed",
+        "owner_read_returned_no_rows",
+        "owner_read_forbidden",
+        "actor_unverified",
+        "actors_not_distinct",
+        "fixture_unverified",
+        "owner_control_not_passed",
+        "target_unverified",
+        "baseline_invalid",
+        "baseline_pin_mismatch",
+        "origin_mismatch",
+        "origin_not_loopback",
+        "api_key_missing",
+        "api_key_wrong_class",
+        "api_key_elevated",
+        "setup_key_missing",
+        "setup_key_wrong_class",
+        "token_missing",
+        "token_malformed",
+        "token_elevated_role",
+        "token_rejected_by_auth",
+        "token_expired_or_expiring",
+        "token_issuer_mismatch",
+        "token_anonymous_user",
+        "user_id_mismatch",
+        "fixture_missing",
+        "fixture_owner_mismatch",
+        "fixture_marker_mismatch",
+        "fixture_returned_inconsistent",
+        "unexpected_rows",
+        "auth_rejected",
+        "http_status_unexpected",
+        "not_found",
+        "rate_limited",
+        "server_error",
+        "timeout",
+        "network_error",
+        "redirect_rejected",
+        "response_too_large",
+        "response_malformed",
+        "request_budget_exhausted",
+        "run_deadline_exceeded",
+        "cancelled",
+        "unsupported_operation",
+        "unsupported_ownership_model",
+        "unsupported_route",
+        "unsupported_environment_class",
+        "unsupported_expectation",
+        "unsupported_rule",
+        "not_executed"
+      ]
+    },
+    "AssertionResult": {
+      "title": "AssertionResult",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "actorRef", "fixtureRef", "expected", "status", "observation", "diagnostic", "httpStatus"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Slug" },
+        "actorRef": { "$ref": "#/$defs/Slug" },
+        "fixtureRef": { "$ref": "#/$defs/Slug" },
+        "expected": { "$ref": "#/$defs/ExpectedObservation" },
+        "status": { "$ref": "#/$defs/AssertionStatus" },
+        "observation": { "$ref": "#/$defs/Observation" },
+        "diagnostic": { "$ref": "#/$defs/DiagnosticCode" },
+        "httpStatus": { "oneOf": [{ "type": "integer", "minimum": 100, "maximum": 599 }, { "type": "null" }] }
+      }
+    },
+    "ControlResult": {
+      "title": "ControlResult",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "diagnostic"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(?:baseline|target|api-key|setup-key|actors-distinct|fixture:[a-z0-9-]{1,64}|identity:[a-z0-9-]{1,64})$"
+        },
+        "status": { "$ref": "#/$defs/ControlStatus" },
+        "diagnostic": { "$ref": "#/$defs/DiagnosticCode" }
+      }
+    },
+    "DependencyFingerprint": {
+      "title": "DependencyFingerprint",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "digest", "observedAt"],
+      "properties": {
+        "kind": { "enum": ["postgres-policies", "postgres-grants", "postgres-functions", "postgrest-schema", "auth-config"] },
+        "digest": { "$ref": "#/$defs/ContentHash" },
+        "observedAt": { "$ref": "#/$defs/Timestamp" }
+      }
+    },
+    "RunLimits": {
+      "title": "RunLimits",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRequests", "requestTimeoutMs", "runTimeoutMs", "maxResponseBytes", "concurrency", "retries"],
+      "properties": {
+        "maxRequests": { "type": "integer", "minimum": 1, "maximum": 200 },
+        "requestTimeoutMs": { "type": "integer", "minimum": 100, "maximum": 60000 },
+        "runTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 600000 },
+        "maxResponseBytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 },
+        "concurrency": { "const": 1 },
+        "retries": { "const": 0 }
+      }
+    },
+    "RunResult": {
+      "title": "RunResult",
+      "description": "Bounded, redacted observation of one run. It reports listed assertions only; it has no field for an overall security verdict or score.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "schemaVersion", "runId", "rule", "runner", "source", "scope", "target", "observedAt", "limits", "controls", "assertions", "summary", "freshness", "provenance"],
+      "properties": {
+        "kind": { "const": "RunResult" },
+        "schemaVersion": { "const": 1 },
+        "runId": { "$ref": "#/$defs/Uuid" },
+        "rule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ruleId", "revision", "contentHash"],
+          "properties": {
+            "ruleId": { "$ref": "#/$defs/Slug" },
+            "revision": { "oneOf": [{ "type": "integer", "minimum": 1, "maximum": 1000000 }, { "type": "null" }] },
+            "contentHash": { "oneOf": [{ "$ref": "#/$defs/ContentHash" }, { "type": "null" }] }
+          }
+        },
+        "runner": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "const": "ship-safe-runner" },
+            "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]{1,32})?$" }
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["commit"],
+          "properties": {
+            "commit": { "oneOf": [{ "$ref": "#/$defs/GitCommit" }, { "type": "null" }] }
+          }
+        },
+        "scope": { "oneOf": [{ "$ref": "#/$defs/RuleScope" }, { "type": "null" }] },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "environmentClass", "transport"],
+          "properties": {
+            "origin": { "oneOf": [{ "$ref": "#/$defs/Origin" }, { "type": "null" }] },
+            "environmentClass": { "oneOf": [{ "enum": ["local-disposable", "remote-non-production"] }, { "type": "null" }] },
+            "transport": { "const": "supabase-data-api-rest-v1" }
+          }
+        },
+        "observedAt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["startedAt", "finishedAt"],
+          "properties": {
+            "startedAt": { "$ref": "#/$defs/Timestamp" },
+            "finishedAt": { "$ref": "#/$defs/Timestamp" }
+          }
+        },
+        "limits": { "$ref": "#/$defs/RunLimits" },
+        "controls": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/ControlResult" } },
+        "assertions": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/AssertionResult" } },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["outcome", "completeness", "exitCode", "counts"],
+          "properties": {
+            "outcome": {
+              "description": "pass: complete required matrix, valid controls, every assertion passed. fail: at least one demonstrated violation. blocked: incomplete without a demonstrated violation.",
+              "enum": ["pass", "fail", "blocked"]
+            },
+            "completeness": { "enum": ["complete", "incomplete"] },
+            "exitCode": { "enum": [0, 1, 2] },
+            "counts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["passed", "failed", "blocked", "not_assessed"],
+              "properties": {
+                "passed": { "type": "integer", "minimum": 0, "maximum": 64 },
+                "failed": { "type": "integer", "minimum": 0, "maximum": 64 },
+                "blocked": { "type": "integer", "minimum": 0, "maximum": 64 },
+                "not_assessed": { "type": "integer", "minimum": 0, "maximum": 64 }
+              }
+            }
+          }
+        },
+        "freshness": {
+          "description": "Separate from assertion truth. v1 has no dependency observer, so state is unknown.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "reason", "dependencies"],
+          "properties": {
+            "state": { "enum": ["current", "stale", "unknown"] },
+            "reason": { "enum": ["observed_inputs_unchanged", "observed_relevant_change", "no_dependency_observer", "incomplete_observations"] },
+            "dependencies": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/DependencyFingerprint" } }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["approvalLevel", "executionContext"],
+          "properties": {
+            "approvalLevel": { "oneOf": [{ "$ref": "#/$defs/ApprovalProvenanceLevel" }, { "type": "null" }] },
+            "executionContext": {
+              "description": "Declared by the invoker; not proof of honest execution.",
+              "enum": ["local-developer", "ci-development", "ci-trusted-pinned-declared"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

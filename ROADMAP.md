@@ -23,9 +23,20 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 - [x] Add an ordered backlog and acceptance scenarios.
 - [x] Keep internal research, generated reports, and credentials out of tracked content.
 
-## 1. Freeze the first rule contract — next
+## 1. Freeze the first rule contract — complete (5 November 2026)
 
-**Deliverable:** versioned JSON Schemas for rule proposals, approvals, and run results, with valid and invalid examples.
+**Verified:** `pnpm --filter @ship-safe/contracts test` (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/ship-safe.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
+
+- [x] Schemas for RuleContent, RuleProposal, Approval, ApprovedRevision, Promotion, ActiveBaseline and RunResult; types generated from the same file with a drift check.
+- [x] RFC 8785 canonicalization and SHA-256 content hash; RFC sample vector and golden hash pinned; strict parser rejects duplicate keys.
+- [x] Proposal and approval are separate records; approval requires the exact acknowledged hash; revisions and promotions are immutable.
+- [x] Read-only `ApprovedBaselineReader` re-verifies hashes, the active pointer and promotions, rejects symlinks and oversized files, and supports revision/hash pins.
+- [x] Gate: changing any leaf of approved content fails verification (every leaf is perturbed in `approval.test.ts`); re-hashing without re-approval fails.
+- [x] Result schema has no field for a security verdict, score, raw row, body or header, and rejects them (`outcome.test.ts`).
+- [x] Hosted-facing identifiers (`organizationId` nullable, `projectId`, `environmentId`) are explicit; local use needs no account.
+- Limitation: the local store is self-attested; a filesystem owner can forge it. This is recorded as provenance, not hidden.
+
+**Original deliverable:** versioned JSON Schemas for rule proposals, approvals, and run results, with valid and invalid examples.
 
 - Define project/environment identity, allowlisted origin, resource/table, SELECT operation, ownership model, synthetic identities, fixtures, and explicit expected outcomes.
 - Require a synthetic fixture marker plus ID; never infer a pass from HTTP status alone.

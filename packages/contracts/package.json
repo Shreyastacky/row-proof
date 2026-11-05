@@ -1,0 +1,28 @@
+{
+  "name": "@ship-safe/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ship Safe v1 schemas, canonicalization, approval semantics, and safe result model.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schemas/ship-safe.v1.schema.json": "./schemas/ship-safe.v1.schema.json"
+  },
+  "files": ["dist", "schemas"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "generate": "node scripts/generate-types.mjs",
+    "check:generated": "node scripts/generate-types.mjs --check"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "16.0.0"
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "description": "Each case names a document kind and the expected validation outcome. Tests in packages/contracts/test/examples.test.ts enforce these.",
+  "cases": [
+    {
+      "file": "valid/rule-content.legacy-anon.json",
+      "kind": "RuleContent",
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "file": "valid/proposal.invoice.json",
+      "kind": "RuleProposal",
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "file": "valid/approved-revision.invoice.json",
+      "kind": "ApprovedRevision",
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "file": "invalid/duplicate-expectation.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "duplicate_expectation_id"
+      }
+    },
+    {
+      "file": "invalid/matrix-incomplete.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "matrix_incomplete"
+      }
+    },
+    {
+      "file": "invalid/unknown-fixture-ref.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "unknown_fixture_ref"
+      }
+    },
+    {
+      "file": "invalid/credential-value-in-title.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "credential_value_in_document"
+      }
+    },
+    {
+      "file": "invalid/credential-ref-outside-namespace.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/origin-with-trailing-slash.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/origin-not-exact-form.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "origin_not_exact"
+      }
+    },
+    {
+      "file": "invalid/origin-not-loopback.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "origin_not_loopback"
+      }
+    },
+    {
+      "file": "invalid/same-expected-user.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "duplicate_expected_user"
+      }
+    },
+    {
+      "file": "invalid/approval-smuggled-into-content.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/uppercase-uuid.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/marker-not-synthetic.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/anonymous-missing.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "anonymous_actor_required"
+      }
+    },
+    {
+      "file": "invalid/future-schema-version.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/credential-ref-reused.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "duplicate_credential_ref"
+      }
+    },
+    {
+      "file": "invalid/duplicate-json-key.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "json_duplicate_key"
+      }
+    },
+    {
+      "file": "invalid/unsupported-insert-operation.json",
+      "kind": "RuleContent",
+      "expect": {
+        "unsupported": "unsupported_operation"
+      }
+    },
+    {
+      "file": "invalid/unsupported-shared-read.json",
+      "kind": "RuleContent",
+      "expect": {
+        "unsupported": "unsupported_expectation"
+      }
+    },
+    {
+      "file": "invalid/unsupported-remote-environment.json",
+      "kind": "RuleContent",
+      "expect": {
+        "unsupported": "unsupported_environment_class"
+      }
+    },
+    {
+      "file": "invalid/unsupported-tenant-model.json",
+      "kind": "RuleContent",
+      "expect": {
+        "unsupported": "unsupported_ownership_model"
+      }
+    },
+    {
+      "file": "invalid/proposal-content-edited-after-hash.json",
+      "kind": "RuleProposal",
+      "expect": {
+        "code": "content_hash_mismatch"
+      }
+    },
+    {
+      "file": "invalid/approved-revision-content-changed.json",
+      "kind": "ApprovedRevision",
+      "expect": {
+        "code": "content_hash_mismatch"
+      }
+    },
+    {
+      "file": "invalid/approved-revision-rehashed-without-approval.json",
+      "kind": "ApprovedRevision",
+      "expect": {
+        "code": "approval_hash_mismatch"
+      }
+    },
+    {
+      "file": "invalid/approval-acknowledged-other-hash.json",
+      "kind": "ApprovedRevision",
+      "expect": {
+        "code": "acknowledgment_mismatch"
+      }
+    }
+  ]
+}

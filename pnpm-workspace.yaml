@@ -1,0 +1,16 @@
+packages:
+  - packages/*
+  - tests/integration
+
+# pnpm 10 blocks dependency lifecycle scripts by default. The Supabase CLI
+# package needs its postinstall step to download the pinned CLI binary.
+onlyBuiltDependencies:
+  - supabase
+
+# Supply-chain guard: refuse to resolve versions published less than seven
+# days ago. The Supabase CLI is excluded because its maintained v2 line
+# (2.122.1) is pinned deliberately; see docs/DECISIONS.md.
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - supabase
+  - "@supabase/cli-*"

@@ -1,0 +1,155 @@
+{
+  "kind": "ApprovedRevision",
+  "schemaVersion": 1,
+  "ruleId": "invoice-owner-read",
+  "revision": 1,
+  "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+  "content": {
+    "kind": "RuleContent",
+    "schemaVersion": 1,
+    "ruleId": "invoice-owner-read",
+    "title": "Each user reads only their own invoice through the Data API",
+    "scope": {
+      "organizationId": null,
+      "projectId": "invoice-portal-demo",
+      "environmentId": "local-disposable"
+    },
+    "target": {
+      "adapter": "supabase",
+      "environmentClass": "local-disposable",
+      "allowedOrigin": "http://127.0.0.1:54321",
+      "apiKey": {
+        "kind": "publishable",
+        "credential": {
+          "source": "env",
+          "name": "SHIPSAFE_PUBLISHABLE_KEY"
+        }
+      },
+      "fixtureVerification": {
+        "channel": "supabase-secret-key",
+        "credential": {
+          "source": "env",
+          "name": "SHIPSAFE_SETUP_SECRET_KEY"
+        }
+      }
+    },
+    "resource": {
+      "schema": "public",
+      "table": "invoices",
+      "operation": "select",
+      "route": "supabase-data-api-rest-v1",
+      "ownershipModel": "single-owner-column",
+      "idColumn": "id",
+      "ownerColumn": "owner_id",
+      "markerColumn": "fixture_marker"
+    },
+    "actors": [
+      {
+        "ref": "user-a",
+        "kind": "authenticated",
+        "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
+        "credential": {
+          "source": "env",
+          "name": "SHIPSAFE_USER_A_TOKEN"
+        }
+      },
+      {
+        "ref": "user-b",
+        "kind": "authenticated",
+        "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
+        "credential": {
+          "source": "env",
+          "name": "SHIPSAFE_USER_B_TOKEN"
+        }
+      },
+      {
+        "ref": "anonymous",
+        "kind": "anonymous"
+      }
+    ],
+    "fixtures": [
+      {
+        "ref": "invoice-a",
+        "id": "1a5e0000-0000-4000-8000-00000000000a",
+        "ownerRef": "user-a",
+        "marker": "synthetic-invoice-a"
+      },
+      {
+        "ref": "invoice-b",
+        "id": "1a5e0000-0000-4000-8000-00000000000b",
+        "ownerRef": "user-a",
+        "marker": "synthetic-invoice-b"
+      }
+    ],
+    "expectations": [
+      {
+        "id": "a-reads-a",
+        "actorRef": "user-a",
+        "fixtureRef": "invoice-a",
+        "expected": "exact_fixture_returned"
+      },
+      {
+        "id": "b-reads-b",
+        "actorRef": "user-b",
+        "fixtureRef": "invoice-b",
+        "expected": "fixture_not_disclosed"
+      },
+      {
+        "id": "a-reads-b",
+        "actorRef": "user-a",
+        "fixtureRef": "invoice-b",
+        "expected": "exact_fixture_returned"
+      },
+      {
+        "id": "b-reads-a",
+        "actorRef": "user-b",
+        "fixtureRef": "invoice-a",
+        "expected": "fixture_not_disclosed"
+      },
+      {
+        "id": "anon-reads-a",
+        "actorRef": "anonymous",
+        "fixtureRef": "invoice-a",
+        "expected": "fixture_not_disclosed"
+      },
+      {
+        "id": "anon-reads-b",
+        "actorRef": "anonymous",
+        "fixtureRef": "invoice-b",
+        "expected": "fixture_not_disclosed"
+      }
+    ],
+    "declaredScope": {
+      "covers": "SELECT of two synthetic invoices by exact id through the direct Supabase Data API (PostgREST /rest/v1) on a disposable local stack, as two ordinary users and an anonymous client.",
+      "notCovered": [
+        "writes, updates and deletes",
+        "tenant membership, shared records and delegated roles",
+        "storage, edge functions, RPC and custom application APIs",
+        "list or filter queries other than lookup by id",
+        "production or remote environments",
+        "the rest of the application's security"
+      ]
+    }
+  },
+  "approval": {
+    "kind": "Approval",
+    "schemaVersion": 1,
+    "approvalId": "7b2f0000-0000-4000-8000-0000000000a1",
+    "ruleId": "invoice-owner-read",
+    "revision": 1,
+    "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+    "acknowledgedHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+    "proposalId": "7b2f0000-0000-4000-8000-000000000001",
+    "decision": "approved",
+    "approvedBy": {
+      "id": "client-owner",
+      "kind": "local-user"
+    },
+    "approvedAt": "2026-11-05T12:05:00.000Z",
+    "provenance": {
+      "level": "local-self-attested",
+      "statement": "Local self-attested acknowledgment. It separates the approval step from routine edits, but anyone who can write the approval store can bypass it. It is not independent approval."
+    },
+    "supersedes": null
+  }
+}
