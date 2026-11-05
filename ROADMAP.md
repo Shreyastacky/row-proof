@@ -10,7 +10,7 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 | 2 Disposable fixture | **complete** | Fresh clone: `pnpm integration` provisions and verifies fixtures on a real stack |
 | 3 Runner | **complete** | 93 runner unit tests + real-HTTP scenarios |
 | 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 33/33 scenarios as expected, real local Supabase; [benchmark](docs/BENCHMARK.md) 16/16 as designed |
-| 5 Reproducible CI | **implemented; locally reproduced; GitHub-hosted run pending** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
+| 5 Reproducible CI | **complete: green on GitHub-hosted runners (5 November 2026, [run 1](https://github.com/Shreyastacky/row-proof/actions/runs/41991447363))** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
 | First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
 | Product pass (Pyx) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
 | Audit response + release review | **complete; see below** | audit fixes, request paths, `compare` / `--compare-to` / `repro`, benchmark |
@@ -20,7 +20,7 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 
 From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pnpm install --frozen-lockfile`, then `pnpm verify` (exit 0; 147 + 11 + 53 tests), then `pnpm integration` (exit 0; 24/24 scenarios, healthy and throwaway broken-policy instances, 0 containers left), then the `assess-with-base-branch-baseline` job steps (exit 3 against `origin/main`, which has no baseline yet, so NOT RUN; exit 0 with this branch as the trusted ref). Environment: Linux, Node 22.23.4, Docker 29.9.2, Supabase CLI 2.122.1, images pulled from Docker Hub (`SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io`). The pnpm store was warm, so a cold machine also downloads packages.
 
-**Not yet verified:** the same workflow on GitHub-hosted runners (default ECR image registry, Node 24). Open a PR to trigger it.
+**Verified on GitHub-hosted runners** (default ECR image registry, Node 24) on 5 November 2026. All three jobs passed: unit and package checks, the real-HTTP harness, and the base-branch assessment.
 
 ### Product pass: Pyx (5 November 2026)
 
