@@ -70,13 +70,18 @@ export function renderSummary(result: RunResult, resultPath: string | null): str
     lines.push('');
   }
   if (result.assertions.length > 0) {
-    lines.push('  Assertions:');
-    for (const a of result.assertions) {
-      const http = a.httpStatus === null ? '' : ` (HTTP ${a.httpStatus})`;
-      const detail = a.status === 'passed' ? '' : `  -> ${a.diagnostic}${http}`;
-      lines.push(`    ${STATUS_LABEL[a.status]} ${a.id.padEnd(14)} ${a.actorRef} -> ${a.fixtureRef}: ${EXPECTED_LABEL[a.expected]}${detail}`);
+    const multi = result.paths.length > 1;
+    for (const path of result.paths) {
+      const these = result.assertions.filter((a) => a.path === path.id);
+      if (these.length === 0) continue;
+      lines.push(multi ? `  Path ${path.id} (${path.kind}: ${path.route}):` : '  Assertions:');
+      for (const a of these) {
+        const http = a.httpStatus === null ? '' : ` (HTTP ${a.httpStatus})`;
+        const detail = a.status === 'passed' ? '' : `  -> ${a.diagnostic}${http}`;
+        lines.push(`    ${STATUS_LABEL[a.status]} ${a.id.padEnd(14)} ${a.actorRef} -> ${a.fixtureRef}: ${EXPECTED_LABEL[a.expected]}${detail}`);
+      }
+      lines.push('');
     }
-    lines.push('');
   }
   const { counts, outcome, completeness, exitCode } = result.summary;
   const verdict = outcome === 'pass' ? 'PASS' : outcome === 'fail' ? 'FAIL (demonstrated violation)' : 'BLOCKED (no trustworthy assessment)';
@@ -85,7 +90,7 @@ export function renderSummary(result: RunResult, resultPath: string | null): str
   );
   lines.push(`  Freshness: ${result.freshness.state} (${result.freshness.reason})`);
   lines.push(
-    '  Scope: only the listed synthetic assertions, on this target, at this time. Not a security certification, not production evidence, not coverage of other access paths.',
+    '  Scope: only the listed synthetic assertions, on this target, at this time. Not a security certification, not production evidence, not coverage of request paths the rule does not list.',
   );
   if (result.provenance.approvalLevel === 'local-self-attested') {
     lines.push('  Approval is local and self-attested: anyone who can write the approval store can change it.');

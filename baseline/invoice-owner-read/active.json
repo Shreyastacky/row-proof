@@ -4,5 +4,6 @@
   "ruleId": "invoice-owner-read",
   "revision": 1,
   "contentHash": "sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b",
-  "promotionSequence": 1
+  "promotionSequence": 1,
+  "approvalDigest": "sha256:13bddb080401d738e8645a610fe5a77cf0757ff2909331798d122016473c1bf0"
 }

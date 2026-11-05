@@ -60,6 +60,11 @@ export type ExpectedObservation = 'exact_fixture_returned' | 'fixture_not_disclo
  */
 export type SafeText = string;
 /**
+ * This interface was referenced by `PyxContractsV1`'s JSON-Schema
+ * via the `definition` "ExtraPath".
+ */
+export type ExtraPath = RpcPath | HttpPath;
+/**
  * sha256 over the RFC 8785 canonical JSON of a RuleContent document.
  *
  * This interface was referenced by `PyxContractsV1`'s JSON-Schema
@@ -155,6 +160,9 @@ export type DiagnosticCode =
   | 'unsupported_environment_class'
   | 'unsupported_expectation'
   | 'unsupported_rule'
+  | 'fixture_unstable'
+  | 'anonymous_context_invalid'
+  | 'unsupported_path'
   | 'not_executed';
 /**
  * This interface was referenced by `PyxContractsV1`'s JSON-Schema
@@ -218,6 +226,13 @@ export interface RuleContent {
    */
   expectations: Expectation[];
   declaredScope: DeclaredScope;
+  /**
+   * Additional request paths checked with the same actors and fixtures. The resource's Data API route is always checked as path 'data-api'.
+   *
+   * @minItems 1
+   * @maxItems 3
+   */
+  paths?: ExtraPath[];
 }
 /**
  * Hosted-facing identifiers. organizationId is null when the rule is used locally without a hosted account.
@@ -330,6 +345,35 @@ export interface DeclaredScope {
   notCovered: SafeText[];
 }
 /**
+ * A Supabase RPC function called as each actor through PostgREST (GET, so the function must be STABLE or IMMUTABLE). It must return the resource's rows (or one row) by id.
+ *
+ * This interface was referenced by `PyxContractsV1`'s JSON-Schema
+ * via the `definition` "RpcPath".
+ */
+export interface RpcPath {
+  kind: 'rpc';
+  id: Slug;
+  function: SqlIdentifier;
+  idArg: SqlIdentifier;
+}
+/**
+ * An application route called as each actor with the user's access token as a bearer token (no token for anonymous). The approved deniedStatuses say how this route expresses denial; a response mentioning a forbidden fixture's id or marker is always a disclosure.
+ *
+ * This interface was referenced by `PyxContractsV1`'s JSON-Schema
+ * via the `definition` "HttpPath".
+ */
+export interface HttpPath {
+  kind: 'http';
+  id: Slug;
+  origin: Origin;
+  pathTemplate: string;
+  /**
+   * @minItems 1
+   * @maxItems 5
+   */
+  deniedStatuses: (200 | 401 | 403 | 404 | 410)[];
+}
+/**
  * A proposed change of intent. A proposal is never an approval and carries no authority.
  *
  * This interface was referenced by `PyxContractsV1`'s JSON-Schema
@@ -404,7 +448,7 @@ export interface ApprovedRevision {
   approval: Approval;
 }
 /**
- * Immutable record that an approved revision became the active baseline.
+ * Immutable record that an approved revision became the active baseline. approvalDigest is the sha256 of the canonical Approval record, so editing any approval field (e.g. the approver) after promotion breaks the link.
  *
  * This interface was referenced by `PyxContractsV1`'s JSON-Schema
  * via the `definition` "Promotion".
@@ -419,9 +463,10 @@ export interface Promotion {
   promotedBy: ActorId;
   promotedAt: Timestamp;
   previous: RevisionPointer | null;
+  approvalDigest: ContentHash;
 }
 /**
- * Pointer to the currently active approved revision. It must agree with the latest Promotion record.
+ * Pointer to the currently active approved revision. It must agree with the latest Promotion record, including approvalDigest.
  *
  * This interface was referenced by `PyxContractsV1`'s JSON-Schema
  * via the `definition` "ActiveBaseline".
@@ -433,6 +478,7 @@ export interface ActiveBaseline {
   revision: number;
   contentHash: ContentHash;
   promotionSequence: number;
+  approvalDigest: ContentHash;
 }
 /**
  * Bounded, redacted observation of one run. It reports listed assertions only; it has no field for an overall security verdict or score.
@@ -470,13 +516,22 @@ export interface RunResult {
     startedAt: Timestamp;
     finishedAt: Timestamp;
   };
+  /**
+   * @minItems 0
+   * @maxItems 4
+   */
+  paths: {
+    id: Slug;
+    kind: 'data-api' | 'rpc' | 'http';
+    route: string;
+  }[];
   limits: RunLimits;
   /**
    * @maxItems 32
    */
   controls: ControlResult[];
   /**
-   * @maxItems 64
+   * @maxItems 256
    */
   assertions: AssertionResult[];
   summary: {
@@ -543,6 +598,7 @@ export interface ControlResult {
  */
 export interface AssertionResult {
   id: Slug;
+  path: Slug;
   actorRef: Slug;
   fixtureRef: Slug;
   expected: ExpectedObservation;

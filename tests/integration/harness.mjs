@@ -19,10 +19,12 @@ import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { contentHashOf } from '../../packages/contracts/dist/index.js';
 import {
+  bindLab,
   EXCLUDE,
   exists,
   fixtureCli,
   forgedToken,
+  labServesPort,
   labSql,
   mintFromRealToken,
   readEnvFile,
@@ -30,6 +32,7 @@ import {
   runnerCli,
   sh,
   stackStatus,
+  startDemoApp,
   supabase,
 } from './lib.mjs';
 
@@ -40,6 +43,8 @@ const USER_A = RULE.actors[0].expectedUserId;
 const USER_B = RULE.actors[1].expectedUserId;
 const INVOICE_B = RULE.fixtures[1].id;
 const ORIGIN = RULE.target.allowedOrigin;
+const THREE_FILE = join(repo, 'examples', 'invoice-three-paths.rule.json');
+const THREE = JSON.parse(readFileSync(THREE_FILE, 'utf8'));
 
 const work = mkdtempSync(join(tmpdir(), 'pyx-it-'));
 const runStamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -51,8 +56,10 @@ const sensitive = new Map(); // credential value -> non-secret label
 const captured = [];
 const resultFiles = [];
 const started = new Set(); // workdirs with a running stack
+const apps = new Set(); // running demo app processes
 let labDir = null;
 let labProjectId = null;
+let labNonce = null;
 
 function log(s) {
   process.stdout.write(`${s}\n`);
@@ -65,6 +72,7 @@ function stopStack(workdir) {
   return r.code;
 }
 function teardown() {
+  for (const a of apps) a.child.kill('SIGKILL');
   for (const w of [...started]) stopStack(w);
   if (labDir) rmSync(labDir, { recursive: true, force: true });
 }
@@ -125,12 +133,46 @@ function pyxCli(args) {
   return r;
 }
 
+// Public mutation benchmark: each deliberate change, what a correct tool must report, what Pyx reported.
+// want: detected (a violation is reported) | blocked (no trustworthy assessment, never a pass) | missed (honest gap)
+const BENCH = {
+  'lab-permissive': ['SELECT policy `using (true)` for every signed-in user', 'policy', 'detected'],
+  'lab-tautology': ['Owner policy typo: `owner_id = owner_id`', 'policy', 'detected'],
+  'lab-rls-disabled': ['Row level security disabled on the table', 'policy', 'detected'],
+  'lab-anon-open': ['SELECT policy open to the anon role', 'policy', 'detected'],
+  'lab-owner-denied': ['Owner SELECT policy dropped (owners lose access)', 'policy', 'detected'],
+  'lab-grant-revoked': ['SELECT grant revoked from authenticated', 'grant', 'detected'],
+  'lab-leaky-rpc': ['SECURITY DEFINER RPC without an owner check', 'rpc', 'detected'],
+  'lab-leaky-rpc-table-only': ['Same RPC bug, but the rule lists only the Data API path', 'rpc', 'missed'],
+  'three-paths-app-bug': ['App route fetches with the secret key and only checks sign-in', 'app route', 'detected'],
+  'lab-fixture-missing': ['Test record deleted before the run', 'test environment', 'blocked'],
+  'lab-fixture-wrong-owner': ['Test record re-assigned to another user', 'test environment', 'blocked'],
+  'lab-fixture-wrong-marker': ['Test record marker changed', 'test environment', 'blocked'],
+  'same-user': ['Both user tokens belong to the same account', 'identity', 'blocked'],
+  'expired-token': ['Expired user token', 'identity', 'blocked'],
+  'forged-token': ['Token signed by another project', 'identity', 'blocked'],
+  'no-stack': ['Target not reachable', 'transport', 'blocked'],
+};
+const benchmark = [];
+function classify(result) {
+  if (!result) return 'blocked';
+  if (result.summary.counts.failed > 0) return 'detected';
+  if (result.assertions.length > 0 && result.assertions.every((a) => a.status === 'not_assessed')) return 'unsupported';
+  if (result.summary.outcome === 'pass') return 'missed';
+  return 'blocked';
+}
+
 let runCounter = 0;
 function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
   const out = join(work, `${String(++runCounter).padStart(2, '0')}-${label}.json`);
   const r = pyxCli(['run', '--store', store, '--rule', rule, '--credentials', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
   const result = exists(out) ? JSON.parse(readFileSync(out, 'utf8')) : null;
   if (result) resultFiles.push(out);
+  if (BENCH[label]) {
+    const [mutation, layer, want] = BENCH[label];
+    const got = classify(result);
+    benchmark.push({ mutation, layer, want, got, paths: result ? result.paths.map((p) => p.id) : [], counts: result?.summary.counts ?? null });
+  }
   return { code: r.code, result, stdout: r.stdout, stderr: r.stderr };
 }
 
@@ -147,8 +189,10 @@ class Mismatch extends Error {}
 function check(cond, message) {
   if (!cond) throw new Mismatch(message);
 }
-function statusOf(result, id) {
-  const a = result?.assertions.find((x) => x.id === id);
+// `id` alone means the Data API path; `<path>/<id>` selects another request path.
+function statusOf(result, key) {
+  const [path, id] = key.includes('/') ? key.split('/') : ['data-api', key];
+  const a = result?.assertions.find((x) => x.id === id && x.path === path);
   return a ? `${a.status}:${a.diagnostic}` : 'absent';
 }
 function controlOf(result, id) {
@@ -185,6 +229,20 @@ async function scenario(stage, name, fn) {
 
 const ALL_PASSED = Object.fromEntries(RULE.expectations.map((e) => [e.id, 'passed:ok']));
 
+/** Run `fn` with the demo app serving the approved app route; always stops it. */
+async function withApp(envFile, mode, fn) {
+  const app = startDemoApp(envFile, mode);
+  apps.add(app);
+  try {
+    await app.ready;
+    return await fn();
+  } finally {
+    await app.stop();
+    apps.delete(app);
+    captured.push(app.output());
+  }
+}
+
 // ---------------------------------------------------------------- main
 async function main() {
   if (!exists(runnerCli) || !exists(fixtureCli)) {
@@ -217,6 +275,7 @@ async function main() {
   const legacyRuleFile = join(work, 'legacy.rule.json');
   writeFileSync(legacyRuleFile, JSON.stringify(legacyRule, null, 2));
   check(approve(store, legacyRuleFile).code === 0, 'legacy rule approval failed');
+  check(approve(store, THREE_FILE).code === 0, 'three-path rule approval failed');
 
   await scenario('A', 'healthy owner-only policy: six assertions pass, exit 0', () => {
     const r = run('healthy', { store, envFile: healthyEnvFile });
@@ -224,7 +283,35 @@ async function main() {
     check(r.result.controls.every((c) => c.status === 'ok'), 'all controls ok');
     check(r.result.summary.completeness === 'complete', 'complete');
     check(r.result.freshness.state === 'unknown', 'freshness unknown without observer');
+    check(controlOf(r.result, 'identity:anonymous') === 'ok:ok', 'the real Auth service refuses the anonymous headers');
+    check(controlOf(r.result, 'fixtures-stable') === 'ok:ok', 'fixtures re-checked after the reads');
   });
+
+  await scenario('A', 'three request paths (Data API, RPC, app route) on a healthy stack: 18 assertions pass', () =>
+    withApp(healthyEnvFile, 'healthy', () => {
+      const r = run('three-paths-healthy', { store, envFile: healthyEnvFile, rule: THREE.ruleId });
+      expectRun(r, { exit: 0 });
+      check(r.result.assertions.length === 18 && r.result.assertions.every((a) => a.status === 'passed'), 'all 18 passed');
+      check(r.result.paths.map((p) => p.id).join(',') === 'data-api,rpc-get-invoice,app-invoice-route', 'paths reported in order');
+    }),
+  );
+
+  await scenario('A', 'app route that fetches with the secret key: table and RPC pass, the route fails', () =>
+    withApp(healthyEnvFile, 'service-key-bug', () => {
+      const r = run('three-paths-app-bug', { store, envFile: healthyEnvFile, rule: THREE.ruleId });
+      expectRun(r, {
+        exit: 1,
+        assertions: {
+          'a-reads-b': 'passed:ok',
+          'rpc-get-invoice/a-reads-b': 'passed:ok',
+          'app-invoice-route/a-reads-a': 'passed:ok',
+          'app-invoice-route/a-reads-b': 'failed:fixture_disclosed',
+          'app-invoice-route/b-reads-a': 'failed:fixture_disclosed',
+          'app-invoice-route/anon-reads-a': 'passed:ok',
+        },
+      });
+    }),
+  );
 
   await scenario('A', 'pyx init on a customer-shaped table: provision, re-provision, approve, run with HTML/JUnit/Markdown', () => {
     // project_notes has an extra NOT NULL column and a foreign key WITHOUT cascade.
@@ -405,21 +492,42 @@ async function main() {
   writeFileSync(cfgPath, readFileSync(cfgPath, 'utf8').replace(/^project_id = ".*"$/m, `project_id = "${labProjectId}"`));
   const labStatus = startStack(labDir);
   check(labStatus.API_URL === ORIGIN, 'lab stack serves the approved origin');
+  check(labServesPort(labProjectId, new URL(ORIGIN).port), 'the lab gateway itself publishes the approved port');
+  labNonce = bindLab(labProjectId);
   let lenv = provision(labDir, join(work, 'lab.env'));
   const labEnvFile = join(work, 'lab.env');
 
   const resetLab = () => {
     const r = supabase(['db', 'reset'], labDir, { timeout: 300_000 });
     if (r.code !== 0) throw new Error(`lab db reset failed: ${r.stderr.slice(-300)}`);
+    labNonce = bindLab(labProjectId); // reset recreates the database
     lenv = provision(labDir, labEnvFile);
   };
+
+  await scenario('B', 'lab mutations are bound to the instance this harness created (nonce, not just a name)', () => {
+    let refused = false;
+    try {
+      labSql(labProjectId, randomUUID(), 'select 1;');
+    } catch (e) {
+      refused = /not the lab instance/.test(e.message);
+    }
+    check(refused, 'a wrong nonce is refused before any SQL runs');
+    labSql(labProjectId, labNonce, 'select 1;');
+    let nonLab = false;
+    try {
+      labSql('pyx-demo', labNonce, 'select 1;');
+    } catch (e) {
+      nonLab = /non-lab/.test(e.message);
+    }
+    check(nonLab, 'the kept demo project is never a mutation target');
+  });
 
   await scenario('B', 'lab instance starts from the same healthy boundary', () => {
     expectRun(run('lab-healthy', { store, envFile: labEnvFile }), { exit: 0, assertions: ALL_PASSED });
   });
 
   await scenario('B', 'deliberately permissive SELECT policy: cross-user disclosure fails, exit 1', () => {
-    labSql(labProjectId, readFileSync(join(repo, 'supabase', 'lab', 'permissive-select.sql'), 'utf8'));
+    labSql(labProjectId, labNonce, readFileSync(join(repo, 'supabase', 'lab', 'permissive-select.sql'), 'utf8'));
     const r = run('lab-permissive', { store, envFile: labEnvFile });
     expectRun(r, {
       exit: 1,
@@ -470,8 +578,8 @@ async function main() {
     Object.assign(forged, { revision: 2, contentHash: h });
     Object.assign(forged.approval, { revision: 2, contentHash: h, acknowledgedHash: h, supersedes: { revision: 1, contentHash: rev1.contentHash } });
     writeFileSync(join(ruleDir, 'revisions', 'r000002.json'), JSON.stringify(forged, null, 2));
-    writeFileSync(join(ruleDir, 'promotions', 'p000002.json'), JSON.stringify({ kind: 'Promotion', schemaVersion: 1, ruleId: RULE_ID, sequence: 2, revision: 2, contentHash: h, promotedBy: 'pr-author', promotedAt: new Date().toISOString(), previous: { revision: 1, contentHash: rev1.contentHash } }, null, 2));
-    writeFileSync(join(ruleDir, 'active.json'), JSON.stringify({ kind: 'ActiveBaseline', schemaVersion: 1, ruleId: RULE_ID, revision: 2, contentHash: h, promotionSequence: 2 }, null, 2));
+    writeFileSync(join(ruleDir, 'promotions', 'p000002.json'), JSON.stringify({ kind: 'Promotion', schemaVersion: 1, ruleId: RULE_ID, sequence: 2, revision: 2, contentHash: h, promotedBy: 'pr-author', promotedAt: new Date().toISOString(), previous: { revision: 1, contentHash: rev1.contentHash }, approvalDigest: contentHashOf(forged.approval) }, null, 2));
+    writeFileSync(join(ruleDir, 'active.json'), JSON.stringify({ kind: 'ActiveBaseline', schemaVersion: 1, ruleId: RULE_ID, revision: 2, contentHash: h, promotionSequence: 2, approvalDigest: contentHashOf(forged.approval) }, null, 2));
     writeFileSync(join(gitRepo, 'app-change.sql'), '-- the application change that broke the policy\n');
     git('add', '-A');
     git('commit', '-q', '-m', 'PR: change app and weaken rule');
@@ -492,14 +600,14 @@ async function main() {
 
   await scenario('B', 'policy open to anonymous: anonymous disclosures fail', () => {
     resetLab();
-    labSql(labProjectId, 'create policy pyx_lab_anon_open on public.invoices for select to anon using (true);');
+    labSql(labProjectId, labNonce, 'create policy pyx_lab_anon_open on public.invoices for select to anon using (true);');
     const r = run('lab-anon-open', { store, envFile: labEnvFile });
     expectRun(r, { exit: 1, assertions: { 'anon-reads-a': 'failed:fixture_disclosed', 'anon-reads-b': 'failed:fixture_disclosed', 'a-reads-b': 'passed:ok' } });
   });
 
   await scenario('B', 'owner policy removed: denied owner access fails; dependent denials blocked', () => {
     resetLab();
-    labSql(labProjectId, 'drop policy invoices_owner_select on public.invoices;');
+    labSql(labProjectId, labNonce, 'drop policy invoices_owner_select on public.invoices;');
     const r = run('lab-owner-denied', { store, envFile: labEnvFile });
     expectRun(r, {
       exit: 1,
@@ -515,14 +623,50 @@ async function main() {
 
   await scenario('B', 'SELECT grant revoked: owner read forbidden is failed; 403 is never a denial pass', () => {
     resetLab();
-    labSql(labProjectId, 'revoke select on public.invoices from authenticated;');
+    labSql(labProjectId, labNonce, 'revoke select on public.invoices from authenticated;');
     const r = run('lab-grant-revoked', { store, envFile: labEnvFile });
     expectRun(r, { exit: 1, assertions: { 'a-reads-a': 'failed:owner_read_forbidden', 'a-reads-b': 'blocked', 'anon-reads-a': 'blocked:owner_control_not_passed' } });
   });
 
+  await scenario('B', 'security-definer RPC without an owner check: the table holds, the RPC leaks', () => {
+    resetLab();
+    labSql(labProjectId, labNonce, readFileSync(join(repo, 'supabase', 'lab', 'leaky-rpc.sql'), 'utf8'));
+    return withApp(labEnvFile, 'healthy', () => {
+      const r = run('lab-leaky-rpc', { store, envFile: labEnvFile, rule: THREE.ruleId });
+      expectRun(r, {
+        exit: 1,
+        assertions: {
+          'a-reads-b': 'passed:ok',
+          'anon-reads-a': 'passed:ok',
+          'rpc-get-invoice/a-reads-a': 'passed:ok',
+          'rpc-get-invoice/a-reads-b': 'failed:fixture_disclosed',
+          'rpc-get-invoice/anon-reads-b': 'failed:fixture_disclosed',
+          'app-invoice-route/a-reads-b': 'passed:ok',
+        },
+      });
+      // Honest gap: a rule that does not list the RPC cannot see it.
+      const narrow = run('lab-leaky-rpc-table-only', { store, envFile: labEnvFile });
+      expectRun(narrow, { exit: 0, assertions: ALL_PASSED });
+    });
+  });
+
+  await scenario('B', 'owner policy typo (owner_id = owner_id): every signed-in user reads everything', () => {
+    resetLab();
+    labSql(labProjectId, labNonce, 'drop policy invoices_owner_select on public.invoices; create policy pyx_lab_tautology on public.invoices for select to authenticated using (owner_id = owner_id);');
+    const r = run('lab-tautology', { store, envFile: labEnvFile });
+    expectRun(r, { exit: 1, assertions: { 'a-reads-b': 'failed:fixture_disclosed', 'b-reads-a': 'failed:fixture_disclosed', 'anon-reads-a': 'passed:ok' } });
+  });
+
+  await scenario('B', 'row level security disabled: users and anonymous read everything', () => {
+    resetLab();
+    labSql(labProjectId, labNonce, 'alter table public.invoices disable row level security;');
+    const r = run('lab-rls-disabled', { store, envFile: labEnvFile });
+    expectRun(r, { exit: 1, assertions: { 'a-reads-b': 'failed:fixture_disclosed', 'anon-reads-a': 'failed:fixture_disclosed', 'anon-reads-b': 'failed:fixture_disclosed' } });
+  });
+
   await scenario('B', 'missing fixture is blocked, not passed', () => {
     resetLab();
-    labSql(labProjectId, `delete from public.invoices where id = '${INVOICE_B}';`);
+    labSql(labProjectId, labNonce, `delete from public.invoices where id = '${INVOICE_B}';`);
     const r = run('lab-fixture-missing', { store, envFile: labEnvFile });
     expectRun(r, {
       exit: 2,
@@ -534,7 +678,7 @@ async function main() {
 
   await scenario('B', 'wrong-owner fixture is blocked, not mistaken for a disclosure or a pass', () => {
     resetLab();
-    labSql(labProjectId, `update public.invoices set owner_id = '${USER_A}' where id = '${INVOICE_B}';`);
+    labSql(labProjectId, labNonce, `update public.invoices set owner_id = '${USER_A}' where id = '${INVOICE_B}';`);
     const r = run('lab-fixture-wrong-owner', { store, envFile: labEnvFile });
     expectRun(r, { exit: 2, controls: { 'fixture:invoice-b': 'failed:fixture_owner_mismatch' }, noPass: true });
     check(r.result.summary.counts.failed === 0, 'no false disclosure');
@@ -542,7 +686,7 @@ async function main() {
 
   await scenario('B', 'wrong-marker fixture is blocked', () => {
     resetLab();
-    labSql(labProjectId, `update public.invoices set fixture_marker = 'synthetic-tampered' where id = '${INVOICE_B}';`);
+    labSql(labProjectId, labNonce, `update public.invoices set fixture_marker = 'synthetic-tampered' where id = '${INVOICE_B}';`);
     const r = run('lab-fixture-wrong-marker', { store, envFile: labEnvFile });
     expectRun(r, { exit: 2, controls: { 'fixture:invoice-b': 'failed:fixture_marker_mismatch' }, noPass: true });
   });
@@ -586,6 +730,7 @@ async function main() {
     ranAt: new Date().toISOString(),
     environment: env0,
     scenarios,
+    benchmark,
     totals: { scenarios: scenarios.length, asExpected: scenarios.length - failed.length, unexpected: failed.length },
     note: 'Real HTTP against disposable local Supabase stacks with synthetic fixtures. Not evidence about any other environment.',
   };

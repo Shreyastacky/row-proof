@@ -25,14 +25,15 @@ export function renderJunit(r: RunResult): string {
       `    <testcase classname="${xml(cls)}.controls" name="control ${xml(c.id)}"><error type="${xml(c.diagnostic)}" message="${xml(e.meaning)}">${xml(`Next: ${e.next}`)}</error></testcase>`,
     );
   }
+  const multi = r.paths.length > 1;
   for (const a of r.assertions) {
-    const name = `${a.id} (${a.actorRef} -> ${a.fixtureRef}: ${EXPECTED[a.expected]})`;
+    const name = `${multi ? `[${a.path}] ` : ''}${a.id} (${a.actorRef} -> ${a.fixtureRef}: ${EXPECTED[a.expected]})`;
     const e = explain(a.diagnostic);
     let body = '';
     if (a.status === 'failed') body = `<failure type="${xml(a.diagnostic)}" message="${xml(e.meaning)}">${xml(`Next: ${e.next}`)}</failure>`;
     else if (a.status === 'blocked') body = `<error type="${xml(a.diagnostic)}" message="${xml(e.meaning)}">${xml(`Next: ${e.next}`)}</error>`;
     else if (a.status === 'not_assessed') body = `<skipped message="${xml(e.meaning)}"/>`;
-    cases.push(`    <testcase classname="${xml(cls)}" name="${xml(name)}">${body}</testcase>`);
+    cases.push(`    <testcase classname="${xml(multi ? `${cls}.${a.path}` : cls)}" name="${xml(name)}">${body}</testcase>`);
   }
   const failures = r.summary.counts.failed;
   const errors = r.summary.counts.blocked + failedControls.length;
@@ -68,9 +69,11 @@ export function renderMarkdownSummary(r: RunResult): string {
     '',
     `Rule \`${md(r.rule.ruleId)}\` revision ${md(r.rule.revision ?? '-')} · \`${md((r.rule.contentHash ?? 'none').slice(0, 19))}…\` · target \`${md(r.target.origin ?? 'unknown')}\` · ${md(r.summary.completeness)}`,
     '',
-    '| Status | Assertion | Actor → record | Finding |',
-    '| --- | --- | --- | --- |',
-    ...r.assertions.map((a) => `| ${MD_STATUS[a.status]} | \`${md(a.id)}\` | ${md(a.actorRef)} → ${md(a.fixtureRef)} | ${md(explain(a.diagnostic).meaning)} |`),
+    '| Status | Path | Assertion | Actor → record | Finding |',
+    '| --- | --- | --- | --- | --- |',
+    ...r.assertions.map(
+      (a) => `| ${MD_STATUS[a.status]} | \`${md(a.path)}\` | \`${md(a.id)}\` | ${md(a.actorRef)} → ${md(a.fixtureRef)} | ${md(explain(a.diagnostic).meaning)} |`,
+    ),
   ];
   const bad = r.controls.filter((c) => c.status !== 'ok');
   if (bad.length > 0) {

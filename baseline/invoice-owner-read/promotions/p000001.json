@@ -7,5 +7,6 @@
   "contentHash": "sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b",
   "promotedBy": "demo-placeholder-not-owner",
   "promotedAt": "2026-11-05T06:12:23.685Z",
-  "previous": null
+  "previous": null,
+  "approvalDigest": "sha256:13bddb080401d738e8645a610fe5a77cf0757ff2909331798d122016473c1bf0"
 }

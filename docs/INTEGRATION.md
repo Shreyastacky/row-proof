@@ -33,16 +33,16 @@ pnpm integration
 
 The harness (`tests/integration/harness.mjs`):
 
-1. **Stage A:** stops any `pyx-demo` stack, starts a fresh one from `supabase/`, provisions synthetic users and invoices, approves the example rule into a temporary store through the CLI, then runs identity, credential, target, baseline and limit scenarios.
-2. **Stage B:** stops it, copies the config into a temporary directory with a unique `pyx-lab-*` project id, and starts that **separate throwaway instance**. It applies the deliberately permissive policy (`supabase/lab/permissive-select.sql`) and other broken variants (each followed by `db reset` and re-provisioning), checks that the approved baseline is read from a protected git ref rather than a PR tree, then destroys the instance and checks that no containers or volumes remain.
+1. **Stage A:** stops any `pyx-demo` stack, starts a fresh one from `supabase/`, provisions synthetic users and invoices, approves the example rule into a temporary store through the CLI, then runs identity, credential, target, baseline and limit scenarios. It also starts the demo app (`examples/demo-app/server.mjs`) on 127.0.0.1:8787 and checks the three-path rule: all 18 assertions pass with the healthy app, and the app route fails (while the table and RPC pass) in `service-key-bug` mode.
+2. **Stage B:** stops it, copies the config into a temporary directory with a unique `pyx-lab-*` project id, and starts that **separate throwaway instance**. It writes a random nonce into the lab database, and every mutation first proves inside the same psql session that it reached that database. It then applies the deliberately permissive policy (`supabase/lab/permissive-select.sql`), a SECURITY DEFINER RPC without an owner check (`supabase/lab/leaky-rpc.sql`), an `owner_id = owner_id` typo, disabled RLS and other broken variants (each followed by `db reset`, re-binding and re-provisioning), checks that the approved baseline is read from a protected git ref rather than a PR tree, then destroys the instance and checks that no containers or volumes remain.
 3. **Stage C:** with no stack running, checks that a connection failure is blocked.
 4. Scans every captured output and result file for credential values and credential-shaped text.
 
-It prints one line per scenario, exits 0 only if every scenario behaves as expected, and writes redacted artifacts to `artifacts/integration/<timestamp>/` (`summary.json` and per-run result files). It always tears down, including on Ctrl-C.
+It prints one line per scenario, exits 0 only if every scenario behaves as expected, and writes redacted artifacts to `artifacts/integration/<timestamp>/` (`summary.json` with a `benchmark` section, and per-run result files). `node scripts/build-benchmark.mjs` turns the latest summary into [BENCHMARK.md](BENCHMARK.md) and the website's benchmark section. It always tears down, including on Ctrl-C.
 
 **Warning:** the harness stops the local `pyx-demo` stack and deletes its local data.
 
-Typical duration after images are cached: about 3 minutes. 27 scenarios, including onboarding a customer-shaped table with `init`, `doctor`, all output formats, and refusal to touch non-synthetic users or rows.
+Typical duration after images are cached: about 4 minutes. 33 scenarios, including onboarding a customer-shaped table with `init`, `doctor`, all output formats, and refusal to touch non-synthetic users or rows.
 
 ### If Docker image pulls are blocked
 

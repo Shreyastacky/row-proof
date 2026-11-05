@@ -1,0 +1,127 @@
+{
+  "kind": "RuleContent",
+  "schemaVersion": 1,
+  "ruleId": "invoice-three-paths",
+  "title": "Each user reads only their own invoice through the Data API, an RPC and the app route",
+  "scope": {
+    "organizationId": null,
+    "projectId": "invoice-portal-demo",
+    "environmentId": "local-disposable"
+  },
+  "target": {
+    "adapter": "supabase",
+    "environmentClass": "local-disposable",
+    "allowedOrigin": "http://127.0.0.1:54321",
+    "apiKey": {
+      "kind": "publishable",
+      "credential": { "source": "env", "name": "PYX_PUBLISHABLE_KEY" }
+    },
+    "fixtureVerification": {
+      "channel": "supabase-secret-key",
+      "credential": { "source": "env", "name": "PYX_SETUP_SECRET_KEY" }
+    }
+  },
+  "resource": {
+    "schema": "public",
+    "table": "invoices",
+    "operation": "select",
+    "route": "supabase-data-api-rest-v1",
+    "ownershipModel": "single-owner-column",
+    "idColumn": "id",
+    "ownerColumn": "owner_id",
+    "markerColumn": "fixture_marker"
+  },
+  "actors": [
+    {
+      "ref": "user-a",
+      "kind": "authenticated",
+      "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
+      "credential": { "source": "env", "name": "PYX_USER_A_TOKEN" }
+    },
+    {
+      "ref": "user-b",
+      "kind": "authenticated",
+      "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
+      "credential": { "source": "env", "name": "PYX_USER_B_TOKEN" }
+    },
+    { "ref": "anonymous", "kind": "anonymous" }
+  ],
+  "fixtures": [
+    {
+      "ref": "invoice-a",
+      "id": "1a5e0000-0000-4000-8000-00000000000a",
+      "ownerRef": "user-a",
+      "marker": "synthetic-invoice-a"
+    },
+    {
+      "ref": "invoice-b",
+      "id": "1a5e0000-0000-4000-8000-00000000000b",
+      "ownerRef": "user-b",
+      "marker": "synthetic-invoice-b"
+    }
+  ],
+  "expectations": [
+    {
+      "id": "a-reads-a",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-a",
+      "expected": "exact_fixture_returned"
+    },
+    {
+      "id": "b-reads-b",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-b",
+      "expected": "exact_fixture_returned"
+    },
+    {
+      "id": "a-reads-b",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed"
+    },
+    {
+      "id": "b-reads-a",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed"
+    },
+    {
+      "id": "anon-reads-a",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed"
+    },
+    {
+      "id": "anon-reads-b",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed"
+    }
+  ],
+  "declaredScope": {
+    "covers": "Reading two synthetic invoices by exact id as two ordinary users and an anonymous client, through three request paths on a disposable local stack: the Supabase Data API, the get_invoice RPC function, and the application's /api/invoices/{id} route.",
+    "notCovered": [
+      "writes, updates and deletes",
+      "tenant membership, shared records and delegated roles",
+      "storage, edge functions and application routes other than /api/invoices/{id}",
+      "list or filter queries other than lookup by id",
+      "production or remote environments",
+      "the rest of the application's security"
+    ]
+  },
+  "paths": [
+    {
+      "kind": "rpc",
+      "id": "rpc-get-invoice",
+      "function": "get_invoice",
+      "idArg": "p_id"
+    },
+    {
+      "kind": "http",
+      "id": "app-invoice-route",
+      "origin": "http://127.0.0.1:8787",
+      "pathTemplate": "/api/invoices/{id}",
+      "deniedStatuses": [401, 403, 404]
+    }
+  ]
+}

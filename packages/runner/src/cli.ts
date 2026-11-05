@@ -22,6 +22,10 @@ Approval workflow (writes the local, self-attested approval store):
 Assessment (reads the approval store only):
   run                 execute the approved matrix; see \`pyx run --help\`
   report              build an HTML evidence report from one or more result files
+
+Release review:
+  compare             who gained or lost access between two runs (exit 1 on a regression)
+  repro               a reproduction pack (README + curl script) for every failing check
 `;
 
 export async function main(argv: string[], io: CliIO): Promise<number> {
@@ -38,6 +42,11 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
       case 'doctor': {
         const t = await import('./commands/tools.js');
         return await { init: t.initCommand, report: t.reportCommand, doctor: t.doctorCommand }[command](rest, io);
+      }
+      case 'compare':
+      case 'repro': {
+        const m = await import('./commands/release.js');
+        return await (command === 'compare' ? m.compareCommand : m.reproCommand)(rest, io);
       }
       case 'fixture': {
         const { runFixtureCli } = await import('@pyx/local-fixture/cli');

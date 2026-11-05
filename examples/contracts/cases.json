@@ -163,6 +163,41 @@
       }
     },
     {
+      "file": "valid/rule-content.three-paths.json",
+      "kind": "RuleContent",
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "file": "invalid/path-id-reserved.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "reserved_path_id"
+      }
+    },
+    {
+      "file": "invalid/path-app-origin-not-loopback.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "origin_not_loopback"
+      }
+    },
+    {
+      "file": "invalid/path-template-without-id.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
+      "file": "invalid/path-denied-status-500.json",
+      "kind": "RuleContent",
+      "expect": {
+        "code": "schema"
+      }
+    },
+    {
       "file": "invalid/proposal-content-edited-after-hash.json",
       "kind": "RuleProposal",
       "expect": {

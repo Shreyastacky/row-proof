@@ -5,6 +5,7 @@
  */
 import type { AssertionResult, RunResult } from '@pyx/contracts';
 import { LOGO_SVG, THEME_CSS } from './design/theme.js';
+import { compareResults, describeCell, type CellChangeKind } from './compare.js';
 import { explain } from './explain.js';
 import { RUNNER_VERSION } from './io.js';
 
@@ -50,12 +51,29 @@ function unique<T>(xs: T[]): T[] {
   return [...new Set(xs)];
 }
 
-function matrix(r: RunResult): string {
-  const actors = unique(r.assertions.map((a) => a.actorRef));
-  const fixtures = unique(r.assertions.map((a) => a.fixtureRef));
-  if (actors.length === 0) return '<p class="rp-muted">No assertions were executed.</p>';
+function matrices(r: RunResult): string {
+  if (r.assertions.length === 0) return '<p class="rp-muted">No assertions were executed.</p>';
+  if (r.paths.length <= 1) return matrix(r, r.assertions);
+  // Paths with a demonstrated violation first: that is what the reader needs to see.
+  const failing = (id: string) => r.assertions.some((a) => a.path === id && a.status === 'failed');
+  return [...r.paths]
+    .sort((a, b) => Number(failing(b.id)) - Number(failing(a.id)))
+    .map((p) => {
+      const these = r.assertions.filter((a) => a.path === p.id);
+      const bad = these.filter((a) => a.status === 'failed').length;
+      return `<div class="rp-path"><div class="rp-spread" style="margin:22px 0 10px"><div><span class="rp-mono">${esc(p.id)}</span> <span class="rp-faint" style="font-size:12.5px">${esc(p.kind)} · ${esc(p.route)}</span></div>${
+        bad > 0 ? `<span class="rp-pill rp-fail">${bad} disclosed</span>` : ''
+      }</div>${matrix(r, these)}</div>`;
+    })
+    .join('');
+}
+
+function matrix(r: RunResult, assertions: AssertionResult[]): string {
+  const actors = unique(assertions.map((a) => a.actorRef));
+  const fixtures = unique(assertions.map((a) => a.fixtureRef));
+  if (actors.length === 0) return '<p class="rp-muted">No assertions were executed on this path.</p>';
   const cell = (actor: string, fixture: string) => {
-    const a = r.assertions.find((x) => x.actorRef === actor && x.fixtureRef === fixture);
+    const a = assertions.find((x) => x.actorRef === actor && x.fixtureRef === fixture);
     if (!a) return '<div class="rp-cell"><span class="rp-faint">n/a</span></div>';
     const variant = a.status === 'passed' ? 'pass' : a.status === 'failed' ? 'fail' : a.status === 'blocked' ? 'blocked' : '';
     return `<div class="rp-cell ${variant ? `rp-cell--${variant}` : ''}"><div class="rp-cell__exp">${EXPECTED[a.expected]}</div><div>${pill(a.status)}</div></div>`;
@@ -74,7 +92,7 @@ function assertionRows(r: RunResult): string {
   return r.assertions
     .map((a) => {
       const e = explain(a.diagnostic);
-      return `<tr><td>${pill(a.status)}</td><td><div class="rp-mono">${esc(a.id)}</div><div class="rp-faint" style="font-size:12.5px">${esc(a.actorRef)} &rarr; ${esc(a.fixtureRef)}</div></td><td>${EXPECTED[a.expected]}</td><td><div>${esc(e.meaning)}</div>${
+      return `<tr><td>${pill(a.status)}</td><td><div class="rp-mono">${esc(a.id)}</div><div class="rp-faint" style="font-size:12.5px">${r.paths.length > 1 ? `${esc(a.path)} · ` : ''}${esc(a.actorRef)} &rarr; ${esc(a.fixtureRef)}</div></td><td>${EXPECTED[a.expected]}</td><td><div>${esc(e.meaning)}</div>${
         a.status === 'passed' ? '' : `<div class="rp-faint" style="font-size:12.5px;margin-top:4px">Next: ${esc(e.next)}</div>`
       }<div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">${esc(a.diagnostic)}${a.httpStatus === null ? '' : ` · HTTP ${a.httpStatus}`}</div></td></tr>`;
     })
@@ -90,6 +108,47 @@ function controlRows(r: RunResult): string {
       return `<tr><td><span class="rp-pill ${cls}">${label}</span></td><td class="rp-mono">${esc(c.id)}</td><td>${c.status === 'ok' ? '<span class="rp-faint">OK</span>' : `${esc(e.meaning)}<div class="rp-faint" style="font-size:12.5px;margin-top:4px">Next: ${esc(e.next)}</div>`}</td></tr>`;
     })
     .join('');
+}
+
+const CHANGE_LABEL: Record<CellChangeKind, [string, string]> = {
+  gained_access: ['Gained access', 'rp-fail'],
+  lost_access: ['Lost access', 'rp-fail'],
+  still_violating: ['Still exposed', 'rp-fail'],
+  access_removed: ['Fixed', 'rp-pass'],
+  access_restored: ['Restored', 'rp-pass'],
+  now_unverified: ['Unverified', 'rp-blocked'],
+  now_verified: ['Verified', 'rp-pass'],
+  added: ['New check', 'rp-na'],
+  removed: ['Dropped', 'rp-blocked'],
+  unchanged: ['Unchanged', 'rp-na'],
+};
+
+/** The release review: who gained or lost access since the previous run of the same rule. */
+function accessReview(results: RunResult[]): string {
+  const r = results.at(-1)!;
+  const prev = results.slice(0, -1).reverse().find((x) => x.rule.ruleId === r.rule.ruleId);
+  if (!prev) return '';
+  const c = compareResults(prev, r, { before: 'previous', after: 'latest' });
+  const shown = c.changes.filter((x) => x.change !== 'unchanged');
+  const head =
+    c.regressions > 0
+      ? `${c.regressions} access change${c.regressions === 1 ? '' : 's'} since the previous run`
+      : c.counts.still_violating > 0
+        ? 'Still exposed since the previous run'
+        : shown.length === 0
+          ? 'No access changes since the previous run'
+          : 'Changes since the previous run';
+  const rows = shown
+    .map((x) => {
+      const [word, cls] = CHANGE_LABEL[x.change];
+      return `<tr><td><span class="rp-pill ${cls}">${word}</span></td><td>${esc(describeCell(x))}</td><td class="rp-mono">${esc(x.path)}</td></tr>`;
+    })
+    .join('');
+  const since = `${esc(fmtTime(prev.observedAt.startedAt))}${prev.source.commit ? ` · ${esc(prev.source.commit.slice(0, 10))}` : ''}`;
+  return `<section class="rp-glass rp-glass--strong rp-pad" style="margin-top:18px">
+  <div class="rp-spread"><div><div class="rp-eyebrow">Access review</div><h2 class="rp-h3" style="margin-top:6px">${esc(head)}</h2></div><span class="rp-faint" style="font-size:13px">Compared with ${since} · ${c.counts.unchanged} checks unchanged</span></div>
+  ${rows ? `<div class="rp-table-wrap" style="margin-top:16px"><table class="rp-table"><thead><tr><th>Change</th><th>Who</th><th>Request path</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+</section>`;
 }
 
 function history(results: RunResult[]): string {
@@ -161,17 +220,17 @@ export function renderHtmlReport(resultsIn: RunResult[], opts: ReportOptions = {
       <dt>Approval</dt><dd>${esc(r.provenance.approvalLevel ?? 'none')}</dd>
       <dt>Target</dt><dd class="rp-mono">${esc(r.target.origin ?? 'unknown')}</dd>
       <dt>Environment</dt><dd>${esc(r.target.environmentClass ?? 'unknown')}</dd>
-      <dt>Route</dt><dd class="rp-mono">${esc(r.target.transport)}</dd>
+      <dt>Request paths</dt><dd class="rp-mono">${r.paths.length > 0 ? r.paths.map((p) => esc(p.route)).join('<br>') : esc(r.target.transport)}</dd>
       <dt>Source</dt><dd class="rp-mono">${esc(r.source.commit ?? 'not recorded')}${r.source.dirty ? '<br><span class="rp-blocked">uncommitted changes present</span>' : ''}</dd>
       <dt>Completeness</dt><dd>${esc(r.summary.completeness)}</dd>
       <dt>Freshness</dt><dd>${esc(r.freshness.state)} <span class="rp-faint">(${esc(r.freshness.reason.replace(/_/g, ' '))})</span></dd>
     </dl>
   </div>
 </section>
-
+${accessReview(results)}
 <section class="rp-glass rp-pad" style="margin-top:18px">
-  <div class="rp-spread"><div><div class="rp-eyebrow">Proof matrix</div><h2 class="rp-h3" style="margin-top:6px">Who may read which record</h2></div><span class="rp-faint" style="font-size:13px">Rows: actors · Columns: synthetic records</span></div>
-  <div style="margin-top:18px">${matrix(r)}</div>
+  <div class="rp-spread"><div><div class="rp-eyebrow">Proof matrix</div><h2 class="rp-h3" style="margin-top:6px">Who may read which record</h2></div><span class="rp-faint" style="font-size:13px">Rows: actors · Columns: synthetic records${r.paths.length > 1 ? ' · one matrix per request path' : ''}</span></div>
+  <div style="margin-top:18px">${matrices(r)}</div>
 </section>
 
 <section class="rp-glass rp-pad" style="margin-top:18px">

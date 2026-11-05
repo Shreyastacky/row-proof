@@ -101,6 +101,26 @@ export function checkRuleContentSemantics(content: RuleContent): Issue[] {
     err('resource_columns_not_distinct', '/resource', 'idColumn, ownerColumn and markerColumn must be distinct');
   }
 
+  // ---- Extra request paths -------------------------------------------------
+  const extra = content.paths ?? [];
+  for (const d of dupes(extra.map((p) => p.id))) err('duplicate_path_id', '/paths', `path id ${d} is declared more than once`);
+  extra.forEach((p, i) => {
+    if (p.id === 'data-api') err('reserved_path_id', `/paths/${i}/id`, "'data-api' is reserved for the resource's Data API route");
+    if (p.kind === 'http') {
+      const o = parseExactOrigin(p.origin);
+      if (!o.ok) err('origin_not_exact', `/paths/${i}/origin`, `origin must be exactly scheme://host[:port] (${o.reason})`);
+      else if (content.target.environmentClass === 'local-disposable' && !o.value.isLoopback) {
+        err('origin_not_loopback', `/paths/${i}/origin`, 'application routes of a local-disposable rule must use a loopback host');
+      }
+      if (new Set(p.deniedStatuses).size !== p.deniedStatuses.length) {
+        err('duplicate_denied_status', `/paths/${i}/deniedStatuses`, 'deniedStatuses must not repeat a status');
+      }
+    }
+  });
+  for (const d of dupes(extra.filter((p) => p.kind === 'rpc').map((p) => (p.kind === 'rpc' ? p.function : '')))) {
+    err('duplicate_rpc_path', '/paths', `rpc function ${d} is listed more than once`);
+  }
+
   // ---- Actors --------------------------------------------------------------
   const actorRefs = content.actors.map((a) => a.ref);
   for (const d of dupes(actorRefs)) err('duplicate_actor_ref', '/actors', `actor ref ${d} is declared more than once`);

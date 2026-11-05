@@ -2,7 +2,8 @@
  * Bounded HTTP transport. Every request the runner makes goes through here.
  *
  * Guarantees:
- * - Only GET, only to the single allowed origin (scheme/host/port compared exactly).
+ * - Only GET, only to the approved origins (scheme/host/port compared exactly):
+ *   the Supabase origin plus any approved application route origins.
  * - Redirects are never followed (`redirect: 'manual'`); any 3xx is a failure.
  * - Per-request timeout, a run-wide deadline/cancellation signal, a request
  *   budget, and a response byte cap enforced while streaming.
@@ -43,7 +44,7 @@ export const ABORT_CANCELLED = 'pyx:cancelled';
 export const ABORT_DEADLINE = 'pyx:run-deadline';
 
 export interface BoundedTransportOptions {
-  allowedOrigin: string;
+  allowedOrigins: readonly string[];
   limits: RunLimits;
   runSignal: AbortSignal;
   fetchImpl?: FetchLike;
@@ -56,13 +57,18 @@ function runAbortCode(signal: AbortSignal): TransportFailureCode {
 
 export class BoundedFetchTransport implements Transport {
   private count = 0;
-  private readonly origin: string;
+  private readonly origins: ReadonlySet<string>;
   private readonly fetchImpl: FetchLike;
 
   constructor(private readonly opts: BoundedTransportOptions) {
-    const parsed = parseExactOrigin(opts.allowedOrigin);
-    if (!parsed.ok) throw new Error('allowedOrigin is not an exact origin');
-    this.origin = parsed.value.origin;
+    if (opts.allowedOrigins.length === 0) throw new Error('at least one allowed origin is required');
+    this.origins = new Set(
+      opts.allowedOrigins.map((o) => {
+        const parsed = parseExactOrigin(o);
+        if (!parsed.ok) throw new Error('allowed origin is not an exact origin');
+        return parsed.value.origin;
+      }),
+    );
     this.fetchImpl = opts.fetchImpl ?? ((input, init) => fetch(input, init));
   }
 
@@ -79,7 +85,8 @@ export class BoundedFetchTransport implements Transport {
   async send(req: HttpRequest): Promise<HttpOutcome> {
     const { limits, runSignal } = this.opts;
     if (runSignal.aborted) return { kind: 'failure', code: runAbortCode(runSignal), status: null };
-    if (this.originOf(req.url) !== this.origin) return { kind: 'failure', code: 'origin_mismatch', status: null };
+    const origin = this.originOf(req.url);
+    if (origin === null || !this.origins.has(origin)) return { kind: 'failure', code: 'origin_mismatch', status: null };
     if (this.count >= limits.maxRequests) return { kind: 'failure', code: 'request_budget_exhausted', status: null };
     this.count++;
 

@@ -93,11 +93,13 @@ describe('transport failures are blocked, never a denial pass', () => {
 
   it('enforces the request budget', async () => {
     const fake = createFake();
-    const { result, requestsMade } = await runEngine(fake.fetch, { env: baseEnv(fake), limits: { maxRequests: 5 } });
-    expect(requestsMade).toBe(5);
-    // setup + 2 identity checks + 2 owner reads = 5; the first denied read is over budget.
-    expect(byId(result)['b-reads-b']!.status).toBe('passed');
+    const { result, requestsMade } = await runEngine(fake.fetch, { env: baseEnv(fake), limits: { maxRequests: 6 } });
+    expect(requestsMade).toBe(6);
+    // setup + 2 identity checks + anonymous context + 2 owner reads = 6; the first denied read is over budget.
     expect(byId(result)['a-reads-b']).toEqual({ status: 'blocked', diagnostic: 'request_budget_exhausted' });
+    // The owner read succeeded, but fixture stability could not be re-checked, so it cannot count as a pass.
+    expect(byId(result)['b-reads-b']).toEqual({ status: 'blocked', diagnostic: 'request_budget_exhausted' });
+    expect(result.controls.find((c) => c.id === 'fixtures-stable')).toEqual({ id: 'fixtures-stable', status: 'failed', diagnostic: 'request_budget_exhausted' });
     expect(result.summary.exitCode).toBe(2);
   });
 

@@ -6,13 +6,14 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 
 | Phase | State | Evidence |
 | --- | --- | --- |
-| 1 Contracts and baseline semantics | **complete** | 147 contract tests; `pnpm check:generated` |
+| 1 Contracts and baseline semantics | **complete** | 154 contract tests; `pnpm check:generated` |
 | 2 Disposable fixture | **complete** | Fresh clone: `pnpm integration` provisions and verifies fixtures on a real stack |
-| 3 Runner | **complete** | 53 runner unit tests + real-HTTP scenarios |
-| 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 27/27 scenarios as expected, real local Supabase |
+| 3 Runner | **complete** | 93 runner unit tests + real-HTTP scenarios |
+| 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 33/33 scenarios as expected, real local Supabase; [benchmark](docs/BENCHMARK.md) 16/16 as designed |
 | 5 Reproducible CI | **implemented; locally reproduced; GitHub-hosted run pending** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
 | First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
 | Product pass (Pyx) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
+| Audit response + release review | **complete; see below** | audit fixes, request paths, `compare` / `--compare-to` / `repro`, benchmark |
 | 6–9 | not started | — |
 
 ### Milestone gate (run 5 November 2026)
@@ -39,9 +40,36 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 - **Website:** `apps/web`, a static site with a liquid-glass dark design shared with the reports, services pricing, CTAs configured in `config.js`, and strict security headers.
 - **Verified:** `pnpm verify` (147 + 11 + 63 tests), `pnpm integration` 27/27, `pnpm package`.
 
+### Audit response and release review (5 November 2026)
+
+Driven by the external design audit (`RowProof_audit_and_premium_strategy.md`). Positioning: *review who gained or lost access before each Supabase release.*
+
+- **Trustworthy runner (audit rank 1):**
+  - a forbidden response carrying the record's id, even without the marker, now **fails**;
+  - the marker leaking through an error body fails, and an error that only echoes the requested id does not;
+  - the fixtures are re-checked after the reads, so a record deleted or re-owned mid-run blocks every pass (`fixtures-stable`);
+  - the anonymous context is validated against Auth (`identity:<anon>`);
+  - promotions and the active pointer carry an `approvalDigest`, so editing the approver after promotion is rejected;
+  - lab mutations are bound to a nonce inside the lab database;
+  - [D6, D14, D16](docs/DECISIONS.md).
+- **Paired request paths (rank 2):** rules may list an RPC function and loopback app routes. The same matrix runs on each path, with per-path owner controls, and Supabase keys never reach the app origin ([D13](docs/DECISIONS.md)). Supporting pieces: `get_invoice` RPC migration, `examples/demo-app` (healthy / `service-key-bug`), `examples/invoice-three-paths.rule.json`.
+- **Release review (rank 4):**
+  - `pyx compare` and `pyx run --compare-to` report gained access, lost access, still exposed, fixed and unverified, cell by cell;
+  - `pyx repro` writes a README and a curl script without credentials;
+  - the HTML report opens with the access review;
+  - the CI template runs the base branch first and then the PR with `--compare-to` ([D15](docs/DECISIONS.md)).
+- **Public benchmark:** [docs/BENCHMARK.md](docs/BENCHMARK.md), generated from real runs. 8/8 access bugs detected, 7/7 broken setups blocked, and 1 published gap (an RPC the rule does not list). It also appears on the website.
+- **Publishability:** terms page, footer links, a mobile overflow fix, and the package smoke now runs `compare` from the installed tarball.
+- **Verified:**
+  - `pnpm verify`: 154 + 11 + 93 tests;
+  - `pnpm integration`: 33/33;
+  - `pnpm package`.
+- **Next (audit rank 3):** membership-removal and session tests, so a user removed from a team loses access on every path.
+- **Later (rank 5):** agency release history and client sign-off.
+
 ### Maintainer actions this work cannot do
 
-0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark search on "Pyx".
+0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark clearance search on "Pyx". Astral (the makers of `uv`) launched a Python package registry named **pyx** in 2025, so expect search competition and possible objections in the developer-tools class ([D8](docs/DECISIONS.md)).
 
 1. Replace the placeholder approval in `baseline/` with the designated owner's own approval ([baseline/README.md](baseline/README.md)).
 2. Protect `main`: a ruleset or branch protection requiring the owner's review for `baseline/` (for example CODEOWNERS plus required code-owner review). Until then, CI results are development tests, not independent assessments.

@@ -73,6 +73,18 @@ export const EXPLANATIONS: Record<DiagnosticCode, Explanation> = {
   unsupported_environment_class: { meaning: 'Only local disposable environments are supported today.', next: 'Run against a local stack.' },
   unsupported_expectation: { meaning: 'The rule expects access that the single-owner model does not support (shared or delegated reads).', next: 'Keep the rule owner-only, or wait for shared-record support.' },
   unsupported_rule: { meaning: 'The approved rule is outside what this runner version supports.', next: 'Run `pyx validate` on the rule.' },
+  fixture_unstable: {
+    meaning: 'A test record vanished or changed owner or marker while the run was in progress, so an empty read could mean "deleted", not "denied". No result from this run counts as a pass.',
+    next: 'Stop anything else writing to the disposable stack (seed scripts, tests, triggers), re-provision with `pyx fixture provision`, then re-run.',
+  },
+  anonymous_context_invalid: {
+    meaning: 'The anonymous request headers were accepted by Auth as a signed-in user, so "anonymous" was not anonymous and its results are not trustworthy.',
+    next: 'Use the publishable (or legacy anon) key on its own for the API key. Never put a user access token there.',
+  },
+  unsupported_path: {
+    meaning: 'A request path in the rule is outside what this runner version can check.',
+    next: 'Run `pyx validate` on the rule. Application routes must be on a loopback origin for local stacks.',
+  },
   not_executed: { meaning: 'This check was not executed.', next: 'See the controls above.' },
 };
 

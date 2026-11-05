@@ -16,6 +16,7 @@ import { mkdir, open, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import {
   ApprovalError,
+  approvalDigestOf,
   BaselineError,
   createApprovedRevision,
   hashesEqual,
@@ -167,6 +168,7 @@ export class LocalApprovalStoreWriter {
       promotedBy,
       promotedAt: now.toISOString(),
       previous,
+      approvalDigest: approvalDigestOf(target.revision),
     };
     try {
       await writeExclusive(join(this.root, storePaths.promotion(ruleId, sequence)), promotion);
@@ -181,6 +183,7 @@ export class LocalApprovalStoreWriter {
       revision: revisionNumber,
       contentHash: target.revision.contentHash,
       promotionSequence: sequence,
+      approvalDigest: promotion.approvalDigest,
     };
     await replaceAtomically(join(this.root, storePaths.active(ruleId)), active);
     return promotion;

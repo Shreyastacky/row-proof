@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   BaselineError,
+  approvalDigestOf,
   createApprovedRevision,
   createProposal,
   openFileBaselineReader,
@@ -60,6 +61,7 @@ async function seed(): Promise<ApprovedRevision> {
     promotedBy: 'owner',
     promotedAt: '2026-11-05T12:06:00.000Z',
     previous: null,
+    approvalDigest: approvalDigestOf(rev),
   };
   await writeJson(storePaths.promotion(rev.ruleId, 1), promo);
   const active: ActiveBaseline = {
@@ -69,6 +71,7 @@ async function seed(): Promise<ApprovedRevision> {
     revision: 1,
     contentHash: rev.contentHash,
     promotionSequence: 1,
+    approvalDigest: promo.approvalDigest,
   };
   await writeJson(storePaths.active(rev.ruleId), active);
   return rev;
@@ -123,7 +126,26 @@ describe('read-only approved baseline reader', () => {
       revision: 2,
       contentHash: other.contentHash,
       promotionSequence: 1,
+      approvalDigest: approvalDigestOf(other),
     });
+    await expectCode(reader.readActive(rev.ruleId), 'active_mismatch');
+  });
+
+  it('rejects an approver edited after promotion (approval digest)', async () => {
+    const rev = await seed();
+    const path = join(store, storePaths.revision(rev.ruleId, 1));
+    const doc = JSON.parse(await readFile(path, 'utf8')) as ApprovedRevision;
+    doc.approval.approvedBy = { id: 'someone-else', kind: 'local-user' };
+    await writeFile(path, JSON.stringify(doc));
+    await expectCode(reader.readActive(rev.ruleId), 'integrity_failed');
+  });
+
+  it('rejects an active pointer whose approval digest differs from the promotion record', async () => {
+    const rev = await seed();
+    const path = join(store, storePaths.active(rev.ruleId));
+    const doc = JSON.parse(await readFile(path, 'utf8')) as ActiveBaseline;
+    doc.approvalDigest = `sha256:${'0'.repeat(64)}`;
+    await writeFile(path, JSON.stringify(doc));
     await expectCode(reader.readActive(rev.ruleId), 'active_mismatch');
   });
 

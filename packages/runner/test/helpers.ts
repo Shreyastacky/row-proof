@@ -8,7 +8,7 @@ import {
   type RunResult,
   type VerifiedBaseline,
 } from '@pyx/contracts';
-import { DEFAULT_LIMITS, executeRun, type RunOutput } from '../src/engine.js';
+import { approvedOrigins, DEFAULT_LIMITS, executeRun, type RunOutput } from '../src/engine.js';
 import { BoundedFetchTransport, type FetchLike } from '../src/transport.js';
 import { ORIGIN } from './fake-supabase.js';
 
@@ -16,6 +16,10 @@ export const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
 export function exampleRule(): RuleContent {
   return JSON.parse(readFileSync(`${repoRoot}examples/invoice-owner-read.rule.json`, 'utf8')) as RuleContent;
+}
+
+export function threePathRule(): RuleContent {
+  return JSON.parse(readFileSync(`${repoRoot}examples/invoice-three-paths.rule.json`, 'utf8')) as RuleContent;
 }
 
 export function approvedBaseline(content: RuleContent = exampleRule()): VerifiedBaseline {
@@ -50,15 +54,16 @@ export interface RunOpts {
 
 export async function runEngine(fetchImpl: FetchLike, opts: RunOpts): Promise<RunOutput & { requestsMade: number }> {
   const limits = { ...DEFAULT_LIMITS, ...opts.limits };
+  const baseline = opts.baseline ?? approvedBaseline();
   const transport = new BoundedFetchTransport({
-    allowedOrigin: ORIGIN,
+    allowedOrigins: approvedOrigins(baseline.revision.content),
     limits,
     runSignal: opts.signal ?? new AbortController().signal,
     fetchImpl,
     userAgent: 'pyx-runner/test',
   });
   const out = await executeRun({
-    baseline: opts.baseline ?? approvedBaseline(),
+    baseline,
     baselineFailure: null,
     env: opts.env,
     targetUrl: 'targetUrl' in opts ? opts.targetUrl : opts.env.PYX_SUPABASE_URL,
@@ -75,6 +80,11 @@ export async function runEngine(fetchImpl: FetchLike, opts: RunOpts): Promise<Ru
 
 export function byId(result: RunResult): Record<string, { status: string; diagnostic: string }> {
   return Object.fromEntries(result.assertions.map((a) => [a.id, { status: a.status, diagnostic: a.diagnostic }]));
+}
+
+/** Assertions keyed by `<path>/<expectation id>`. */
+export function byPath(result: RunResult): Record<string, { status: string; diagnostic: string }> {
+  return Object.fromEntries(result.assertions.map((a) => [`${a.path}/${a.id}`, { status: a.status, diagnostic: a.diagnostic }]));
 }
 
 export function control(result: RunResult, id: string): { status: string; diagnostic: string } | undefined {

@@ -1,18 +1,18 @@
 {
   "kind": "RunResult",
   "schemaVersion": 1,
-  "runId": "5c0e801b-9b3e-4a84-95e1-c6708c2a2249",
+  "runId": "b3f962e8-b3f4-43b6-92ba-72ddf37d4b1f",
   "rule": {
-    "ruleId": "invoice-owner-read",
+    "ruleId": "invoice-three-paths",
     "revision": 1,
-    "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3"
+    "contentHash": "sha256:87ed888660b38257523dc96f7d6ccb5a4cdee17655f5fc19db5a9d48562dc765"
   },
   "runner": {
     "name": "pyx-runner",
     "version": "0.1.0"
   },
   "source": {
-    "commit": "737252cc0f38ead98247370cab95b1675f36a346",
+    "commit": "6704db4781aa99bd88ca2f597e883df6d62841ea",
     "dirty": true
   },
   "scope": {
@@ -26,11 +26,28 @@
     "transport": "supabase-data-api-rest-v1"
   },
   "observedAt": {
-    "startedAt": "2026-11-05T05:08:47.732Z",
-    "finishedAt": "2026-11-05T05:08:47.812Z"
+    "startedAt": "2026-11-05T06:38:23.032Z",
+    "finishedAt": "2026-11-05T06:38:23.135Z"
   },
+  "paths": [
+    {
+      "id": "data-api",
+      "kind": "data-api",
+      "route": "/rest/v1/invoices"
+    },
+    {
+      "id": "rpc-get-invoice",
+      "kind": "rpc",
+      "route": "/rest/v1/rpc/get_invoice"
+    },
+    {
+      "id": "app-invoice-route",
+      "kind": "http",
+      "route": "http://127.0.0.1:8787/api/invoices/{id}"
+    }
+  ],
   "limits": {
-    "maxRequests": 32,
+    "maxRequests": 64,
     "requestTimeoutMs": 5000,
     "runTimeoutMs": 60000,
     "maxResponseBytes": 65536,
@@ -82,11 +99,22 @@
       "id": "actors-distinct",
       "status": "ok",
       "diagnostic": "ok"
+    },
+    {
+      "id": "identity:anonymous",
+      "status": "ok",
+      "diagnostic": "ok"
+    },
+    {
+      "id": "fixtures-stable",
+      "status": "ok",
+      "diagnostic": "ok"
     }
   ],
   "assertions": [
     {
       "id": "a-reads-a",
+      "path": "data-api",
       "actorRef": "user-a",
       "fixtureRef": "invoice-a",
       "expected": "exact_fixture_returned",
@@ -97,6 +125,7 @@
     },
     {
       "id": "b-reads-b",
+      "path": "data-api",
       "actorRef": "user-b",
       "fixtureRef": "invoice-b",
       "expected": "exact_fixture_returned",
@@ -107,6 +136,7 @@
     },
     {
       "id": "a-reads-b",
+      "path": "data-api",
       "actorRef": "user-a",
       "fixtureRef": "invoice-b",
       "expected": "fixture_not_disclosed",
@@ -117,6 +147,7 @@
     },
     {
       "id": "b-reads-a",
+      "path": "data-api",
       "actorRef": "user-b",
       "fixtureRef": "invoice-a",
       "expected": "fixture_not_disclosed",
@@ -127,6 +158,7 @@
     },
     {
       "id": "anon-reads-a",
+      "path": "data-api",
       "actorRef": "anonymous",
       "fixtureRef": "invoice-a",
       "expected": "fixture_not_disclosed",
@@ -137,6 +169,7 @@
     },
     {
       "id": "anon-reads-b",
+      "path": "data-api",
       "actorRef": "anonymous",
       "fixtureRef": "invoice-b",
       "expected": "fixture_not_disclosed",
@@ -144,6 +177,138 @@
       "observation": "no_rows",
       "diagnostic": "ok",
       "httpStatus": 200
+    },
+    {
+      "id": "a-reads-a",
+      "path": "rpc-get-invoice",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-a",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "b-reads-b",
+      "path": "rpc-get-invoice",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-b",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "a-reads-b",
+      "path": "rpc-get-invoice",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "b-reads-a",
+      "path": "rpc-get-invoice",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "anon-reads-a",
+      "path": "rpc-get-invoice",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "anon-reads-b",
+      "path": "rpc-get-invoice",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "no_rows",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "a-reads-a",
+      "path": "app-invoice-route",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-a",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "b-reads-b",
+      "path": "app-invoice-route",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-b",
+      "expected": "exact_fixture_returned",
+      "status": "passed",
+      "observation": "exact_fixture_returned",
+      "diagnostic": "ok",
+      "httpStatus": 200
+    },
+    {
+      "id": "a-reads-b",
+      "path": "app-invoice-route",
+      "actorRef": "user-a",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "error_response",
+      "diagnostic": "ok",
+      "httpStatus": 404
+    },
+    {
+      "id": "b-reads-a",
+      "path": "app-invoice-route",
+      "actorRef": "user-b",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "error_response",
+      "diagnostic": "ok",
+      "httpStatus": 404
+    },
+    {
+      "id": "anon-reads-a",
+      "path": "app-invoice-route",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-a",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "error_response",
+      "diagnostic": "ok",
+      "httpStatus": 401
+    },
+    {
+      "id": "anon-reads-b",
+      "path": "app-invoice-route",
+      "actorRef": "anonymous",
+      "fixtureRef": "invoice-b",
+      "expected": "fixture_not_disclosed",
+      "status": "passed",
+      "observation": "error_response",
+      "diagnostic": "ok",
+      "httpStatus": 401
     }
   ],
   "summary": {
@@ -151,7 +316,7 @@
     "completeness": "complete",
     "exitCode": 0,
     "counts": {
-      "passed": 6,
+      "passed": 18,
       "failed": 0,
       "blocked": 0,
       "not_assessed": 0

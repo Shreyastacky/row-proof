@@ -1,0 +1,109 @@
+{
+  "ranAt": "2026-11-05T06:41:10.695Z",
+  "tally": {
+    "detected": 8,
+    "missed": 1,
+    "blocked": 7,
+    "unsupported": 0
+  },
+  "asExpected": 16,
+  "total": 16,
+  "rows": [
+    {
+      "mutation": "App route fetches with the secret key and only checks sign-in",
+      "layer": "app route",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "Token signed by another project",
+      "layer": "identity",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "Both user tokens belong to the same account",
+      "layer": "identity",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "Expired user token",
+      "layer": "identity",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "SELECT policy `using (true)` for every signed-in user",
+      "layer": "policy",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "SELECT policy open to the anon role",
+      "layer": "policy",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "Owner SELECT policy dropped (owners lose access)",
+      "layer": "policy",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "SELECT grant revoked from authenticated",
+      "layer": "grant",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "SECURITY DEFINER RPC without an owner check",
+      "layer": "rpc",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "Same RPC bug, but the rule lists only the Data API path",
+      "layer": "rpc",
+      "want": "missed",
+      "got": "missed"
+    },
+    {
+      "mutation": "Owner policy typo: `owner_id = owner_id`",
+      "layer": "policy",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "Row level security disabled on the table",
+      "layer": "policy",
+      "want": "detected",
+      "got": "detected"
+    },
+    {
+      "mutation": "Test record deleted before the run",
+      "layer": "test environment",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "Test record re-assigned to another user",
+      "layer": "test environment",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "Test record marker changed",
+      "layer": "test environment",
+      "want": "blocked",
+      "got": "blocked"
+    },
+    {
+      "mutation": "Target not reachable",
+      "layer": "transport",
+      "want": "blocked",
+      "got": "blocked"
+    }
+  ]
+}

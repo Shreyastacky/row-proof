@@ -11,17 +11,21 @@ import { parseArgs } from 'node:util';
 import {
   BaselineError,
   openFileBaselineReader,
+  parseStrictJson,
+  StrictJsonError,
+  validateSchema,
   type ApprovedBaselineReader,
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
 } from '@pyx/contracts';
-import { DEFAULT_LIMITS, executeRun, type RunContext } from '../engine.js';
-import { loadEnvFile, optionalInt, requireString, RUNNER_VERSION, UsageError, type CliIO } from '../io.js';
+import { approvedOrigins, DEFAULT_LIMITS, executeRun, type RunContext } from '../engine.js';
+import { loadEnvFile, optionalInt, readTextFile, requireString, RUNNER_VERSION, UsageError, type CliIO } from '../io.js';
 import { appendFile } from 'node:fs/promises';
 import { assertOutputSafe, OutputSafetyError, renderSummary, serializeResult, writeResultFile } from '../report.js';
 import { renderHtmlReport } from '../html-report.js';
 import { renderJunit, renderMarkdownSummary } from '../ci-formats.js';
+import { compareResults, CompareError, renderComparison, renderComparisonMarkdown } from '../compare.js';
 import { ABORT_CANCELLED, ABORT_DEADLINE, BoundedFetchTransport, type FetchLike } from '../transport.js';
 
 const COMMIT = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
@@ -73,6 +77,8 @@ Options:
   --html <path>              also write a self-contained HTML evidence report
   --junit <path>             also write JUnit XML (one test case per assertion) for CI test reporters
   --summary-md <path>        append a Markdown summary (use "$GITHUB_STEP_SUMMARY" in GitHub Actions)
+  --compare-to <result.json> after the run, print who gained or lost access since that
+                             earlier run (e.g. the last release) and add it to --summary-md
   --force                    replace existing output files
   --source-commit <sha>      source commit (default GITHUB_SHA or git rev-parse HEAD)
   --execution-context <c>    local-developer | ci-development | ci-trusted-pinned-declared
@@ -106,6 +112,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
       html: { type: 'string' },
       junit: { type: 'string' },
       'summary-md': { type: 'string' },
+      'compare-to': { type: 'string' },
       help: { type: 'boolean' },
     },
   });
@@ -149,6 +156,23 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
     }
   }
 
+  // An earlier result to compare against: loaded and validated before anything is sent.
+  let previous: RunResult | null = null;
+  if (values['compare-to']) {
+    const p = values['compare-to'];
+    let raw: unknown;
+    try {
+      raw = parseStrictJson(await readTextFile(resolve(io.cwd, p), 1024 * 1024), { maxBytes: 1024 * 1024 });
+    } catch (e) {
+      if (e instanceof StrictJsonError) throw new UsageError(`--compare-to ${p}: ${e.message}`);
+      throw e;
+    }
+    const v = validateSchema('RunResult', raw);
+    if (!v.ok) throw new UsageError(`--compare-to ${p} is not a valid Pyx result`);
+    if (v.value.rule.ruleId !== ruleId) throw new UsageError(`--compare-to ${p} is a result for rule ${v.value.rule.ruleId}, not ${ruleId}`);
+    previous = v.value;
+  }
+
   // Approved baseline: read-only.
   const reader = deps.reader ?? openFileBaselineReader(resolve(io.cwd, store));
   let baseline: VerifiedBaseline | null = null;
@@ -172,7 +196,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   process.once('SIGTERM', onSignal);
   deps.signal?.addEventListener('abort', onSignal, { once: true });
 
-  const allowedOrigin = baseline?.revision.content.target.allowedOrigin ?? 'http://127.0.0.1:1';
+  const allowedOrigins = baseline ? approvedOrigins(baseline.revision.content) : ['http://127.0.0.1:1'];
   let output;
   try {
     output = await executeRun({
@@ -181,7 +205,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
       env,
       targetUrl,
       transport: new BoundedFetchTransport({
-        allowedOrigin,
+        allowedOrigins,
         limits,
         runSignal: controller.signal,
         userAgent: `pyx-runner/${RUNNER_VERSION}`,
@@ -236,6 +260,21 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
       assertOutputSafe(md, output.sensitiveValues);
       // Appends, so it can target $GITHUB_STEP_SUMMARY.
       await appendFile(resolve(io.cwd, mdPath), md, 'utf8');
+    }
+    if (previous) {
+      try {
+        const c = compareResults(previous, output.result, {
+          before: previous.source.commit?.slice(0, 10) ?? 'previous',
+          after: output.result.source.commit?.slice(0, 10) ?? 'this run',
+        });
+        const text = renderComparison(c);
+        assertOutputSafe(text, output.sensitiveValues);
+        io.stdout(`\n${text}`);
+        if (mdPath) await appendFile(resolve(io.cwd, mdPath), renderComparisonMarkdown(c), 'utf8');
+      } catch (e) {
+        if (!(e instanceof CompareError)) throw e;
+        io.stderr(`access review skipped: ${e.message}\n`);
+      }
     }
   } catch (e) {
     const code = e instanceof Error && 'code' in e ? String((e as NodeJS.ErrnoException).code) : 'unknown';

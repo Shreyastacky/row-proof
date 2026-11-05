@@ -29,7 +29,7 @@ const results = readdirSync(dir)
   });
 const report = renderHtmlReport(results, { client: 'Invoice Portal (demo)', preparedBy: 'Pyx' }).replace(
   '<body class="rp rp-report">',
-  '<body class="rp rp-report">\n<div class="rp-noprint" style="text-align:center;padding:10px 16px;font-size:13px;color:#a3b1c4;border-bottom:1px solid rgba(148,170,200,.14)">Sample report generated from a real run against a deliberately broken local policy · <a href="index.html">Back to Pyx</a></div>',
+  '<body class="rp rp-report">\n<div class="rp-noprint" style="text-align:center;padding:10px 16px;font-size:13px;color:#a3b1c4;border-bottom:1px solid rgba(148,170,200,.14)">Sample report generated from real runs: release 41 is healthy; in release 42 the demo app’s API route fetches invoices with the secret key · <a href="index.html">Back to Pyx</a></div>',
 );
 writeFileSync(join(web, 'sample-report.html'), report);
 

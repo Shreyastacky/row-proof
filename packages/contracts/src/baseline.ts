@@ -19,7 +19,7 @@
  */
 import { lstat, open, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { hashesEqual } from './canonical.js';
+import { contentHashOf, hashesEqual } from './canonical.js';
 import { verifyApprovedRevision } from './documents.js';
 import { parseStrictJson, StrictJsonError } from './strict-json.js';
 import type { ActiveBaseline, ApprovedRevision, Promotion } from './types.generated.js';
@@ -207,7 +207,8 @@ export class ApprovedBaselineStoreReader implements ApprovedBaselineReader {
       p.ruleId !== ruleId ||
       active.value.promotionSequence !== latestSeq ||
       active.value.revision !== p.revision ||
-      !hashesEqual(active.value.contentHash, p.contentHash)
+      !hashesEqual(active.value.contentHash, p.contentHash) ||
+      !hashesEqual(active.value.approvalDigest, p.approvalDigest)
     ) {
       throw new BaselineError('active_mismatch', 'active.json disagrees with the latest promotion record');
     }
@@ -215,6 +216,10 @@ export class ApprovedBaselineStoreReader implements ApprovedBaselineReader {
     const verified = await this.readRevision(ruleId, active.value.revision);
     if (!hashesEqual(verified.revision.contentHash, active.value.contentHash)) {
       throw new BaselineError('active_mismatch', 'active.json hash differs from the approved revision');
+    }
+    // The approval record is bound at promotion time: renaming the approver afterwards breaks the link.
+    if (!hashesEqual(approvalDigestOf(verified.revision), active.value.approvalDigest)) {
+      throw new BaselineError('integrity_failed', 'the approval record changed after promotion');
     }
     if (pin.revision !== undefined && pin.revision !== verified.revision.revision) {
       throw new BaselineError('pin_mismatch', `active revision ${verified.revision.revision} differs from pinned revision ${pin.revision}`);
@@ -224,6 +229,11 @@ export class ApprovedBaselineStoreReader implements ApprovedBaselineReader {
     }
     return { revision: verified.revision, active: active.value, sourceDescription: this.source.description };
   }
+}
+
+/** sha256 of the canonical Approval record inside an approved revision. */
+export function approvalDigestOf(revision: ApprovedRevision): `sha256:${string}` {
+  return contentHashOf(revision.approval);
 }
 
 export function openFileBaselineReader(storeRoot: string): ApprovedBaselineReader {

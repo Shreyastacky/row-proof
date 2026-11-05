@@ -136,4 +136,33 @@ describe('run output safety', () => {
     expect(md.startsWith('# existing\n')).toBe(true);
     expect(md).toContain('Pyx: PASS');
   });
+
+  it('--compare-to prints who gained access since the earlier run and adds it to the Markdown summary', async () => {
+    const healthy = createFake();
+    const io1: CliIO = { stdout: () => undefined, stderr: () => undefined, env: baseEnv(healthy), cwd: dir };
+    expect(await runCommand(['--store', `${repoRoot}baseline`, '--rule', 'invoice-owner-read', '--out', 'before.json'], io1, { fetchImpl: healthy.fetch })).toBe(0);
+    const broken = createFake();
+    broken.policy = 'permissive-authenticated';
+    const out: string[] = [];
+    const io2: CliIO = { stdout: (s) => out.push(s), stderr: (s) => out.push(s), env: baseEnv(broken), cwd: dir };
+    const code = await runCommand(
+      ['--store', `${repoRoot}baseline`, '--rule', 'invoice-owner-read', '--out', 'after.json', '--compare-to', 'before.json', '--summary-md', 'pr.md'],
+      io2,
+      { fetchImpl: broken.fetch },
+    );
+    expect(code).toBe(1);
+    expect(out.join('')).toContain('GAINED ACCESS  user-a can now read invoice-b  [data-api]');
+    expect(await readFile(join(dir, 'pr.md'), 'utf8')).toContain('Access changed');
+  });
+
+  it('--compare-to refuses a result for another rule before sending anything', async () => {
+    const fake = createFake();
+    const r = (await runEngine(fake.fetch, { env: baseEnv(fake) })).result;
+    await writeFile(join(dir, 'other.json'), JSON.stringify({ ...r, rule: { ...r.rule, ruleId: 'another-rule' } }));
+    const before = fake.requests.length;
+    const err: string[] = [];
+    const io: CliIO = { stdout: () => undefined, stderr: (s) => err.push(s), env: baseEnv(fake), cwd: dir };
+    await expect(runCommand(['--store', `${repoRoot}baseline`, '--rule', 'invoice-owner-read', '--compare-to', 'other.json'], io, { fetchImpl: fake.fetch })).rejects.toThrow(/another-rule/);
+    expect(fake.requests.length).toBe(before);
+  });
 });

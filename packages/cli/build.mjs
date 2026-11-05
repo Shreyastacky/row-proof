@@ -48,6 +48,17 @@ if (process.argv.includes('--smoke')) {
     console.log(run('--version').trim());
     run('init', '--table', 'invoices', '--owner-column', 'owner_id', '--marker-column', 'title', '--out', 'r.json');
     console.log(run('validate', 'r.json').trim());
+    // The release review from the installed package, on the two real sample results.
+    const results = join(here, '..', '..', 'examples', 'results');
+    let review = '';
+    try {
+      run('compare', join(results, 'release-41-pass.json'), join(results, 'release-42-fail.json'));
+    } catch (e) {
+      review = String(e.stdout ?? '');
+      if (e.status !== 1) throw e;
+    }
+    if (!review.includes('GAINED ACCESS')) throw new Error('compare did not report the regression');
+    console.log('compare: regression reported, exit 1');
     console.log(`packed ${tgz}: install and first commands OK`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });

@@ -7,6 +7,7 @@ const failedControl: ControlResult = { id: 'fixture:invoice-b', status: 'failed'
 function a(status: AssertionResult['status'], id = `x-${Math.random().toString(36).slice(2, 8)}`): AssertionResult {
   return {
     id,
+    path: 'data-api',
     actorRef: 'user-a',
     fixtureRef: 'invoice-b',
     expected: 'fixture_not_disclosed',
@@ -64,6 +65,7 @@ function sampleResult(): RunResult {
     scope: { organizationId: null, projectId: 'invoice-portal-demo', environmentId: 'local-disposable' },
     target: { origin: 'http://127.0.0.1:54321', environmentClass: 'local-disposable', transport: 'supabase-data-api-rest-v1' },
     observedAt: { startedAt: '2026-11-05T12:00:00.000Z', finishedAt: '2026-11-05T12:00:01.000Z' },
+    paths: [{ id: 'data-api', kind: 'data-api', route: '/rest/v1/invoices' }],
     limits: { maxRequests: 32, requestTimeoutMs: 5000, runTimeoutMs: 60000, maxResponseBytes: 65536, concurrency: 1, retries: 0 },
     controls: [ok],
     assertions,

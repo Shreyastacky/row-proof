@@ -39,7 +39,7 @@ describe('healthy owner-only boundary', () => {
     const fake = createFake();
     await runEngine(fake.fetch, { env: baseEnv(fake) });
     const reads = fake.requests.filter((r) => r.url.pathname === '/rest/v1/invoices');
-    expect(reads.length).toBe(7); // 1 setup verification + 6 assertions
+    expect(reads.length).toBe(8); // setup verification + 6 assertions + fixture stability re-check
     for (const r of reads) {
       expect([...r.url.searchParams.keys()].sort()).toEqual(['id', 'limit', 'select']);
       expect(r.url.searchParams.has('owner_id')).toBe(false);
@@ -49,13 +49,18 @@ describe('healthy owner-only boundary', () => {
   it('keeps the setup secret out of every assertion and identity request, and sends no user token anonymously', async () => {
     const fake = createFake();
     await runEngine(fake.fetch, { env: baseEnv(fake) });
-    const [setup, ...rest] = fake.requests;
-    expect(setup!.headers.apikey).toBe(SECRET);
-    for (const r of rest) {
+    const isSetup = (r: (typeof fake.requests)[number]) => r.url.searchParams.get('id')?.startsWith('in.(') === true;
+    const setup = fake.requests.filter(isSetup);
+    // Verified before the reads and re-checked after them.
+    expect(setup.length).toBe(2);
+    expect(fake.requests[0]).toBe(setup[0]);
+    expect(fake.requests.at(-1)).toBe(setup[1]);
+    for (const r of setup) expect(r.headers.apikey).toBe(SECRET);
+    for (const r of fake.requests.filter((x) => !isSetup(x))) {
       expect(JSON.stringify(r.headers)).not.toContain(SECRET);
       expect(r.url.origin).toBe(ORIGIN);
     }
-    const anonReads = rest.filter((r) => r.url.pathname === '/rest/v1/invoices' && !r.headers.authorization);
+    const anonReads = fake.requests.filter((r) => !isSetup(r) && r.url.pathname === '/rest/v1/invoices' && !r.headers.authorization);
     expect(anonReads.length).toBe(2);
   });
 });
@@ -207,8 +212,10 @@ describe('legacy anon-key compatibility is explicit', () => {
     const env = { ...baseEnv(fake), PYX_LEGACY_ANON_KEY: LEGACY_ANON, PYX_SETUP_SECRET_KEY: LEGACY_SERVICE };
     const { result } = await runEngine(fake.fetch, { env, baseline: approvedBaseline(content) });
     expect(byId(result)).toEqual(ALL_PASS);
-    const anon = fake.requests.filter((r) => r.headers.authorization === `Bearer ${LEGACY_ANON}`);
+    const anon = fake.requests.filter((r) => r.url.pathname === '/rest/v1/invoices' && r.headers.authorization === `Bearer ${LEGACY_ANON}`);
     expect(anon.length).toBe(2);
+    // The anonymous context itself was checked against Auth with the same headers.
+    expect(control(result, 'identity:anonymous')).toEqual({ status: 'ok', diagnostic: 'ok' });
   });
 });
 

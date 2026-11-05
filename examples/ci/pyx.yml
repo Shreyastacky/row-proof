@@ -4,8 +4,13 @@
 #   1. starts a disposable local Supabase stack from YOUR migrations (no production access);
 #   2. provisions synthetic users and records for each rule;
 #   3. reads the APPROVED baseline from the base branch (never from the PR itself);
-#   4. runs the checks: a cross-user leak fails the job (exit 1), anything untrustworthy blocks it (exit 2);
-#   5. posts a summary to the job page and uploads an HTML evidence report.
+#   4. runs the same approved rules against the BASE branch first, then against the PR;
+#   5. prints an access review: who gained or lost access compared with the base branch;
+#   6. a cross-user leak fails the job (exit 1), anything untrustworthy blocks it (exit 2);
+#   7. posts a summary to the job page and uploads an HTML evidence report.
+#
+# Rules that list an application route ("kind": "http") need your app running on
+# that loopback origin during both runs: add a step that starts it in the background.
 #
 # Before you rely on it:
 #   - Commit your approval store (e.g. `.pyx/approvals/`) to the default branch.
@@ -63,6 +68,24 @@ jobs:
           # Copy only the store from the trusted ref, never from the working tree.
           git archive "$BASE_REF" "$APPROVAL_STORE" | tar -x -C "$RUNNER_TEMP/baseline"
 
+      - name: "Before: the same approved rules against the base branch"
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          mkdir -p pyx-before
+          git worktree add --detach "$RUNNER_TEMP/base" "origin/${GITHUB_BASE_REF}"
+          cd "$RUNNER_TEMP/base"
+          supabase start -x studio,postgres-meta,imgproxy,vector,logflare,supavisor,storage-api,edge-runtime,realtime,mailpit > /dev/null
+          for rule in $RULES; do
+            [ -f "pyx/${rule}.rule.json" ] || continue
+            pyx fixture provision --rule "pyx/${rule}.rule.json" --out "$RUNNER_TEMP/before-${rule}.env" || continue
+            pyx run --store "$RUNNER_TEMP/baseline/$APPROVAL_STORE" --rule "$rule" \
+              --credentials "$RUNNER_TEMP/before-${rule}.env" --execution-context ci-development \
+              --out "$GITHUB_WORKSPACE/pyx-before/${rule}.json" > /dev/null || true
+          done
+          supabase stop --no-backup
+          rm -f "$RUNNER_TEMP"/before-*.env
+
       - name: Start a disposable local stack from your migrations
         run: supabase start -x studio,postgres-meta,imgproxy,vector,logflare,supavisor,storage-api,edge-runtime,realtime,mailpit > /dev/null
 
@@ -71,8 +94,10 @@ jobs:
           status=0
           for rule in $RULES; do
             pyx fixture provision --rule "pyx/${rule}.rule.json" --out ".pyx/${rule}.env"
+            compare=()
+            if [ -f "pyx-before/${rule}.json" ]; then compare=(--compare-to "pyx-before/${rule}.json"); fi
             set +e
-            pyx run \
+            pyx run "${compare[@]}" \
               --store "$RUNNER_TEMP/baseline/$APPROVAL_STORE" \
               --rule "$rule" \
               --credentials ".pyx/${rule}.env" \

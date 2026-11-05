@@ -6,6 +6,7 @@
 import type { FetchLike } from '../src/transport.js';
 
 export const ORIGIN = 'http://127.0.0.1:54321';
+export const APP_ORIGIN = 'http://127.0.0.1:8787';
 export const PUBLISHABLE = 'sb_publishable_TESTPUBLISHABLEKEY0001';
 export const SECRET = 'sb_secret_TESTSECRETKEY000000000001';
 export const USER_A = '5a1e0000-0000-4000-8000-00000000000a';
@@ -35,6 +36,10 @@ export const LEGACY_ANON = fakeJwt({ iss: 'supabase-demo', role: 'anon', exp: 19
 export const LEGACY_SERVICE = fakeJwt({ iss: 'supabase-demo', role: 'service_role', exp: 1983812996 });
 
 export type Policy = 'owner-only' | 'permissive-authenticated' | 'permissive-all' | 'deny-all';
+/** get_invoice(p_id): owner-only (null for others), leaky (security definer, no owner check), raise (42501 for others). */
+export type RpcPolicy = 'owner-only' | 'leaky' | 'raise';
+/** GET /api/invoices/{id}: owner-only (401/404), leaky (any signed-in user), echo-id (403 for others but 200 naming the id), not-found-all. */
+export type AppPolicy = 'owner-only' | 'leaky' | 'echo-id' | 'gone';
 
 export interface Row {
   id: string;
@@ -54,6 +59,10 @@ export interface FakeSupabase {
   rows: Row[];
   users: Map<string, { id: string; is_anonymous?: boolean }>;
   policy: Policy;
+  rpcPolicy: RpcPolicy;
+  appPolicy: AppPolicy;
+  /** Called after each request is answered (used to change fixtures mid-run). */
+  after: ((req: RecordedRequest) => void) | undefined;
   override: ((req: RecordedRequest) => Response | Promise<Response> | undefined) | undefined;
 }
 
@@ -81,8 +90,20 @@ export function createFake(): FakeSupabase & { tokenA: string; tokenB: string } 
       [tokenB, { id: USER_B }],
     ]),
     policy: 'owner-only',
+    rpcPolicy: 'owner-only',
+    appPolicy: 'owner-only',
+    after: undefined,
     override: undefined,
     fetch: async (input, init) => {
+      try {
+        return await handle(input, init);
+      } finally {
+        const last = fake.requests.at(-1);
+        if (last) fake.after?.(last);
+      }
+    },
+  };
+  const handle: FetchLike = async (input, init) => {
       const headers = Object.fromEntries(new Headers(init.headers).entries());
       const req: RecordedRequest = { url: new URL(input.href), headers };
       fake.requests.push(req);
@@ -90,6 +111,29 @@ export function createFake(): FakeSupabase & { tokenA: string; tokenB: string } 
       const o = fake.override?.(req);
       if (o) return await o;
       const bearer = headers.authorization?.startsWith('Bearer ') ? headers.authorization.slice(7) : null;
+      const uidOf = (b: string | null) => (b ? fake.users.get(b)?.id : undefined);
+      if (req.url.origin === APP_ORIGIN) {
+        const m = /^\/api\/invoices\/([0-9a-f-]{36})$/.exec(req.url.pathname);
+        if (!m) return json(404, { error: 'not found' });
+        if (headers.apikey) return json(400, { error: 'unexpected apikey header' });
+        const uid = uidOf(bearer);
+        const row = fake.rows.find((r) => r.id === m[1]);
+        if (fake.appPolicy === 'gone') return json(404, { error: 'not found' });
+        if (!uid) return json(401, { error: 'sign in required' });
+        if (!row) return json(404, { error: 'not found' });
+        if (row.owner_id === uid || fake.appPolicy === 'leaky') return json(200, { invoice: { id: row.id, title: row.fixture_marker, total: row.amount_cents } });
+        if (fake.appPolicy === 'echo-id') return json(200, { error: 'forbidden', invoice: { id: row.id } });
+        return json(404, { error: 'not found' });
+      }
+      if (req.url.pathname === '/rest/v1/rpc/get_invoice') {
+        const uid = uidOf(bearer);
+        const row = fake.rows.find((r) => r.id === req.url.searchParams.get('p_id'));
+        const visible = row && (row.owner_id === uid || fake.rpcPolicy === 'leaky') ? row : null;
+        if (row && !visible && fake.rpcPolicy === 'raise') {
+          return json(uid ? 403 : 401, { code: '42501', message: 'not your invoice', details: null, hint: null });
+        }
+        return json(200, visible && { id: visible.id, owner_id: visible.owner_id, fixture_marker: visible.fixture_marker });
+      }
       if (req.url.pathname === '/auth/v1/user') {
         const u = bearer ? fake.users.get(bearer) : undefined;
         if (!u) return json(403, { code: 403, error_code: 'bad_jwt', msg: `invalid JWT ${bearer ?? ''}` });
@@ -121,7 +165,6 @@ export function createFake(): FakeSupabase & { tokenA: string; tokenB: string } 
         return json(200, visible.map((r) => Object.fromEntries(select.map((c) => [c, (r as unknown as Record<string, unknown>)[c]]))));
       }
       return json(404, { code: 'PGRST205', message: 'not found' });
-    },
   };
   return fake;
 }

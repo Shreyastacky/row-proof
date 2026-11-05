@@ -117,6 +117,33 @@
   </div>
 </section>
 
+<section id="proof" class="center">
+<!-- benchmark:start -->
+  <div class="wrap">
+    <div class="eyebrow rise">Measured, not promised</div>
+    <h2 class="rise">We break a real stack on purpose, and publish the score.</h2>
+    <p class="section-lede rise">Every row is a real change to a throwaway Supabase project followed by a real run. Including the one Pyx misses.</p>
+    <div class="score">
+      <div class="score__cell score__cell--pass glass rise"><div class="score__n">8<small>/ 8</small></div><div class="score__l">access bugs caught: policies, grants, RPC functions, API routes</div></div>
+      <div class="score__cell score__cell--blocked glass rise"><div class="score__n">7<small>/ 7</small></div><div class="score__l">broken test setups stopped instead of passing</div></div>
+      <div class="score__cell score__cell--gap glass rise"><div class="score__n">1</div><div class="score__l">known gap, published: a path the rule doesn’t list</div></div>
+    </div>
+    <div class="bench glass rise">
+      <div class="bench__row"><span>App route fetches with the secret key and only checks sign-in</span><span class="bench__layer">app route</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>SELECT policy <code>using (true)</code> for every signed-in user</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>SELECT policy open to the anon role</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>Owner SELECT policy dropped (owners lose access)</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>SELECT grant revoked from authenticated</span><span class="bench__layer">grant</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>SECURITY DEFINER RPC without an owner check</span><span class="bench__layer">rpc</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>Owner policy typo: <code>owner_id = owner_id</code></span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>Row level security disabled on the table</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
+      <div class="bench__row"><span>Same RPC bug, but the rule lists only the Data API path</span><span class="bench__layer">rpc</span><span class="bench__got bench__got--missed">missed</span></div>
+    </div>
+    <p class="bench__note rise">Run 2026-11-05 on Supabase CLI 2.122.1. Reproduce it with <code>pnpm integration</code>.</p>
+  </div>
+<!-- benchmark:end -->
+</section>
+
 <section id="how" class="center">
   <div class="wrap">
     <div class="eyebrow rise">Setup</div>
@@ -223,7 +250,7 @@
 <footer>
   <div class="wrap">
     <span>© <span data-year>2026</span> Pyx</span>
-    <nav aria-label="Footer"><a href="privacy.html">Privacy</a><a href="#" data-repo>Source</a><a href="#" data-email>Contact</a></nav>
+    <nav aria-label="Footer"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="#proof">Benchmark</a><a href="#" data-repo>Source</a><a href="#" data-email>Contact</a></nav>
   </div>
 </footer>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="refract-defs"></defs></svg>

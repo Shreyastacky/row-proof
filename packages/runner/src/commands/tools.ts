@@ -20,7 +20,7 @@ import {
   type RunResult,
 } from '@pyx/contracts';
 import { classifyApiKey, decodeJwtUnverified, isElevated, precheckUserToken } from '../credentials.js';
-import { DEFAULT_LIMITS } from '../engine.js';
+import { DEFAULT_LIMITS, plannedPaths } from '../engine.js';
 import { renderHtmlReport } from '../html-report.js';
 import { loadEnvFile, readTextFile, requireString, RUNNER_VERSION, UsageError, type CliIO } from '../io.js';
 import { assertOutputSafe } from '../report.js';
@@ -146,6 +146,8 @@ export async function initCommand(argv: string[], io: CliIO): Promise<number> {
       `wrote ${out}`,
       `  ${schema}.${table}: owner column ${ownerColumn}, id column ${idColumn}, synthetic marker column ${markerColumn}`,
       '  two synthetic users and two records with fresh random ids; six assertions (owners read own, nobody else, anonymous none)',
+      `  request path: the Data API (/rest/v1/${table}) only. RPC functions and your API routes that return`,
+      '  these rows are NOT checked until you list them under "paths" (see examples/invoice-three-paths.rule.json)',
       '',
       'Next:',
       '  1. Review the file. The marker column must be a text column the fixtures can set (it holds synthetic-* values).',
@@ -227,6 +229,11 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
     else {
       rule = v.value;
       add(true, `rule ${rule.ruleId} is valid`);
+      const paths = plannedPaths(rule);
+      add(null, `request paths checked: ${paths.map((p) => `${p.id} (${p.route})`).join(', ')}`);
+      if (paths.length === 1) {
+        add(null, 'RPC functions and your own API routes are NOT checked by this rule; list them under "paths" to cover them');
+      }
     }
   }
   if (values.store) {
@@ -276,7 +283,7 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
 
   const reachable = parsedOrigin.ok && apiKey && apiCls === rule.target.apiKey.kind;
   if (reachable) {
-    const t = new BoundedFetchTransport({ allowedOrigin: origin, limits: { ...DEFAULT_LIMITS, maxRequests: 16 }, runSignal: new AbortController().signal, userAgent: `pyx-doctor/${RUNNER_VERSION}` });
+    const t = new BoundedFetchTransport({ allowedOrigins: [origin], limits: { ...DEFAULT_LIMITS, maxRequests: 16 }, runSignal: new AbortController().signal, userAgent: `pyx-doctor/${RUNNER_VERSION}` });
     const health = await t.send({ url: new URL('/auth/v1/health', origin), headers: { apikey: apiKey!, Accept: 'application/json' } });
     add(health.kind === 'response' && health.status === 200, `Auth service at ${origin}: ${health.kind === 'response' ? `HTTP ${health.status}` : health.code}`, 'Start the stack: `supabase start` (or `pnpm stack:up` in the Pyx repo).');
     const r = rule.resource;

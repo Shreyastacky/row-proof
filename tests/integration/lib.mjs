@@ -1,5 +1,5 @@
 // Shared helpers for the real-HTTP integration harness. Plain ESM, no build step.
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,15 +41,81 @@ export function readEnvFile(path) {
   return parseEnv(readFileSync(path, 'utf8'));
 }
 
-/** Apply SQL inside a LAB instance's own database container. Refuses anything else. */
-export function labSql(projectId, sql) {
-  if (!/^pyx-lab-[a-z0-9]+$/.test(projectId)) throw new Error('labSql refuses non-lab projects');
+function psqlIn(projectId, sql) {
   const container = `supabase_db_${projectId}`;
-  const r = sh('docker', ['exec', '-i', container, 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-q', '-f', '-'], {
+  return sh('docker', ['exec', '-i', container, 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-q', '-f', '-'], {
     input: sql,
     timeout: 60_000,
   });
+}
+
+/**
+ * Bind this harness to the lab instance it created: write a random nonce into the
+ * lab database (a schema the Data API does not expose). Every later mutation first
+ * proves, inside the same psql session, that it is talking to that database.
+ * A container name or URL alone is not enough: another stack could own them.
+ * Must be called again after `supabase db reset`, which recreates the database.
+ */
+export function bindLab(projectId) {
+  if (!/^pyx-lab-[a-z0-9]+$/.test(projectId)) throw new Error('bindLab refuses non-lab projects');
+  const nonce = randomUUID();
+  const r = psqlIn(
+    projectId,
+    `create schema if not exists pyx_lab; revoke all on schema pyx_lab from public;
+     create table if not exists pyx_lab.instance (nonce uuid not null);
+     delete from pyx_lab.instance; insert into pyx_lab.instance values ('${nonce}');`,
+  );
+  if (r.code !== 0) throw new Error(`lab binding failed: ${r.stderr.slice(0, 300)}`);
+  return nonce;
+}
+
+/** Apply SQL inside a LAB instance's own database, only if it holds this harness's nonce. */
+export function labSql(projectId, nonce, sql) {
+  if (!/^pyx-lab-[a-z0-9]+$/.test(projectId)) throw new Error('labSql refuses non-lab projects');
+  if (!/^[0-9a-f-]{36}$/.test(nonce ?? '')) throw new Error('labSql requires the instance nonce from bindLab');
+  const guard = `do $pyx$ begin
+    if not exists (select 1 from pyx_lab.instance where nonce = '${nonce}') then
+      raise exception 'pyx: this database is not the lab instance this harness created';
+    end if;
+  end $pyx$;\n`;
+  const r = psqlIn(projectId, guard + sql);
   if (r.code !== 0) throw new Error(`lab SQL failed: ${r.stderr.slice(0, 300)}`);
+}
+
+/** True when the lab project's own gateway container publishes the given loopback port. */
+export function labServesPort(projectId, port) {
+  const r = sh('docker', ['port', `supabase_kong_${projectId}`], { timeout: 30_000 });
+  return r.code === 0 && r.stdout.split('\n').some((l) => l.trim().endsWith(`:${port}`));
+}
+
+/** Start the demo app (examples/demo-app) on 127.0.0.1:8787 and wait until it listens. */
+export function startDemoApp(credentialsFile, mode) {
+  const child = spawn(process.execPath, [join(repo, 'examples', 'demo-app', 'server.mjs'), '--credentials', credentialsFile, '--mode', mode, '--port', '8787'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: process.env.PATH ?? '' },
+  });
+  let out = '';
+  const ready = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('demo app did not start')), 15_000);
+    child.stdout.on('data', (d) => {
+      out += d;
+      if (out.includes('listening on')) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    child.on('exit', (code) => {
+      clearTimeout(timer);
+      reject(new Error(`demo app exited (${code})`));
+    });
+  });
+  const stop = () =>
+    new Promise((resolve) => {
+      if (child.exitCode !== null) return resolve();
+      child.once('exit', () => resolve());
+      child.kill('SIGTERM');
+    });
+  return { ready, stop, output: () => out, child };
 }
 
 function b64url(o) {
