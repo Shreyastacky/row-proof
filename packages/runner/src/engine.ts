@@ -587,8 +587,14 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
       const fixtureOk = fixtureVerified.get(fixture.ref) === true;
       const isOwnerRead = e.expected === 'exact_fixture_returned';
       const success = out.status >= 200 && out.status < 300;
-      const hasMarker = mentions(out.body, fixture.marker);
-      const hasId = mentions(out.body, fixture.id, true);
+      // JSON may encode identifiers as Unicode escapes. Scan the decoded values too:
+      // a leaked record remains a leak regardless of its wire encoding.
+      let decoded = '';
+      if (isJson(out)) {
+        try { decoded = JSON.stringify(JSON.parse(out.body)); } catch { /* raw body remains available */ }
+      }
+      const hasMarker = mentions(out.body, fixture.marker) || mentions(decoded, fixture.marker);
+      const hasId = mentions(out.body, fixture.id, true) || mentions(decoded, fixture.id, true);
 
       if (!isOwnerRead && fixtureOk) {
         // The fixture is verified as another user's record, so any trace of it is a disclosure:

@@ -166,13 +166,14 @@ export function buildReproPack(result: RunResult, content: RuleContent): { readm
     let url: string;
     const headers: string[] = [];
     if (path.spec === null) {
-      url = `\${PYX_SUPABASE_URL}/rest/v1/${r.table}?select=${r.idColumn},${r.ownerColumn},${r.markerColumn}&${r.idColumn}=eq.${fixture.id}&limit=2`;
+      url = `${content.target.allowedOrigin}/rest/v1/${r.table}?select=${r.idColumn},${r.ownerColumn},${r.markerColumn}&${r.idColumn}=eq.${fixture.id}&limit=2`;
       headers.push(`-H "apikey: \${${apiKeyVar}}"`);
       if (r.schema !== 'public') headers.push(`-H ${sh(`Accept-Profile: ${r.schema}`)}`);
       if (bearerVar) headers.push(`-H "Authorization: Bearer \${${bearerVar}}"`);
     } else if (path.spec.kind === 'rpc') {
-      url = `\${PYX_SUPABASE_URL}/rest/v1/rpc/${path.spec.function}?${path.spec.idArg}=${fixture.id}`;
+      url = `${content.target.allowedOrigin}/rest/v1/rpc/${path.spec.function}?${path.spec.idArg}=${fixture.id}`;
       headers.push(`-H "apikey: \${${apiKeyVar}}"`);
+      if (r.schema !== 'public') headers.push(`-H ${sh(`Accept-Profile: ${r.schema}`)}`);
       if (bearerVar) headers.push(`-H "Authorization: Bearer \${${bearerVar}}"`);
     } else {
       url = `${path.spec.origin}${path.spec.pathTemplate.replace('{id}', fixture.id)}`;

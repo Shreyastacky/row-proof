@@ -11,6 +11,20 @@ import { approvedBaseline, byPath, control, runEngine, threePathRule } from './h
 const run = (fake: ReturnType<typeof createFake>) => runEngine(fake.fetch, { env: baseEnv(fake), baseline: approvedBaseline(threePathRule()) });
 
 describe('three request paths', () => {
+  it('detects JSON-escaped disclosures on app routes even with an approved denial status', async () => {
+    const fake = createFake();
+    fake.appPolicy = 'leaky';
+    const fetch: typeof fake.fetch = async (url, init) => {
+      const response = await fake.fetch(url, init);
+      if (url.origin !== APP_ORIGIN || response.status !== 200) return response;
+      const body = await response.text();
+      const escaped = body.replace(/[a-z]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+      return new Response(escaped, { status: 404, headers: { 'content-type': 'application/json' } });
+    };
+    const { result } = await runEngine(fetch, { env: baseEnv(fake), baseline: approvedBaseline(threePathRule()) });
+    expect(byPath(result)['app-invoice-route/a-reads-b']).toEqual({ status: 'failed', diagnostic: 'fixture_disclosed' });
+    expect(result.summary.exitCode).toBe(1);
+  });
   it('the example rule is valid and in scope', () => {
     expect(validateSchema('RuleContent', threePathRule()).ok).toBe(true);
     expect(checkRuleContentSemantics(threePathRule())).toEqual([]);

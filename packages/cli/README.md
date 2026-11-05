@@ -8,6 +8,8 @@ Pyx signs in as test users on a disposable local copy of your app and asks for r
 GAINED ACCESS  user-a can now read invoice-b  [app-invoice-route]
 ```
 
+Requires Node 22.12+, Docker, and the Supabase CLI. In your initialized Supabase project, start Docker and run `supabase start` before provisioning fixtures.
+
 ```bash
 npm install -g pyx-cli
 ```
@@ -27,7 +29,13 @@ pyx doctor --rule invoices-owner-read.rule.json --credentials .pyx/local.env
 The data owner approves the rule (`pyx propose`, `pyx diff`, `pyx approve --acknowledge <hash> --promote`). Then:
 
 ```bash
-pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --html report.html --requests ledger.json --compare-to last-release.json
+pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --out last-release.json --html report.html --requests ledger.json
+```
+
+On the next release, use a new output file and compare against the saved result:
+
+```bash
+pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --out next-release.json --compare-to last-release.json
 ```
 
 | Command | What it does |
@@ -41,7 +49,7 @@ pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/loc
 
 Exit codes: `0` every approved check held, `1` someone can read what they must not (or an owner lost access), `2` blocked or incomplete, never a pass.
 
-- Local disposable stacks and synthetic data only. No production access. Credentials never appear in any output.
+- Local disposable stacks and synthetic data only. No production access. Credential values are excluded from result artifacts and checked before output.
 - Scope: reads by id on user-owned records. Not a penetration test or a certification. See the [benchmark](https://github.com/Shreyastacky/row-proof/blob/HEAD/docs/BENCHMARK.md) for what it catches and misses.
 - Source, docs and the CI template: https://github.com/Shreyastacky/row-proof
 

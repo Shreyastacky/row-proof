@@ -2,7 +2,7 @@
 
 **Review who gained or lost access before each Supabase release.**
 
-Pyx turns *"Alice reads Alice's invoices, Bob never sees them"* into a versioned rule that the person responsible for the data approves. It then signs in as real test users on a disposable local stack built from your migrations and asks for records they must not see, through every door your app has: the Data API, your RPC functions and your own API routes. Each pull request gets an access review against the base branch:
+Pyx turns *"Alice reads Alice's invoices, Bob never sees them"* into a versioned rule that the person responsible for the data approves. It then signs in as real test users on a disposable local stack built from your migrations and asks for records they must not see, through the request paths you explicitly configure: the Data API, your RPC functions and your own API routes. Each pull request gets an access review against the base branch:
 
 ```text
 $ pyx compare examples/results/release-41-pass.json examples/results/release-42-fail.json --before-label release-41 --after-label release-42
@@ -20,10 +20,10 @@ Those two results are real runs against the demo stack: release 42 is the demo a
 
 If anyone can read what they must not, the run exits **1**, names the record, the user, the request path, the rule revision and the commit, and `pyx repro` writes a curl script that shows it happening.
 
-- **Every door, not just the table.** Security-definer RPC functions and server routes that use the secret key skip row-level security. Pyx checks them with the same users and records.
+- **Check configured routes as well as the table.** Security-definer RPC functions and server routes that use the secret key skip row-level security. Pyx checks them with the same users and records.
 - **Approved intent, separate from code.** The owner approves an exact content hash. A pull request can't quietly redefine "correct": CI reads the baseline from your protected branch.
-- **Fails closed.** Owner reads are positive controls. Timeouts, 401/403/404/429, redirects and malformed responses are *blocked*, never a pass.
-- **No production access, no customer data.** Synthetic users and records only. Credentials never appear in any output.
+- **Fails closed.** Owner reads are positive controls. Timeouts, rate limits, redirects and malformed Data API responses are *blocked*. App routes may use explicitly approved denial statuses; RPC permission errors have separate supported semantics.
+- **No production access, no customer data.** Synthetic users and records only. Credential values are excluded from result artifacts and checked before output.
 - **Nothing hidden.** `--requests` writes a ledger of every request sent (purpose, identity by name, URL, status). Any result file can be recounted and compared in the browser with the [result verifier](apps/web/verify.html), which uses the CLI's own code. See the [trust page](apps/web/trust.html).
 - **Evidence people can read.** HTML reports (white-label, print-to-PDF), JUnit for CI, and Markdown summaries for pull requests.
 
@@ -31,7 +31,9 @@ Website: [`apps/web`](apps/web) (static, deploy anywhere). Sample report: [`apps
 
 ## Quick start
 
-Requires Node 22.12+, Docker and the Supabase CLI, in a Supabase project.
+Requires Node 22.12+, Docker and the Supabase CLI, in an initialized Supabase project with your table migrations. Start Docker first. Commands below use a disposable local stack, never your hosted database.
+
+The npm command below applies once `pyx-cli` is published. To install this checkout before publication, run `pnpm install --frozen-lockfile`, `pnpm package`, then `npm install -g ./packages/cli`. See [release checks](docs/RELEASING.md).
 
 ```bash
 npm install -g pyx-cli
@@ -66,7 +68,7 @@ pyx approve --proposal proposal.json --store .pyx/approvals --approver owner --a
 ```
 
 ```bash
-pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --html report.html --junit junit.xml
+pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --out before.json --html report.html --junit junit.xml
 ```
 
 Then, on the next release:

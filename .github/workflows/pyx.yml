@@ -18,12 +18,13 @@ on:
   push:
     branches: [main, 'claude/**']
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: pyx-${{ github.ref }}
+  group: pyx-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

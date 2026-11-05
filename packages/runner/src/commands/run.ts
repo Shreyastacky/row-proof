@@ -153,6 +153,15 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   const runId = randomUUID();
   const outPath = resolve(io.cwd, values.out ?? `artifacts/pyx/${runId}.json`);
   const extraOutputs = [values.html, values.junit, values.requests].filter((p): p is string => typeof p === 'string').map((p) => resolve(io.cwd, p));
+  const outputPaths = [outPath, ...extraOutputs, ...(values['summary-md'] ? [resolve(io.cwd, values['summary-md'])] : [])];
+  const pathKey = (p: string) => process.platform === 'win32' ? p.toLowerCase() : p;
+  if (new Set(outputPaths.map(pathKey)).size !== outputPaths.length) {
+    throw new UsageError('output paths must be distinct');
+  }
+  const inputs = [values.credentials, values['compare-to']].filter((p): p is string => typeof p === 'string');
+  if (inputs.some((p) => outputPaths.map(pathKey).includes(pathKey(resolve(io.cwd, p))))) {
+    throw new UsageError('output paths must not overwrite credentials or the previous result');
+  }
   if (!values.force) {
     for (const p of [outPath, ...extraOutputs]) {
       if (existsSync(p)) throw new UsageError(`output file already exists: ${p} (use --force to replace it)`);
@@ -198,6 +207,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   process.once('SIGINT', onSignal);
   process.once('SIGTERM', onSignal);
   deps.signal?.addEventListener('abort', onSignal, { once: true });
+  if (deps.signal?.aborted) onSignal();
 
   const allowedOrigins = baseline ? approvedOrigins(baseline.revision.content) : ['http://127.0.0.1:1'];
   let output;
@@ -225,6 +235,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
     clearTimeout(deadline);
     process.removeListener('SIGINT', onSignal);
     process.removeListener('SIGTERM', onSignal);
+    deps.signal?.removeEventListener('abort', onSignal);
   }
 
   let text: string;
@@ -243,7 +254,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   }
   // Print first: a write failure must not hide what was observed.
   io.stdout(summary);
-  const exitCode = output.result.summary.exitCode;
+  let exitCode = output.result.summary.exitCode;
   try {
     await writeResultFile(outPath, text, values.force === true);
     if (values.html) {
@@ -277,6 +288,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
           after: output.result.source.commit?.slice(0, 10) ?? 'this run',
         });
         const text = renderComparison(c);
+        exitCode = exitCode === 1 || c.exitCode === 1 ? 1 : Math.max(exitCode, c.exitCode) as 0 | 2;
         assertOutputSafe(text, output.sensitiveValues);
         io.stdout(`\n${text}`);
         if (mdPath) await appendFile(resolve(io.cwd, mdPath), renderComparisonMarkdown(c), 'utf8');

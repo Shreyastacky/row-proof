@@ -108,6 +108,33 @@ describe('approval workflow', () => {
 });
 
 describe('run command', () => {
+  it('returns incomplete when the comparison finds a dropped path, even if this run passes', async () => {
+    await approveExample();
+    const fake = createFake();
+    const args = ['--store', 'store', '--rule', 'invoice-owner-read'];
+    expect(await runCommand([...args, '--out', 'before.json'], io(baseEnv(fake)), { fetchImpl: fake.fetch })).toBe(0);
+    const previous = JSON.parse(await readFile(join(dir, 'before.json'), 'utf8')) as RunResult;
+    previous.paths.push({ id: 'old-route', kind: 'http', route: 'http://127.0.0.1:8787/api/invoices/{id}' });
+    previous.assertions.push(...previous.assertions.map((a) => ({ ...a, path: 'old-route' })));
+    previous.summary.counts.passed = previous.assertions.length;
+    await writeFile(join(dir, 'before.json'), JSON.stringify(previous));
+    expect(await runCommand([...args, '--out', 'after.json', '--compare-to', 'before.json'], io(baseEnv(fake)), { fetchImpl: fake.fetch })).toBe(2);
+    expect(out.join('')).toContain('dropped');
+  });
+  it('rejects colliding outputs before sending requests, even with --force', async () => {
+    const fake = createFake();
+    await expect(runCommand(['--store', 'store', '--rule', 'invoice-owner-read', '--out', 'same.json', '--html', './same.json', '--force'], io(baseEnv(fake)), { fetchImpl: fake.fetch })).rejects.toThrow('output paths must be distinct');
+    expect(fake.requests).toHaveLength(0);
+  });
+
+  it('honors cancellation that happened before the command started', async () => {
+    await approveExample();
+    const fake = createFake();
+    const controller = new AbortController();
+    controller.abort();
+    expect(await runCommand(['--store', 'store', '--rule', 'invoice-owner-read', '--out', 'cancelled.json'], io(baseEnv(fake)), { fetchImpl: fake.fetch, signal: controller.signal })).toBe(2);
+    expect(fake.requests).toHaveLength(0);
+  });
   it('writes a schema-valid result, prints a summary without secrets, and exits 0 when healthy', async () => {
     await approveExample();
     const fake = createFake();

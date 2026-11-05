@@ -162,15 +162,27 @@ describe('read-only approved baseline reader', () => {
     await expect(reader.readActive(rev.ruleId, { revision: 1, contentHash: rev.contentHash })).resolves.toBeTruthy();
   });
 
-  it('refuses symlinks, oversized files, malformed JSON, missing files and bad rule ids', async () => {
+  it('refuses symlinks', async (ctx) => {
     const rev = await seed();
     const outside = join(store, 'outside.json');
     await writeFile(outside, JSON.stringify(rev));
     const revPath = join(store, storePaths.revision(rev.ruleId, 1));
     await rm(revPath);
-    await symlink(outside, revPath);
+    try {
+      await symlink(outside, revPath);
+    } catch (e) {
+      if (process.platform === 'win32' && (e as NodeJS.ErrnoException).code === 'EPERM') {
+        ctx.skip('Windows requires Developer Mode or symlink privileges; Linux CI exercises this check');
+        return;
+      }
+      throw e;
+    }
     await expectCode(reader.readRevision(rev.ruleId, 1), 'symlink_rejected');
-    await rm(revPath);
+  });
+
+  it('refuses oversized files, malformed JSON, missing files and bad rule ids', async () => {
+    const rev = await seed();
+    const revPath = join(store, storePaths.revision(rev.ruleId, 1));
     await writeFile(revPath, ' '.repeat(300 * 1024));
     await expectCode(reader.readRevision(rev.ruleId, 1), 'too_large');
     await writeFile(revPath, '{"kind":"ApprovedRevision","kind":"ApprovedRevision"}');

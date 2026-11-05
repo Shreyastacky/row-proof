@@ -83,7 +83,7 @@ function violates(expected: AssertionResult['expected'], access: boolean): boole
 }
 
 function classify(expected: AssertionResult['expected'], before: boolean | null, after: boolean | null): CellChangeKind {
-  if (after === null) return before === null ? 'unchanged' : 'now_unverified';
+  if (after === null) return 'now_unverified';
   if (violates(expected, after)) {
     if (before !== null && violates(expected, before)) return 'still_violating';
     return expected === 'fixture_not_disclosed' ? 'gained_access' : 'lost_access';
@@ -131,7 +131,7 @@ export function compareResults(before: RunResult, after: RunResult, labels: { be
     const base = { path: x.path, actorRef: x.actorRef, fixtureRef: x.fixtureRef, expected: x.expected, before: y?.status ?? null, after: x.status };
     if (!y) {
       const acc = accessOf(x);
-      changes.push({ ...base, change: acc !== null && violates(x.expected, acc) ? (x.expected === 'fixture_not_disclosed' ? 'gained_access' : 'lost_access') : 'added' });
+      changes.push({ ...base, change: acc === null ? 'now_unverified' : violates(x.expected, acc) ? (x.expected === 'fixture_not_disclosed' ? 'gained_access' : 'lost_access') : 'added' });
     } else if (y.expected !== x.expected) {
       // The approved intent for this cell changed between the runs: report it, never hide it.
       changes.push({ ...base, change: 'now_unverified' });

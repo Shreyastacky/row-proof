@@ -1,7 +1,7 @@
 // Bundles the Pyx CLI (runner + contracts + fixture tooling) into one ESM file for npm.
 // `--smoke` additionally packs the package and runs it from a clean temporary install.
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,13 +40,24 @@ cpSync(join(repo, 'LICENSE.md'), join(here, 'LICENSE.md'));
 console.log(`built dist/pyx.mjs (${(text.length / 1024).toFixed(0)} KiB)`);
 
 if (process.argv.includes('--smoke')) {
+  // Invoke npm's JavaScript entry point, not a .cmd shim or an unquoted shell.
+  const npmBesideNode = join(dirname(process.execPath), 'npm');
+  const npmCli = [process.env.npm_execpath, join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'),
+    ...(existsSync(npmBesideNode) ? [realpathSync(npmBesideNode)] : [])]
+    .find((p) => p && p.endsWith('npm-cli.js') && existsSync(p));
+  if (!npmCli) throw new Error('npm-cli.js not found beside Node; install npm with Node to smoke-test packaging');
   const tmp = mkdtempSync(join(tmpdir(), 'pyx-pack-'));
   try {
-    const tgz = execFileSync('npm', ['pack', '--silent', '--pack-destination', tmp], { cwd: here }).toString().trim().split('\n').pop();
-    execFileSync('npm', ['init', '-y'], { cwd: tmp, stdio: 'ignore' });
-    execFileSync('npm', ['install', '--silent', '--no-audit', '--no-fund', join(tmp, tgz)], { cwd: tmp, stdio: 'inherit' });
-    const bin = join(tmp, 'node_modules/.bin/pyx');
-    const run = (...a) => execFileSync(bin, a, { cwd: tmp }).toString();
+    // A clean install must not inherit a developer's registry/auth/script settings.
+    const config = join(tmp, 'empty.npmrc');
+    writeFileSync(config, '');
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^npm_config_/i.test(k)));
+    const npm = (args, options) => execFileSync(process.execPath, [npmCli, '--userconfig', config, ...args], { ...options, env });
+    const tgz = npm(['pack', '--silent', '--pack-destination', tmp], { cwd: here }).toString().trim().split('\n').pop().trim();
+    npm(['init', '-y'], { cwd: tmp, stdio: 'ignore' });
+    npm(['install', '--no-audit', '--no-fund', '--offline', join(tmp, tgz)], { cwd: tmp, stdio: 'inherit' });
+    const bin = join(tmp, 'node_modules/pyx-cli/dist/pyx.mjs');
+    const run = (...a) => execFileSync(process.execPath, [bin, ...a], { cwd: tmp }).toString();
     console.log(run('--version').trim());
     run('init', '--table', 'invoices', '--owner-column', 'owner_id', '--marker-column', 'title', '--out', 'r.json');
     console.log(run('validate', 'r.json').trim());

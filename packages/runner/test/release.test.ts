@@ -18,6 +18,13 @@ async function runWith(setup: (f: ReturnType<typeof createFake>) => void) {
 }
 
 describe('pyx compare', () => {
+  it('keeps checks unverified when both runs are blocked', async () => {
+    const blocked = await runWith((f) => f.rows.splice(1, 1));
+    const c = compareResults(blocked, blocked, { before: 'a', after: 'b' });
+    expect(c.counts.now_unverified).toBeGreaterThan(0);
+    expect(c.changes.filter((x) => x.after === 'blocked').every((x) => x.change === 'now_unverified')).toBe(true);
+    expect(c.exitCode).toBe(2);
+  });
   it('names exactly who gained access, on which path', async () => {
     const before = await runWith(() => undefined);
     const after = await runWith((f) => (f.rpcPolicy = 'leaky'));
@@ -96,6 +103,8 @@ describe('pyx repro', () => {
     const pack = buildReproPack(result, threePathRule());
     expect(pack.failing).toBe(6);
     expect(pack.script).toContain('/rest/v1/rpc/get_invoice?p_id=1a5e0000-0000-4000-8000-00000000000b');
+    expect(pack.script).not.toContain('${PYX_SUPABASE_URL}');
+    expect(pack.script).toContain('http://127.0.0.1:54321/rest/v1/rpc/');
     expect(pack.script).toContain('Authorization: Bearer ${PYX_USER_A_TOKEN}');
     expect(pack.script).toContain('http://127.0.0.1:8787/api/invoices/');
     expect(pack.readme).toContain('## a-reads-b on `rpc-get-invoice`');

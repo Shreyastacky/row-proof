@@ -7,13 +7,13 @@
 // scripts/render-site-images.mjs because they need a browser.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const web = join(repo, 'apps', 'web');
-const { THEME_CSS, LOGO_SVG } = await import(join(repo, 'packages/runner/dist/design/theme.js'));
-const { renderHtmlReport } = await import(join(repo, 'packages/runner/dist/html-report.js'));
-const { validateSchema } = await import(join(repo, 'packages/contracts/dist/index.js'));
+const { THEME_CSS, LOGO_SVG } = await import(pathToFileURL(join(repo, 'packages/runner/dist/design/theme.js')).href);
+const { renderHtmlReport } = await import(pathToFileURL(join(repo, 'packages/runner/dist/html-report.js')).href);
+const { validateSchema } = await import(pathToFileURL(join(repo, 'packages/contracts/dist/index.js')).href);
 
 mkdirSync(join(web, 'assets'), { recursive: true });
 writeFileSync(join(web, 'assets', 'theme.css'), `/* GENERATED from packages/runner/src/design/theme.ts by scripts/build-site.mjs. Do not edit. */\n${THEME_CSS.trim()}\n`);
@@ -34,7 +34,7 @@ const report = renderHtmlReport(results, { client: 'Invoice Portal (demo)', prep
 writeFileSync(join(web, 'sample-report.html'), report);
 
 // In-browser verifier: the CLI's compare/outcome code bundled for apps/web/verify.html.
-const { build } = await import(join(repo, 'packages/cli/node_modules/esbuild/lib/main.js'));
+const { build } = await import(pathToFileURL(join(repo, 'packages/cli/node_modules/esbuild/lib/main.js')).href);
 await build({
   entryPoints: [join(repo, 'scripts/web/verify-entry.ts')],
   bundle: true,
