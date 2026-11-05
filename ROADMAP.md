@@ -67,6 +67,22 @@ Driven by the external design audit (`RowProof_audit_and_premium_strategy.md`). 
 - **Next (audit rank 3):** membership-removal and session tests, so a user removed from a team loses access on every path.
 - **Later (rank 5):** agency release history and client sign-off.
 
+### Website v3 and trust features (5 November 2026)
+
+- **Research-driven redesign ([D17](docs/DECISIONS.md)).** The site was rebuilt around published critiques of generated-looking sites and Apple's Liquid Glass guidance:
+  - neutral near-black canvas, with glass only on the nav and the hero lens;
+  - an editorial grid, and tables instead of card rows;
+  - real CLI output next to the claims.
+
+  The hero is a ledger of 18 requests that all say "200 OK". A liquid-glass lens reveals the two leaks.
+- **Trust features:**
+  - `pyx run --requests` request ledger, also shown in the HTML report ([D18](docs/DECISIONS.md));
+  - `apps/web/verify.html`, a result verifier that recounts a result, flags a tampered verdict and compares two releases in the browser with the CLI's own code;
+  - `apps/web/trust.html`, which shows a real ledger from an integration run;
+  - `/.well-known/security.txt`;
+  - `.github/workflows/release.yml`, which publishes to npm with provenance on `v*` tags. It needs a trusted publisher or an `NPM_TOKEN`.
+- **No invented social proof.** There is a founding-customer offer instead. The strongest missing trust signal is a real founder section with a name and face, which only the owner can add.
+
 ### Maintainer actions this work cannot do
 
 0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark clearance search on "Pyx". Astral (the makers of `uv`) launched a Python package registry named **pyx** in 2025, so expect search competition and possible objections in the developer-tools class ([D8](docs/DECISIONS.md)).

@@ -1,0 +1,138 @@
+{
+  "kind": "PyxRequestLedger",
+  "runId": "f65f9bf4-4825-45ac-ab11-55179a623553",
+  "requests": [
+    {
+      "n": 1,
+      "purpose": "fixture-check",
+      "as": "setup-key",
+      "path": null,
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=in.%281a5e0000-0000-4000-8000-00000000000a%2C1a5e0000-0000-4000-8000-00000000000b%29&limit=3",
+      "status": 200,
+      "failure": null,
+      "bytes": 274,
+      "ms": 24
+    },
+    {
+      "n": 2,
+      "purpose": "identity",
+      "as": "user-a",
+      "path": null,
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/auth/v1/user",
+      "status": 200,
+      "failure": null,
+      "bytes": 1082,
+      "ms": 6
+    },
+    {
+      "n": 3,
+      "purpose": "identity",
+      "as": "user-b",
+      "path": null,
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/auth/v1/user",
+      "status": 200,
+      "failure": null,
+      "bytes": 1082,
+      "ms": 4
+    },
+    {
+      "n": 4,
+      "purpose": "anonymous-context",
+      "as": "anonymous",
+      "path": null,
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/auth/v1/user",
+      "status": 403,
+      "failure": null,
+      "bytes": 76,
+      "ms": 2
+    },
+    {
+      "n": 5,
+      "purpose": "read",
+      "as": "user-a",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000a&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 136,
+      "ms": 29
+    },
+    {
+      "n": 6,
+      "purpose": "read",
+      "as": "user-b",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000b&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 136,
+      "ms": 15
+    },
+    {
+      "n": 7,
+      "purpose": "read",
+      "as": "user-a",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000b&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 2,
+      "ms": 3
+    },
+    {
+      "n": 8,
+      "purpose": "read",
+      "as": "user-b",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000a&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 2,
+      "ms": 3
+    },
+    {
+      "n": 9,
+      "purpose": "read",
+      "as": "anonymous",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000a&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 2,
+      "ms": 3
+    },
+    {
+      "n": 10,
+      "purpose": "read",
+      "as": "anonymous",
+      "path": "data-api",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=eq.1a5e0000-0000-4000-8000-00000000000b&limit=2",
+      "status": 200,
+      "failure": null,
+      "bytes": 2,
+      "ms": 3
+    },
+    {
+      "n": 11,
+      "purpose": "fixture-recheck",
+      "as": "setup-key",
+      "path": null,
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/rest/v1/invoices?select=id%2Cowner_id%2Cfixture_marker&id=in.%281a5e0000-0000-4000-8000-00000000000a%2C1a5e0000-0000-4000-8000-00000000000b%29&limit=3",
+      "status": 200,
+      "failure": null,
+      "bytes": 274,
+      "ms": 2
+    }
+  ]
+}

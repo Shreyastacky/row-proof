@@ -5,7 +5,7 @@ Each row is one deliberate change made to a throwaway local Supabase stack, foll
 `tests/integration/harness.mjs`; regenerate this page with `pnpm integration` and
 `node scripts/build-benchmark.mjs`.
 
-Run: 2026-11-05T06:41:10.695Z · Node v22.23.4 · Docker 29.9.2 · Supabase CLI 2.122.1
+Run: 2026-11-05T07:20:37.525Z · Node v22.23.4 · Docker 29.9.2 · Supabase CLI 2.122.1
 
 | | Count |
 | --- | --- |

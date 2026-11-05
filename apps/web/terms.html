@@ -2,42 +2,57 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
 <title>Terms · Pyx</title>
-<meta name="description" content="Terms for Pyx setup and monitoring services.">
+<meta name="description" content="Terms for Pyx setup and release review services.">
+<meta name="theme-color" content="#0a0a0b">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/theme.css">
 <link rel="stylesheet" href="assets/site.css">
-</head>
-<body class="rp">
-<main class="rp-wrap" style="max-width:760px;padding:64px 0">
-  <a class="rp-brand" href="index.html">Pyx</a>
-  <div class="rp-glass rp-pad" style="margin-top:28px">
-    <h1 class="rp-h2">Terms of service</h1>
-    <p class="rp-muted">These terms cover paid Pyx services: setup, monthly release reviews and agency plans. The Pyx CLI itself is licensed separately under FSL-1.1-ALv2 (see the source repository).</p>
-
-    <h2 class="rp-h3">What you get</h2>
-    <p class="rp-muted">We write access rules with you, you approve them, and we connect Pyx to your continuous integration so every pull request is checked against those rules. Each plan lists its tables, request paths and turnaround on the pricing section of the home page. Work starts when payment clears and you have given us access to the repository you choose.</p>
-
-    <h2 class="rp-h3">What we never need</h2>
-    <p class="rp-muted">We work only on disposable local stacks built from your migrations, with synthetic users and records. We never ask for production credentials, customer data or access to your live project. Please do not send them. If you do, we delete them and tell you.</p>
-
-    <h2 class="rp-h3">What a result means</h2>
-    <p class="rp-muted">A pass means the approved checks held on the named stack at the stated time. It is not a penetration test, a security certification or a guarantee about production or about anything the rules do not list. You remain responsible for your application's security and for the rules you approve.</p>
-
-    <h2 class="rp-h3">Payment, cancellation and refunds</h2>
-    <p class="rp-muted">Setup is paid once, up front. If we have not delivered the setup within ten business days of receiving repository access, you may ask for a full refund. Monthly plans renew each month and can be cancelled at any time; cancellation takes effect at the end of the paid month and we do not charge again.</p>
-
-    <h2 class="rp-h3">Confidentiality</h2>
-    <p class="rp-muted">We treat your code, schema and reports as confidential, use them only to deliver the service, and delete our working copies within 30 days after the engagement ends unless you ask us to keep them.</p>
-
-    <h2 class="rp-h3">Liability</h2>
-    <p class="rp-muted">To the extent the law allows, our total liability for any claim relating to the services is limited to the amount you paid us in the three months before the claim.</p>
-
-    <p class="rp-faint" style="font-size:13px;margin-top:28px">Questions: <a href="#" data-email>contact us</a>.</p>
-  </div>
-</main>
 <script src="config.js" defer></script>
 <script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav">
+  <div class="nav__bar">
+    <a class="brand" href="index.html" aria-label="Pyx home"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Pyx</a>
+    <nav class="nav__links" aria-label="Primary"><a href="index.html#review">Product</a><a href="index.html#proof">Proof</a><a href="trust.html">Trust</a><a href="index.html#pricing">Pricing</a></nav>
+    <a class="btn btn--sm" href="index.html#pricing">Book a setup</a>
+  </div>
+</header>
+<main id="main" class="doc">
+  <div class="wrap doc__head"><p class="label">Terms of service</p><h1>Plain terms for paid work.</h1></div>
+  <div class="wrap sec__grid" style="margin-top:56px"><p class="label sec__label">Updated 5 November 2026</p><div class="sec__body prose">
+    <p>These terms cover paid Pyx services: setup, monthly release reviews and agency plans. The Pyx CLI itself is licensed separately under FSL-1.1-ALv2 (see the source repository).</p>
+
+    <h2>What you get</h2>
+    <p>We write access rules with you, you approve them, and we connect Pyx to your continuous integration so every pull request is checked against those rules. Each plan lists its tables, request paths and turnaround on the pricing section of the home page. Work starts when payment clears and you have given us access to the repository you choose.</p>
+
+    <h2>What we never need</h2>
+    <p>We work only on disposable local stacks built from your migrations, with synthetic users and records. We never ask for production credentials, customer data or access to your live project. Please do not send them. If you do, we delete them and tell you.</p>
+
+    <h2>What a result means</h2>
+    <p>A pass means the approved checks held on the named stack at the stated time. It is not a penetration test, a security certification or a guarantee about production or about anything the rules do not list. You remain responsible for your application's security and for the rules you approve.</p>
+
+    <h2>Payment, cancellation and refunds</h2>
+    <p>Setup is paid once, up front. If we have not delivered the setup within ten business days of receiving repository access, you may ask for a full refund. Monthly plans renew each month and can be cancelled at any time; cancellation takes effect at the end of the paid month and we do not charge again.</p>
+
+    <h2>Confidentiality</h2>
+    <p>We treat your code, schema and reports as confidential, use them only to deliver the service, and delete our working copies within 30 days after the engagement ends unless you ask us to keep them.</p>
+
+    <h2>Liability</h2>
+    <p>To the extent the law allows, our total liability for any claim relating to the services is limited to the amount you paid us in the three months before the claim.</p>
+
+    <p>Questions: <a href="#" data-email>contact us</a>.</p>
+  </div></div>
+</main>
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div class="foot__brand">Pyx</div>
+    <nav aria-label="Footer"><a href="verify.html">Verify a result</a><a href="trust.html">Trust</a><a href="index.html#proof">Benchmark</a><a href="sample-report.html">Sample report</a><a href="#" data-repo>Source</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="#" data-email>Contact</a></nav>
+    <p class="foot__small">© <span data-year>2026</span> Pyx. Synthetic test data only. Not a penetration test or a certification.</p>
+  </div>
+</footer>
 </body>
 </html>

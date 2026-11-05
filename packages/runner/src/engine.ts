@@ -74,10 +74,30 @@ export interface RunContext {
   now: () => Date;
 }
 
+/**
+ * One request the runner sent, for the request ledger. Holds no header values:
+ * `as` names which identity was used, never the credential itself. URLs carry
+ * only the origin, path, column names and synthetic fixture ids.
+ */
+export interface RequestRecord {
+  n: number;
+  purpose: 'fixture-check' | 'identity' | 'anonymous-context' | 'read' | 'fixture-recheck';
+  as: string;
+  path: string | null;
+  method: 'GET';
+  url: string;
+  status: number | null;
+  failure: string | null;
+  bytes: number;
+  ms: number;
+}
+
 export interface RunOutput {
   result: RunResult;
   /** Credential values loaded for this run; callers use them to prove output contains none. */
   sensitiveValues: string[];
+  /** Every request sent, in order. Written with `pyx run --requests` and shown in the HTML report. */
+  requests: RequestRecord[];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -224,6 +244,24 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
   const startedAt = ctx.now();
   const controls: ControlResult[] = [];
   const sensitive: string[] = [];
+  const ledger: RequestRecord[] = [];
+  const send = async (purpose: RequestRecord['purpose'], as: string, path: string | null, req: { url: URL; headers: Record<string, string> }) => {
+    const t0 = performance.now();
+    const out = await ctx.transport.send(req);
+    ledger.push({
+      n: ledger.length + 1,
+      purpose,
+      as,
+      path,
+      method: 'GET',
+      url: `${req.url.origin}${req.url.pathname}${req.url.search}`,
+      status: out.status,
+      failure: out.kind === 'failure' ? out.code : null,
+      bytes: out.kind === 'response' ? Buffer.byteLength(out.body, 'utf8') : 0,
+      ms: Math.round(performance.now() - t0),
+    });
+    return out;
+  };
 
   const finish = (assertions: AssertionResult[], content: RuleContent | null): RunOutput => {
     const finishedAt = ctx.now();
@@ -256,7 +294,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
       freshness: { state: 'unknown', reason: 'no_dependency_observer', dependencies: [] },
       provenance: { approvalLevel: rev?.approval.provenance.level ?? null, executionContext: ctx.executionContext },
     };
-    return { result, sensitiveValues: sensitive };
+    return { result, sensitiveValues: sensitive, requests: ledger };
   };
 
   const assertionFor = (
@@ -367,7 +405,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
   controls.push({ id: 'setup-key', status: setupDiag === 'ok' ? 'ok' : 'failed', diagnostic: setupDiag });
 
   /** Read every fixture through the setup channel; returns a per-fixture verdict. */
-  const readFixtures = async (key: string): Promise<Map<string, DiagnosticCode>> => {
+  const readFixtures = async (key: string, purpose: 'fixture-check' | 'fixture-recheck'): Promise<Map<string, DiagnosticCode>> => {
     const verdict = new Map<string, DiagnosticCode>();
     const all = (d: DiagnosticCode) => {
       for (const f of content.fixtures) verdict.set(f.ref, d);
@@ -376,7 +414,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
     const headers: Record<string, string> = { apikey: key, Accept: 'application/json', ...profileHeaders(content.resource) };
     // Legacy service_role keys are JWTs and must also be sent as the bearer.
     if (classifyApiKey(key) === 'legacy-service-role') headers.Authorization = `Bearer ${key}`;
-    const out = await ctx.transport.send({ url: buildReadUrl(origin, content.resource, content.fixtures.map((f) => f.id)), headers });
+    const out = await send(purpose, 'setup-key', null, { url: buildReadUrl(origin, content.resource, content.fixtures.map((f) => f.id)), headers });
     if (out.kind === 'failure') return all(transportDiagnostic(out.code));
     if (out.status !== 200) return all(statusDiagnostic(out.status));
     const parsed = parseRows(out, content.resource);
@@ -397,7 +435,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
       fixtureVerified.set(f.ref, false);
     }
   } else {
-    const verdict = await readFixtures(setupKey);
+    const verdict = await readFixtures(setupKey, 'fixture-check');
     for (const f of content.fixtures) {
       const d = verdict.get(f.ref)!;
       controls.push({ id: `fixture:${f.ref}`, status: d === 'ok' ? 'ok' : 'failed', diagnostic: d });
@@ -422,7 +460,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
       control('failed', pre.code);
       continue;
     }
-    const out = await ctx.transport.send({ url: new URL('/auth/v1/user', origin), headers: appHeaders(token) });
+    const out = await send('identity', actor.ref, null, { url: new URL('/auth/v1/user', origin), headers: appHeaders(token) });
     if (out.kind === 'failure') {
       control('failed', transportDiagnostic(out.code));
       continue;
@@ -491,7 +529,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
   // The anonymous headers must not identify a user. Auth must refuse them.
   let anonymousOk = false;
   if (anonActors.length > 0) {
-    const out = await ctx.transport.send({ url: new URL('/auth/v1/user', origin), headers: appHeaders(anonBearer) });
+    const out = await send('anonymous-context', anonActors[0]!.ref, null, { url: new URL('/auth/v1/user', origin), headers: appHeaders(anonBearer) });
     let diag: DiagnosticCode;
     if (out.kind === 'failure') diag = transportDiagnostic(out.code);
     else if (out.status === 401 || out.status === 403) diag = 'ok';
@@ -544,7 +582,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
         if (actor.kind === 'authenticated') headers.Authorization = `Bearer ${bearer}`;
       }
 
-      const out = await ctx.transport.send({ url, headers });
+      const out = await send('read', actor.ref, path.id, { url, headers });
       if (out.kind === 'failure') return at('blocked', transportDiagnostic(out.code), 'no_response', out.status);
       const fixtureOk = fixtureVerified.get(fixture.ref) === true;
       const isOwnerRead = e.expected === 'exact_fixture_returned';
@@ -643,7 +681,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
   // ---- 8. Fixture stability ------------------------------------------------
   // A fixture deleted or re-owned mid-run turns a later empty read into a false denial.
   if (setupDiag === 'ok' && setupKey) {
-    const verdict = await readFixtures(setupKey);
+    const verdict = await readFixtures(setupKey, 'fixture-recheck');
     // Only fixtures verified at the start can become unstable; the others already block their assertions.
     const unstable = content.fixtures.filter((f) => fixtureVerified.get(f.ref) === true).map((f) => verdict.get(f.ref)!).find((d) => d !== 'ok');
     const diag: DiagnosticCode = unstable === undefined ? 'ok' : unstable.startsWith('fixture_') ? 'fixture_unstable' : unstable;

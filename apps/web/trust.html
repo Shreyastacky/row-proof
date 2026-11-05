@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Trust · Pyx</title>
+<meta name="description" content="What Pyx touches and what it never touches, every request it sends, how to check a result yourself, the source, the supply chain, and how to report a problem.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<script src="config.js" defer></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav">
+  <div class="nav__bar">
+    <a class="brand" href="index.html" aria-label="Pyx home"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Pyx</a>
+    <nav class="nav__links" aria-label="Primary"><a href="index.html#review">Product</a><a href="index.html#proof">Proof</a><a href="trust.html" aria-current="page">Trust</a><a href="index.html#pricing">Pricing</a></nav>
+    <a class="btn btn--sm" href="index.html#pricing">Book a setup</a>
+  </div>
+</header>
+
+<main id="main" class="doc">
+  <div class="wrap doc__head">
+    <p class="label">Trust</p>
+    <h1>You shouldn’t have to take a security tool’s word for anything.</h1>
+    <p class="lede">So here is what Pyx touches, every request it sends, how to check a result without us, and where the code lives. Where something isn’t in place yet, it says so.</p>
+  </div>
+
+  <section class="sec" id="production">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">What it touches</p>
+      <div class="sec__body prose">
+        <h2>Production stays closed.</h2>
+        <dl class="kv">
+          <dt>Your live Supabase project</dt><dd>Never. Pyx refuses any target that isn’t a loopback address on a disposable local stack.</dd>
+          <dt>Your customers’ data</dt><dd>Never. Tests use synthetic users and records that Pyx creates, marked <code>synthetic-…</code>. It refuses to change any user or row it didn’t create.</dd>
+          <dt>A local copy of your database</dt><dd>Yes. Started from your migrations on your machine or CI runner, and thrown away afterwards.</dd>
+          <dt>Your API routes</dt><dd>Only the ones a rule lists, only on a loopback origin, and only with the test user’s own token. Supabase keys never leave the Supabase origin.</dd>
+          <dt>Our servers</dt><dd>Nothing. The CLI has no account, no telemetry and no phone-home. Results are files you choose where to write.</dd>
+          <dt>Credentials</dt><dd>Read from a file you pass with <code>--credentials</code>, kept out of the process environment, and never written to any output. Every result, report and ledger is scanned for them before it is written.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="ledger">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Every request</p>
+      <div class="sec__body prose">
+        <h2>Every request on the record.</h2>
+        <p>Run with <code>--requests ledger.json</code> and Pyx writes down each request it sent: why, as which test user, to which URL, and what came back. The HTML report includes the same list. This is a real ledger from a run against the demo stack:</p>
+<!-- ledger:start -->
+        <div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Why</th><th>As</th><th>Request</th><th>Status</th></tr></thead><tbody>
+          <tr><td class="mono">1</td><td>verify test records</td><td class="mono">setup-key</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=in.(1a5e0000-0000-4000-8000-00000000000a,1a5e0000-0000-4000-8000-00000000000b)&amp;limit=3</td><td class="mono">200</td></tr>
+          <tr><td class="mono">2</td><td>verify user</td><td class="mono">user-a</td><td class="mono url">GET /auth/v1/user</td><td class="mono">200</td></tr>
+          <tr><td class="mono">3</td><td>verify user</td><td class="mono">user-b</td><td class="mono url">GET /auth/v1/user</td><td class="mono">200</td></tr>
+          <tr><td class="mono">4</td><td>verify anonymous</td><td class="mono">anonymous</td><td class="mono url">GET /auth/v1/user</td><td class="mono">403</td></tr>
+          <tr><td class="mono">5</td><td>read</td><td class="mono">user-a</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000a&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">6</td><td>read</td><td class="mono">user-b</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000b&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">7</td><td>read</td><td class="mono">user-a</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000b&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">8</td><td>read</td><td class="mono">user-b</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000a&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">9</td><td>read</td><td class="mono">anonymous</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000a&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">10</td><td>read</td><td class="mono">anonymous</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=eq.1a5e0000-0000-4000-8000-00000000000b&amp;limit=2</td><td class="mono">200</td></tr>
+          <tr><td class="mono">11</td><td>re-check test records</td><td class="mono">setup-key</td><td class="mono url">GET /rest/v1/invoices?select=id,owner_id,fixture_marker&amp;id=in.(1a5e0000-0000-4000-8000-00000000000a,1a5e0000-0000-4000-8000-00000000000b)&amp;limit=3</td><td class="mono">200</td></tr>
+        </tbody></table></div>
+        <!-- ledger:end -->
+        <p>Only <code>GET</code>, only to approved origins, with a fixed request budget and a timeout on each request. “As” names the identity; the token itself is never recorded.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="verify">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Check it yourself</p>
+      <div class="sec__body prose">
+        <h2>Don’t trust the report. Check the result.</h2>
+        <p>Every report comes with the raw result file. Open it in the <a href="verify.html">result verifier</a>: it recounts every check in your browser, flags a file whose stated verdict doesn’t match its own checks, and compares two releases cell by cell. It uses the same comparison code as the CLI, and the page can’t send anything anywhere.</p>
+        <p>Each result also records the exact approved rule it ran (a SHA-256 content hash) and the commit it ran against, so a result can’t silently be swapped for a run of a weaker rule.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="proof">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Measured</p>
+      <div class="sec__body prose">
+        <h2>What it catches, and what it misses.</h2>
+        <p>We seed real access bugs into a throwaway Supabase project and publish the result of every run, including the miss: see the <a href="index.html#proof">benchmark</a> and <a href="#" data-repo="/blob/HEAD/docs/BENCHMARK.md">its full table</a>.</p>
+        <p>A broken test setup never turns green. Expired tokens, two “users” who are the same account, a test record deleted mid-run, an anonymous request that Auth accepts as a user, or an unreachable stack all end as <b>blocked</b>, never as a pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="approval">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Who decides</p>
+      <div class="sec__body prose">
+        <h2>The rule is approved by a person, not by the pull request.</h2>
+        <p>The person responsible for the data approves an exact version of each rule, identified by its content hash. CI reads the approved rule from your protected branch, so a pull request that weakens the rule and the code at the same time still gets checked against the old, stricter rule. Promotions record a digest of the approval itself, so editing who approved it afterwards is detected.</p>
+        <p>Today approvals are local and self-attested: anyone who can write to the approval store can change it. Protect that folder with code owners and branch protection.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="source">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Source and supply chain</p>
+      <div class="sec__body prose">
+        <h2>Read every line.</h2>
+        <ul>
+          <li><b>Source available.</b> The full source is on <a href="#" data-repo>GitHub</a> under FSL-1.1. Each release becomes Apache-2.0 two years after it ships.</li>
+          <li><b>Pinned dependencies.</b> Frozen lockfile installs, a seven-day minimum age for new package versions, and GitHub Actions pinned to exact commits.</li>
+          <li><b>Signed releases.</b> The release workflow publishes to npm with provenance, so <code>npm audit signatures</code> can confirm a package was built from this repository by that workflow. This starts with the first public release.</li>
+          <li><b>Tested against the real thing.</b> Over 250 unit tests, plus 33 scenarios against a real local Supabase stack, are part of the CI workflow.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="disclosure">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">Report a problem</p>
+      <div class="sec__body prose">
+        <h2>Found something? Tell us.</h2>
+        <p>Email <a href="#" data-email>us</a> with a minimal, redacted reproduction. Please don’t send credentials or real records. The policy is in <a href="#" data-repo="/blob/HEAD/SECURITY.md">SECURITY.md</a>, and the contact is also published at <a href=".well-known/security.txt">/.well-known/security.txt</a>.</p>
+        <p>Pyx has not had an independent security review yet. When it does, the report will be linked here.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="limits">
+    <div class="wrap sec__grid">
+      <p class="label sec__label">What a pass means</p>
+      <div class="sec__body prose">
+        <h2>A pass is narrow, on purpose.</h2>
+        <p>It means the approved checks held on the named stack, at the stated time, through the listed request paths. It is not a penetration test, a certification, or a statement about production or anything the rules don’t list. Writes, list queries, team membership, storage and edge functions are not checked automatically yet.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div class="foot__brand">Pyx</div>
+    <nav aria-label="Footer"><a href="verify.html">Verify a result</a><a href="trust.html">Trust</a><a href="index.html#proof">Benchmark</a><a href="sample-report.html">Sample report</a><a href="#" data-repo>Source</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="#" data-email>Contact</a></nav>
+    <p class="foot__small">© <span data-year>2026</span> Pyx. Synthetic test data only. Not a penetration test or a certification.</p>
+  </div>
+</footer>
+</body>
+</html>

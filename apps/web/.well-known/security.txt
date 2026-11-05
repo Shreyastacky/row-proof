@@ -1,0 +1,5 @@
+# Pyx security contact (RFC 9116). Please read the policy before reporting.
+Contact: mailto:stackdrawn@gmail.com
+Expires: 2027-11-05T00:00:00.000Z
+Policy: https://github.com/Shreyastacky/row-proof/blob/HEAD/SECURITY.md
+Preferred-Languages: en

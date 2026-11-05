@@ -45,7 +45,7 @@ jobs:
       - name: Build and smoke-test the npm package from a clean install
         run: pnpm --filter pyx-cli run smoke
       - name: Check the website's generated files are current
-        run: node scripts/build-site.mjs && git diff --exit-code -- apps/web/assets/theme.css apps/web/sample-report.html apps/web/favicon.svg
+        run: node scripts/build-site.mjs && git diff --exit-code -- apps/web/assets/theme.css apps/web/sample-report.html apps/web/favicon.svg apps/web/assets/verify-lib.js apps/web/samples apps/web/trust.html
 
   integration:
     name: real-HTTP integration harness (healthy + throwaway broken-policy instance)

@@ -119,3 +119,35 @@ describe('HTML report access review', () => {
     expect(renderHtmlReport([after])).not.toContain('Access review');
   });
 });
+
+describe('request ledger', () => {
+  it('records every request in order, by identity name only, and matches what the server saw', async () => {
+    const fake = createFake();
+    const out = await runEngine(fake.fetch, { env: baseEnv(fake), baseline: approvedBaseline(threePathRule()) });
+    expect(out.requests).toHaveLength(fake.requests.length);
+    expect(out.requests.map((q) => q.url)).toEqual(fake.requests.map((r) => `${r.url.origin}${r.url.pathname}${r.url.search}`));
+    expect(out.requests[0]).toMatchObject({ n: 1, purpose: 'fixture-check', as: 'setup-key', status: 200 });
+    expect(out.requests.at(-1)).toMatchObject({ purpose: 'fixture-recheck' });
+    expect(out.requests.filter((q) => q.purpose === 'read')).toHaveLength(18);
+    expect(new Set(out.requests.filter((q) => q.purpose === 'read').map((q) => q.path))).toEqual(new Set(['data-api', 'rpc-get-invoice', 'app-invoice-route']));
+    const text = JSON.stringify(out.requests);
+    for (const v of out.sensitiveValues) expect(text).not.toContain(v);
+    expect(findCredentialValues(out.requests)).toEqual([]);
+  });
+
+  it('a request the budget refused is listed as not sent', async () => {
+    const fake = createFake();
+    const out = await runEngine(fake.fetch, { env: baseEnv(fake), limits: { maxRequests: 3 } });
+    expect(out.requests.filter((q) => q.failure === 'request_budget_exhausted').length).toBeGreaterThan(0);
+    expect(fake.requests).toHaveLength(3);
+  });
+
+  it('appears in the HTML report as an appendix', async () => {
+    const fake = createFake();
+    const out = await runEngine(fake.fetch, { env: baseEnv(fake) });
+    const html = renderHtmlReport([out.result], { requests: out.requests });
+    expect(html).toContain(`Every request Pyx sent: ${out.requests.length}`);
+    expect(html).toContain('/auth/v1/user');
+    for (const v of out.sensitiveValues) expect(html).not.toContain(v);
+  });
+});

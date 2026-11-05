@@ -278,8 +278,13 @@ async function main() {
   check(approve(store, THREE_FILE).code === 0, 'three-path rule approval failed');
 
   await scenario('A', 'healthy owner-only policy: six assertions pass, exit 0', () => {
-    const r = run('healthy', { store, envFile: healthyEnvFile });
+    const ledgerFile = join(work, 'healthy.requests.json');
+    const r = run('healthy', { store, envFile: healthyEnvFile, extra: ['--requests', ledgerFile] });
     expectRun(r, { exit: 0, assertions: ALL_PASSED });
+    resultFiles.push(ledgerFile); // included in the credential leak scan
+    const ledger = JSON.parse(readFileSync(ledgerFile, 'utf8')).requests;
+    check(ledger.length === 1 + 2 + 1 + 6 + 1, `ledger lists every request (${ledger.length})`);
+    check(ledger.every((q) => q.method === 'GET' && q.url.startsWith(ORIGIN) && q.failure === null), 'every request is a GET to the approved origin');
     check(r.result.controls.every((c) => c.status === 'ok'), 'all controls ok');
     check(r.result.summary.completeness === 'complete', 'complete');
     check(r.result.freshness.state === 'unknown', 'freshness unknown without observer');

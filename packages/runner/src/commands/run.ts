@@ -77,6 +77,8 @@ Options:
   --html <path>              also write a self-contained HTML evidence report
   --junit <path>             also write JUnit XML (one test case per assertion) for CI test reporters
   --summary-md <path>        append a Markdown summary (use "$GITHUB_STEP_SUMMARY" in GitHub Actions)
+  --requests <path>          also write the request ledger: every request sent, with its purpose,
+                             identity used (by name, never the credential), status and size
   --compare-to <result.json> after the run, print who gained or lost access since that
                              earlier run (e.g. the last release) and add it to --summary-md
   --force                    replace existing output files
@@ -113,6 +115,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
       junit: { type: 'string' },
       'summary-md': { type: 'string' },
       'compare-to': { type: 'string' },
+      requests: { type: 'string' },
       help: { type: 'boolean' },
     },
   });
@@ -149,7 +152,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   // Fail before assessing if an output path is unusable, so a finding is never lost to a write error.
   const runId = randomUUID();
   const outPath = resolve(io.cwd, values.out ?? `artifacts/pyx/${runId}.json`);
-  const extraOutputs = [values.html, values.junit].filter((p): p is string => typeof p === 'string').map((p) => resolve(io.cwd, p));
+  const extraOutputs = [values.html, values.junit, values.requests].filter((p): p is string => typeof p === 'string').map((p) => resolve(io.cwd, p));
   if (!values.force) {
     for (const p of [outPath, ...extraOutputs]) {
       if (existsSync(p)) throw new UsageError(`output file already exists: ${p} (use --force to replace it)`);
@@ -244,10 +247,16 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
   try {
     await writeResultFile(outPath, text, values.force === true);
     if (values.html) {
-      const html = renderHtmlReport([output.result]);
+      const html = renderHtmlReport([output.result], { requests: output.requests });
       assertOutputSafe(html, output.sensitiveValues);
       await writeResultFile(resolve(io.cwd, values.html), html, values.force === true);
       io.stdout(`  HTML report: ${resolve(io.cwd, values.html)}\n`);
+    }
+    if (values.requests) {
+      const ledger = JSON.stringify({ kind: 'PyxRequestLedger', runId: output.result.runId, requests: output.requests }, null, 2) + '\n';
+      assertOutputSafe(ledger, output.sensitiveValues);
+      await writeResultFile(resolve(io.cwd, values.requests), ledger, values.force === true);
+      io.stdout(`  Request ledger: ${resolve(io.cwd, values.requests)} (${output.requests.length} requests)\n`);
     }
     if (values.junit) {
       const xml = renderJunit(output.result);

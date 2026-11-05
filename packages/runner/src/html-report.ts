@@ -7,6 +7,7 @@ import type { AssertionResult, RunResult } from '@pyx/contracts';
 import { LOGO_SVG, THEME_CSS } from './design/theme.js';
 import { compareResults, describeCell, type CellChangeKind } from './compare.js';
 import { explain } from './explain.js';
+import type { RequestRecord } from './engine.js';
 import { RUNNER_VERSION } from './io.js';
 
 export interface ReportOptions {
@@ -15,6 +16,8 @@ export interface ReportOptions {
   /** Shown as "Prepared by" (agency white-label). */
   preparedBy?: string;
   title?: string;
+  /** Request ledger of the latest run; shown as an appendix. */
+  requests?: ReadonlyArray<RequestRecord>;
 }
 
 export function esc(value: unknown): string {
@@ -151,6 +154,25 @@ function accessReview(results: RunResult[]): string {
 </section>`;
 }
 
+const PURPOSE: Record<RequestRecord['purpose'], string> = {
+  'fixture-check': 'verify test records',
+  identity: 'verify user',
+  'anonymous-context': 'verify anonymous',
+  read: 'read',
+  'fixture-recheck': 're-check test records',
+};
+
+function requestLedger(requests: ReadonlyArray<RequestRecord> | undefined): string {
+  if (!requests || requests.length === 0) return '';
+  const rows = requests
+    .map((q) => {
+      const status = q.failure ? `<span class="rp-blocked">${esc(q.failure)}</span>` : esc(q.status ?? '');
+      return `<tr><td class="rp-mono">${q.n}</td><td>${esc(PURPOSE[q.purpose])}${q.path ? ` <span class="rp-faint">· ${esc(q.path)}</span>` : ''}</td><td class="rp-mono">${esc(q.as)}</td><td class="rp-mono" style="word-break:break-all">GET ${esc(q.url)}</td><td class="rp-mono">${status}</td><td class="rp-mono">${q.bytes} B · ${q.ms} ms</td></tr>`;
+    })
+    .join('');
+  return `<section class="rp-glass rp-pad" style="margin-top:18px"><div class="rp-eyebrow">Request ledger</div><h2 class="rp-h3" style="margin:6px 0 6px">Every request Pyx sent: ${requests.length}</h2><p class="rp-muted" style="margin:0 0 16px">All read-only GETs to the approved origins. “As” names the identity used; no credential is recorded. Nothing else left the machine.</p><div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>#</th><th>Purpose</th><th>As</th><th>Request</th><th>Status</th><th>Size · time</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
 function history(results: RunResult[]): string {
   if (results.length < 2) return '';
   const rows = results
@@ -244,6 +266,7 @@ ${accessReview(results)}
   <h2 class="rp-h3" style="margin:6px 0 16px">Preconditions established before any result was trusted</h2>
   <div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>State</th><th>Control</th><th>Detail</th></tr></thead><tbody>${controlRows(r)}</tbody></table></div>
 </section>
+${requestLedger(opts.requests)}
 ${history(results)}
 <section class="rp-glass rp-pad" style="margin-top:18px">
   <div class="rp-eyebrow">Scope and limits</div>

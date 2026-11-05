@@ -24,6 +24,7 @@ If anyone can read what they must not, the run exits **1**, names the record, th
 - **Approved intent, separate from code.** The owner approves an exact content hash. A pull request can't quietly redefine "correct": CI reads the baseline from your protected branch.
 - **Fails closed.** Owner reads are positive controls. Timeouts, 401/403/404/429, redirects and malformed responses are *blocked*, never a pass.
 - **No production access, no customer data.** Synthetic users and records only. Credentials never appear in any output.
+- **Nothing hidden.** `--requests` writes a ledger of every request sent (purpose, identity by name, URL, status). Any result file can be recounted and compared in the browser with the [result verifier](apps/web/verify.html), which uses the CLI's own code. See the [trust page](apps/web/trust.html).
 - **Evidence people can read.** HTML reports (white-label, print-to-PDF), JUnit for CI, and Markdown summaries for pull requests.
 
 Website: [`apps/web`](apps/web) (static, deploy anywhere). Sample report: [`apps/web/sample-report.html`](apps/web/sample-report.html).
@@ -91,9 +92,9 @@ For CI in your own repository, copy [`examples/ci/pyx.yml`](examples/ci/pyx.yml)
 | `doctor` | Check Node, rule, baseline, keys, tokens, target, Auth and the Data API route, with fixes |
 | `validate`, `hash` | Validate a rule or proposal; print its canonical content hash |
 | `propose`, `diff`, `approve`, `promote`, `history` | Approval workflow: proposals have no authority; approval binds one acknowledged hash |
-| `run` | Execute the approved matrix (reads the approval store only); `--html`, `--junit`, `--summary-md`, `--compare-to` |
+| `run` | Execute the approved matrix (reads the approval store only); `--html`, `--junit`, `--summary-md`, `--compare-to`, `--requests` (request ledger) |
 | `report` | Build an HTML evidence report from one or more result files (`--client`, `--prepared-by`) |
-| `compare` | Who gained or lost access between two results, cell by cell; exit 1 on a regression |
+| `compare` | Who gained or lost access between two results, cell by cell; exit 1 on a regression (also in the browser: `apps/web/verify.html`) |
 | `repro` | A reproduction pack (README + curl script, no credentials) for every failing check |
 
 ## Scope, stated plainly

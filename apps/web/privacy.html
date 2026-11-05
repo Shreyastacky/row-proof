@@ -2,25 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
 <title>Privacy · Pyx</title>
+<meta name="description" content="How Pyx handles information: no cookies, no trackers, no customer data.">
+<meta name="theme-color" content="#0a0a0b">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/theme.css">
 <link rel="stylesheet" href="assets/site.css">
-</head>
-<body class="rp">
-<main class="rp-wrap" style="max-width:760px;padding:64px 0">
-  <a class="rp-brand" href="index.html">Pyx</a>
-  <div class="rp-glass rp-pad" style="margin-top:28px">
-    <h1 class="rp-h2">Privacy</h1>
-    <p class="rp-muted">This website sets no cookies, runs no analytics or trackers, and loads nothing from third parties.</p>
-    <p class="rp-muted">If you email us, we use your message only to reply and to deliver work you request. We keep it no longer than needed for that and for our legal and accounting obligations, and we do not sell or share it.</p>
-    <p class="rp-muted">The Pyx CLI runs on your machines. It sends requests only to the target you approve, never to us, and it writes results only to files you choose.</p>
-    <p class="rp-muted">For engagements we never ask for production credentials or customer data. Please do not send them.</p>
-    <p class="rp-muted">Questions or deletion requests: <a href="#" data-email>contact us</a>.</p>
-  </div>
-</main>
 <script src="config.js" defer></script>
 <script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav" id="nav">
+  <div class="nav__bar">
+    <a class="brand" href="index.html" aria-label="Pyx home"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Pyx</a>
+    <nav class="nav__links" aria-label="Primary"><a href="index.html#review">Product</a><a href="index.html#proof">Proof</a><a href="trust.html">Trust</a><a href="index.html#pricing">Pricing</a></nav>
+    <a class="btn btn--sm" href="index.html#pricing">Book a setup</a>
+  </div>
+</header>
+<main id="main" class="doc">
+  <div class="wrap doc__head"><p class="label">Privacy</p><h1>We collect almost nothing, on purpose.</h1></div>
+  <div class="wrap sec__grid" style="margin-top:56px"><p class="label sec__label">Updated 5 November 2026</p><div class="sec__body prose">
+    <p>This website sets no cookies, runs no analytics or trackers, and loads nothing from third parties.</p>
+    <p>If you email us, we use your message only to reply and to deliver work you request. We keep it no longer than needed for that and for our legal and accounting obligations, and we do not sell or share it.</p>
+    <p>The Pyx CLI runs on your machines. It sends requests only to the target you approve, never to us, and it writes results only to files you choose.</p>
+    <p>For engagements we never ask for production credentials or customer data. Please do not send them.</p>
+    <p>Questions or deletion requests: <a href="#" data-email>contact us</a>.</p>
+  </div></div>
+</main>
+<footer class="foot">
+  <div class="wrap foot__grid">
+    <div class="foot__brand">Pyx</div>
+    <nav aria-label="Footer"><a href="verify.html">Verify a result</a><a href="trust.html">Trust</a><a href="index.html#proof">Benchmark</a><a href="sample-report.html">Sample report</a><a href="#" data-repo>Source</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="#" data-email>Contact</a></nav>
+    <p class="foot__small">© <span data-year>2026</span> Pyx. Synthetic test data only. Not a penetration test or a certification.</p>
+  </div>
+</footer>
 </body>
 </html>

@@ -113,3 +113,36 @@ The product's central question is "who gained or lost access in this release?". 
 ## D16. Public mutation benchmark; lab mutations bound to a nonce
 
 `docs/BENCHMARK.md` is generated from the integration harness. Each row is a deliberate change to a throwaway stack and the real result: detected, blocked, missed or unsupported. Known gaps are published, for example an RPC bug the rule does not list. The harness writes a random nonce into the lab database and every mutation first proves, inside the same psql session, that it reached that database. A container name or URL alone is not proof.
+
+## D17. Website v3: evidence first, glass only where it belongs (5 November 2026)
+
+The liquid-glass site of D12's successor still read as generated. In a research pass, published critiques named the tells:
+- multicolour gradient fields (blue/purple as the most common);
+- glass on every surface;
+- three rounded cards in a row;
+- centred eyebrow, headline and subtitle in every section;
+- uniform density.
+
+Apple's own Liquid Glass guidance reserves glass for the navigation layer and warns against stacking it. The sites developers cite as premium (Linear, Raycast, Stripe) share:
+- a near-black neutral canvas;
+- one type family at restrained display weights;
+- hairline borders instead of shadows;
+- colour used only for meaning;
+- real code shown next to its real output.
+
+The rebuild follows that:
+- **Canvas and colour:** near-black neutral (#0a0a0b) with a single cool light in the hero. Mint, coral and amber appear only when they mean held, leak or blocked.
+- **Glass:** only on the navigation bar, which turns to glass once content passes under it, and on one object: the hero lens.
+- **The hero is the argument.** A ledger of 18 requests all reads "200 OK", and a liquid-glass lens (real magnification plus SVG-displacement refraction at the rim in Chromium) reveals what each one means, including the two leaks. It follows the pointer and wanders between the leaks when idle. It is static under reduced motion.
+- **Layout:** an editorial grid with mono section labels on the left. Comparisons are tables, not card rows (doors, benchmark, pricing). There is a real terminal block with real `pyx compare` output.
+- **Trust, built rather than claimed:**
+  - a trust page (what Pyx touches, a real request ledger, approval model, supply chain, disclosure, limits);
+  - an in-browser result verifier that uses the CLI's own compare code;
+  - `/.well-known/security.txt`;
+  - a release workflow with npm provenance;
+  - the published benchmark next to the CTA.
+- **No invented social proof:** a founding-customer offer instead of fake logos or testimonials.
+
+## D18. Request ledger
+
+`pyx run --requests <file>` writes every request the runner sent, in order: purpose, the identity used (by name, never the credential), URL, status or failure, size and time. The HTML report appends the same list. A request the budget refused is listed as not sent. The ledger is scanned for credential values like every other output, and the integration harness checks it on a real stack: 11 GETs, all to the approved origin.
