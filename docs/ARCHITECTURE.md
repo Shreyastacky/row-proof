@@ -1,6 +1,17 @@
 # Proposed architecture
 
-Status: design only. No services or dependencies are implemented.
+Status: the **execution plane is implemented** for the v1 Supabase SELECT adapter (local disposable targets only). The **control plane is not implemented**. Decisions and pinned versions: [DECISIONS.md](DECISIONS.md).
+
+## Implemented modules
+
+| Module | Responsibility | Depends on |
+| --- | --- | --- |
+| `packages/contracts` | Schema bundle, generated types, strict JSON, RFC 8785 hashing, semantic rules, proposal/approval/revision builders and verifiers, outcome rules, read-only `ApprovedBaselineReader` | Ajv only; no Supabase, no Next.js, no hosted account model |
+| `packages/runner` | CLI; local approval writer (propose/approve/promote); `run`: engine, bounded transport, credential classification, safe report | contracts |
+| `packages/local-fixture` | Privileged local setup and verification (supabase-js admin API) | contracts, supabase-js |
+| `tests/integration` | Real-HTTP harness against disposable stacks | everything above, Docker, Supabase CLI |
+
+Provider-specific behaviour is confined to the engine's Supabase adapter (request templates, identity endpoint, response semantics). Hosted-facing identifiers (`organizationId`, `projectId`, `environmentId`) are explicit in rules and results, and `organizationId` may be null for local use.
 
 ## Execution plane
 
@@ -10,7 +21,7 @@ Setup/admin access provisions and independently verifies synthetic fixtures. Ord
 
 The CLI must bind authorization to a verified non-production environment and allowlisted origin. Requests may not follow cross-origin redirects or silently change projects. The harness that deliberately weakens a policy is a separate local-only component with an explicit disposable-instance boundary.
 
-## Control plane — later
+## Control plane — later (not implemented)
 
 A small authenticated web application stores organizations, projects, immutable rule revisions, approvals, and bounded run results. It accepts no database passwords, session tokens, private source, or raw invoice responses.
 

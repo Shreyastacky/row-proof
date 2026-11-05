@@ -1,6 +1,30 @@
 # Implementation roadmap
 
-Initial plan: 5 November 2026. Every item below is unfinished unless explicitly marked complete. Stack choices are proposals, not implemented dependencies.
+Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases 1–5. Every item below is unfinished unless explicitly marked complete, and "complete" names the check that was actually run.
+
+## Status at a glance
+
+| Phase | State | Evidence |
+| --- | --- | --- |
+| 1 Contracts and baseline semantics | **complete** | 147 contract tests; `pnpm check:generated` |
+| 2 Disposable fixture | **complete** | Fresh clone: `pnpm integration` provisions and verifies fixtures on a real stack |
+| 3 Runner | **complete** | 53 runner unit tests + real-HTTP scenarios |
+| 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 24/24 scenarios as expected, real local Supabase |
+| 5 Reproducible CI | **implemented; locally reproduced; GitHub-hosted run pending** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
+| First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
+| 6–9 | not started | — |
+
+### Milestone gate (run 5 November 2026)
+
+From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pnpm install --frozen-lockfile`, then `pnpm verify` (exit 0; 147 + 11 + 53 tests), then `pnpm integration` (exit 0; 24/24 scenarios, healthy and throwaway broken-policy instances, 0 containers left), then the `assess-with-base-branch-baseline` job steps (exit 3 against `origin/main`, which has no baseline yet, so NOT RUN; exit 0 with this branch as the trusted ref). Environment: Linux, Node 22.23.4, Docker 29.9.2, Supabase CLI 2.122.1, images pulled from Docker Hub (`SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io`). The pnpm store was warm, so a cold machine also downloads packages.
+
+**Not yet verified:** the same workflow on GitHub-hosted runners (default ECR image registry, Node 24). Open a PR to trigger it.
+
+### Maintainer actions this work cannot do
+
+1. Replace the placeholder approval in `baseline/` with the designated owner's own approval ([baseline/README.md](baseline/README.md)).
+2. Protect `main`: a ruleset or branch protection requiring the owner's review for `baseline/` (for example CODEOWNERS plus required code-owner review). Until then, CI results are development tests, not independent assessments.
+3. Decide whether to adopt a trusted assessment path (a pinned released runner in a workflow the PR cannot modify).
 
 ## GitHub work tracker
 
@@ -25,7 +49,7 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 ## 1. Freeze the first rule contract — complete (5 November 2026)
 
-**Verified:** `pnpm --filter @ship-safe/contracts test` (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/ship-safe.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
+**Verified:** `pnpm verify` includes the contract suite (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/ship-safe.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
 
 - [x] Schemas for RuleContent, RuleProposal, Approval, ApprovedRevision, Promotion, ActiveBaseline and RunResult; types generated from the same file with a drift check.
 - [x] RFC 8785 canonicalization and SHA-256 content hash; RFC sample vector and golden hash pinned; strict parser rejects duplicate keys.
@@ -45,9 +69,9 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 - Specify bounded redacted result fields: rule hash/revision, runner version, source commit, environment, observed policy/config fingerprints, timestamp, assertion outcome, and safe diagnostic code.
 - Reject credential values, raw rows, unsupported operations, and malformed or oversized payloads.
 
-**Done when:** examples validate; changed permission intent cannot reuse an old approval; result schemas cannot encode a blanket security verdict. See [the proposal example](examples/invoice-rule.proposed.json).
+**Done when:** examples validate; changed permission intent cannot reuse an old approval; result schemas cannot encode a blanket security verdict. All three conditions are met; see [the canonical rule](examples/invoice-owner-read.rule.json) and [the case manifest](examples/contracts/cases.json). The earlier illustrative `invoice-rule.proposed.json` was replaced by these validated files.
 
-## 2. Build a disposable Supabase demo — implemented; fresh-checkout gate verified with Phase 4
+## 2. Build a disposable Supabase demo — complete (5 November 2026)
 
 **Implemented:** `supabase/config.toml` (CLI 2.122.1 template trimmed to Postgres, Auth, PostgREST and the gateway; signups off), migration `supabase/migrations/20261105000000_invoices_owner_read.sql` (explicit grants plus an owner-only SELECT policy), `packages/local-fixture` (admin-API provisioning, sign-in, independent verification, credentials in a 0600 env file), and `scripts/stack.mjs` (up/reset/down/status; refuses linked directories and keeps CLI key output out of logs). Manually verified on a real local stack: provisioning, re-provisioning, `fixture:verify`, public signup refused (422), and a real healthy run of all six assertions.
 
@@ -62,7 +86,7 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** a fresh local instance reproduces both owner reads and all four denied reads; fixtures and identity ownership can be verified independently.
 
-## 3. Implement the local read-only runner — implemented; real-HTTP gate verified with Phase 4
+## 3. Implement the local read-only runner — complete (5 November 2026)
 
 **Implemented:** `packages/runner`: propose/diff/approve/promote/history (local writer) and `run` (read-only baseline), the bounded fetch transport, identity verification via the target's Auth service, six assertions with dependency rules, a schema-validated and leak-checked JSON result, a terminal summary, and exit codes 0/1/2. 53 unit tests with a mocked transport cover transport failures, response shapes, limits, cancellation and output safety. Decisions D5 and D6 in [docs/DECISIONS.md](docs/DECISIONS.md).
 
@@ -82,13 +106,14 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 ## 4. Prove sensitivity to the intended regression — complete (5 November 2026)
 
-**Verified by actually running** `pnpm integration` (tests/integration/harness.mjs) in this environment: 23/23 scenarios behaved as expected against real local Supabase (CLI 2.122.1, Postgres 17, GoTrue 2.197.0, PostgREST 16.5) over real HTTP, in about 2.5 minutes. Teardown left 0 containers and 0 volumes.
+**Verified by actually running** `pnpm integration` (tests/integration/harness.mjs) in this environment, including from a fresh clone: 24/24 scenarios behaved as expected against real local Supabase (CLI 2.122.1, Postgres 17, GoTrue 2.197.0, PostgREST 16.5) over real HTTP, in about 2.5 minutes. Teardown left 0 containers and 0 volumes.
 
 - [x] Healthy policy passes all six (exit 0); the runner's identity result agrees with supabase-js `getUser(jwt)`.
 - [x] Separate throwaway lab instance (unique project id, copied config) with the deliberately permissive policy: `a-reads-b` and `b-reads-a` fail with `fixture_disclosed` (exit 1); the lab is then destroyed and its volumes deleted.
 - [x] Lab variants: anonymous-open policy (anonymous disclosures fail), owner policy dropped (owner reads fail, denials blocked), SELECT grant revoked (403 is never a denial pass), missing / wrong-owner / wrong-marker fixtures (blocked, never pass or false disclosure).
 - [x] Same-user sessions, forged-signature (wrong-project) token, expired token rejected by the real Auth service, token about to expire, elevated keys in user and app-key contexts, legacy anon key (declared vs undeclared), wrong target origins, missing setup channel, baseline pin mismatch, tampered store, request budget, connection refused.
 - [x] Weakening the proposed rule alongside the broken policy is refused at approval, and the run still reports the disclosure against the approved hash.
+- [x] A PR branch that changes the app and forges a hash-consistent weakened approval in its own `baseline/` cannot change the assessment: the baseline from `main` still reports the disclosure, and the forged store is not assessable (never a pass).
 - [x] Leak scan: no loaded credential (keys, tokens, minted tokens, JWT secret) or credential-shaped text appears in any captured CLI output or result file.
 - [x] Transport failures (redirects, timeouts, 429, 5xx, generic 404, oversized/malformed/invalid-UTF-8 bodies, network errors, cancellation, request budget) are covered with a mocked transport in `packages/runner/test`, as the spec directs. Authorization behaviour is covered only by the real-HTTP harness.
 
@@ -103,7 +128,17 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** clean and deliberately broken configurations produce their expected different outcomes reproducibly from a fresh checkout.
 
-## 5. Make customer-run CI reproducible
+## 5. Make customer-run CI reproducible — implemented; locally reproduced; GitHub-hosted run pending
+
+**Implemented:** [.github/workflows/ship-safe.yml](.github/workflows/ship-safe.yml) with jobs `verify`, `integration` (the harness, with redacted artifacts uploaded) and `assess-with-base-branch-baseline` (baseline materialized from the base branch by `scripts/fetch-trusted-baseline.mjs`; edits to `baseline/` in a PR are flagged and ignored). Actions pinned to full SHAs (checkout v7.0.1, setup-node v7.1.0, pnpm/action-setup v6.1.0, upload-artifact v7.0.2), `contents: read`, no persisted credentials, no secrets, no `pull_request_target`, teardown always runs. Instructions: [docs/INTEGRATION.md](docs/INTEGRATION.md).
+
+- [x] Healthy demo green, broken-policy demo red, setup failures blocked (harness, fresh clone).
+- [x] Approved baseline is an explicit input from a separate ref, not the PR tree (harness boundary scenario plus the CI job).
+- [x] Results carry rule hash, revision, source commit, runner version, target and provenance; freshness is `unknown` (no observer).
+- [ ] Workflow observed green on GitHub-hosted runners.
+- [ ] Base-branch protection for `baseline/` (maintainer action; not configured).
+- [ ] Trusted assessment with a pinned released runner outside the PR's control (not configured; CI jobs are development tests).
+
 
 **Deliverable:** a pinned example GitHub Actions workflow plus fixture setup/run/teardown instructions.
 
@@ -115,7 +150,10 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** the healthy demo is green, the broken-policy demo is red, and setup failures are visibly blocked rather than passed.
 
-## 6. Preserve rule approvals and compare intent
+## 6. Preserve rule approvals and compare intent — next
+
+**Already in place locally (self-attested):** immutable revisions and promotions, `history`, a matrix-style intent diff, stale-proposal and no-change refusal, and runs bound to one approved hash. **Remaining:** separately authorized promotion, audited reviewer identity, replay/concurrency handling beyond exclusive file creation, and clear local-vs-authenticated provenance end to end.
+
 
 **Deliverable:** revision history and a readable approval diff; start locally if that avoids premature hosting.
 
@@ -169,10 +207,12 @@ Writes/deletes, shared/delegated access, storage, edge functions, arbitrary app 
 
 ## Immediate work sequence
 
-1. Finalize the rule/result schemas and approval semantics.
-2. Build the two-user local Supabase fixture.
-3. Implement the read runner with positive controls and blocked states.
-4. Prove it detects the deliberately permissive local policy.
-5. Put that exact demonstration in CI.
+1. ~~Finalize the rule/result schemas and approval semantics.~~ Done.
+2. ~~Build the two-user local Supabase fixture.~~ Done.
+3. ~~Implement the read runner with positive controls and blocked states.~~ Done.
+4. ~~Prove it detects the deliberately permissive local policy.~~ Done (real local Supabase).
+5. Put that exact demonstration in CI. Workflow written and reproduced locally; **confirm on GitHub Actions**.
+6. Maintainer: replace the placeholder approval and protect `baseline/` on `main`.
+7. Phase 6: authenticated, audited approval and promotion.
 
-The first prototype is complete only when steps 1–5 work from a fresh checkout. A dashboard alone does not complete that milestone.
+The first prototype is complete only when steps 1–5 work from a fresh checkout. That holds locally; GitHub-hosted confirmation is pending. A dashboard alone does not complete that milestone.

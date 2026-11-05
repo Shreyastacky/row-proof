@@ -2,63 +2,101 @@
 
 **Keep agreed access rules intact as your app changes.**
 
-Ship Safe is an early-stage project for maintaining permission expectations and checking whether supported application behavior still matches them after a release.
+Ship Safe is an early-stage tool for recording who should be able to read which records, keeping the owner's approved expectations separate from routine code edits, and rerunning checks after changes to report exactly what passed, failed, or could not be assessed.
 
-The first proposed integration is Supabase: two synthetic users should each be able to read their own invoice and should never receive the other user's invoice through the tested Data API route.
+The first supported integration is Supabase: two synthetic users should each read their own invoice and never receive the other's through the direct Data API; an anonymous client should receive neither.
 
 ## Current status
 
-**Planning foundation only. There is no working runner, hosted application, or security assessment service in this repository yet.**
+**A working local prototype of one access boundary.** Phases 1–5 of the [roadmap](ROADMAP.md) are implemented. The contract tests, runner tests and a real-HTTP integration harness pass from a fresh checkout. The harness runs against disposable local Supabase stacks, including a separate throwaway instance with a deliberately broken policy. The CI workflow is written and its steps were reproduced locally, but it has **not yet run on GitHub Actions**.
 
-This repository contains the product scope, architecture, acceptance criteria, and implementation backlog. The first milestone is a reproducible local demonstration of one access boundary.
+What this is not: a hosted service, a security certification, a scanner, or evidence about production. There is no approval authority beyond what you configure. The local approval store is self-attested, and base-branch protection for `baseline/` is not configured. See [what remains](ROADMAP.md#maintainer-actions-this-work-cannot-do).
 
-The existing Ship Safe checklist/kit and the separate `ship-safe-check` secrets scanner are earlier products. They are not implementations of Access Rules. Paid kit files, customer information, and internal research are not included here.
+The existing Ship Safe checklist/kit and the separate `ship-safe-check` secrets scanner are earlier products, not this implementation.
 
-## First supported boundary
+## The supported boundary
 
-| Request | Required observation |
+| Assertion | Required observation |
 | --- | --- |
-| User A reads invoice A | Exact synthetic fixture is returned |
-| User B reads invoice B | Exact synthetic fixture is returned |
-| User A reads invoice B | Invoice B is not disclosed |
-| User B reads invoice A | Invoice A is not disclosed |
-| Anonymous reads invoice A and invoice B | Neither fixture is disclosed; two assertions |
+| User A reads invoice A | Exact synthetic fixture returned (id, owner, marker) |
+| User B reads invoice B | Exact synthetic fixture returned |
+| User A reads invoice B | Invoice B not disclosed |
+| User B reads invoice A | Invoice A not disclosed |
+| Anonymous reads invoice A | Not disclosed |
+| Anonymous reads invoice B | Not disclosed |
 
-Positive owner reads must work before denied reads can establish a passing isolation result. A failed login, missing fixture, timeout, or broken endpoint must never turn into a green result.
+A denial passes only as a well-formed empty result, and only after the target, keys, fixtures (checked through a separate setup channel), verified identities, and that fixture's owner read have all succeeded. A failed login, missing fixture, timeout, 403/404/429 or redirect never becomes a pass.
 
-## Start here
+## Quick start
 
-1. Read [the product scope](docs/PRODUCT.md).
-2. Follow [the ordered implementation roadmap](ROADMAP.md).
-3. Use [the acceptance scenarios](docs/ACCEPTANCE.md) as the definition of working behavior.
-4. Review [the architecture](docs/ARCHITECTURE.md) before choosing dependencies.
+Requires Node 22.12+, pnpm 10 (`corepack enable`), and Docker. Full details: [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
-Work is tracked in [nine implementation issues](https://github.com/Shreyastacky/ship-safe/issues). Start with [#1: the rule contract](https://github.com/Shreyastacky/ship-safe/issues/1).
-
-## Planned layout
-
-```text
-apps/web/              Hosted rule review and run history (not implemented)
-packages/runner/       Customer-run checks (not implemented)
-supabase/              Disposable demo schema and fixtures (not implemented)
-examples/              Synthetic rule proposal
-docs/                  Scope, architecture, acceptance scenarios
+```bash
+pnpm install --frozen-lockfile
 ```
 
-No installation command is provided until executable software exists. See [the illustrative rule proposal](examples/invoice-rule.proposed.json); it is not an approved rule or a stable configuration format.
+```bash
+pnpm verify
+```
+
+```bash
+pnpm integration
+```
+
+`pnpm integration` starts and destroys local Supabase stacks (about 2.5 minutes once images are cached) and stops any running `ship-safe-demo` stack.
+
+### The workflow, by hand
+
+```bash
+pnpm build && pnpm stack:up && pnpm fixture:provision
+```
+
+```bash
+pnpm ship-safe propose --rule examples/invoice-owner-read.rule.json --store .ship-safe/approvals --proposed-by you --out .ship-safe/proposal.json
+```
+
+```bash
+pnpm ship-safe diff --proposal .ship-safe/proposal.json --store .ship-safe/approvals
+```
+
+```bash
+pnpm ship-safe approve --proposal .ship-safe/proposal.json --store .ship-safe/approvals --approver owner --acknowledge <hash printed by diff> --promote
+```
+
+```bash
+pnpm ship-safe run --store .ship-safe/approvals --rule invoice-owner-read --env-file .ship-safe/local.env
+```
+
+Exit codes: **0** every required assertion passed with valid controls; **1** at least one demonstrated violation (even if other checks are blocked); **2** blocked or incomplete without a demonstrated violation.
+
+## Layout
+
+```text
+packages/contracts/    JSON Schema bundle (authoritative), canonical hashing, approval semantics,
+                       read-only approved-baseline reader, outcome rules
+packages/runner/       ship-safe CLI: propose/diff/approve/promote/history and run
+packages/local-fixture/ privileged local-only setup: synthetic users and fixtures
+supabase/              disposable stack config, migration (owner-only RLS), lab-only broken policy
+tests/integration/     real-HTTP harness: healthy and throwaway broken-policy instances
+baseline/              approval store that CI reads from the base branch (placeholder approval)
+examples/              canonical rule and a valid/invalid/unsupported contract corpus
+scripts/               stack lifecycle and trusted-baseline retrieval
+apps/web/              hosted control plane (not implemented; Phase 7)
+docs/                  scope, architecture, acceptance, decisions, integration instructions
+```
 
 ## Result language
 
 - **passed / failed**: a supported assertion completed against the named fixtures and environment.
 - **blocked**: execution or setup did not produce a trustworthy assessment.
-- **not assessed**: the requested behavior is outside supported coverage.
-- **current / stale / unknown**: separate evidence freshness, based only on available observations.
+- **not assessed**: the requested behaviour is outside supported coverage.
+- **current / stale / unknown**: freshness, kept separate and based only on available observations. v1 has no dependency observer, so every result says `unknown`.
 
-A passing run describes those checks at that time. It does not certify an application, cover every access path, or establish production parity. Customer-produced results can also be forged by a customer-controlled runner.
+A passing run describes those six checks, on that target, at that time. It does not certify an application, cover other access paths, or establish production parity. A customer-controlled runner can forge results; provenance identifies a producer, not honest execution.
 
-## Development priorities
+## Further reading
 
-Build the local fixture, explicit rule model, and reliable runner first. Prove the runner detects a deliberately broken policy in a disposable local database. Add CI, approval history, and a hosted interface after that foundation works. Validate repeat customer use before expanding the supported surface.
+[Product scope](docs/PRODUCT.md) · [Architecture](docs/ARCHITECTURE.md) · [Acceptance scenarios](docs/ACCEPTANCE.md) · [Decisions and pinned versions](docs/DECISIONS.md) · [Running the checks](docs/INTEGRATION.md) · [Roadmap](ROADMAP.md)
 
 ## Repository visibility and rights
 
