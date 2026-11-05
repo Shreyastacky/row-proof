@@ -16,5 +16,5 @@ window.ROWPROOF_CONFIG = {
   },
 
   // Public source repository.
-  repoUrl: 'https://github.com/Shreyastacky/ship-safe',
+  repoUrl: 'https://github.com/Shreyastacky/row-proof',
 };

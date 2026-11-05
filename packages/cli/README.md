@@ -30,6 +30,6 @@ Exit codes: `0` every approved expectation held with all controls established, `
 
 - Scope today: SELECT through the Supabase Data API on user-owned tables, against a local disposable stack. Not a pentest or certification.
 - No production access and no customer data. Credentials stay on your machine and never appear in outputs.
-- Docs, CI template and source: https://github.com/Shreyastacky/ship-safe
+- Docs, CI template and source: https://github.com/Shreyastacky/row-proof
 
 License: FSL-1.1-ALv2. Free to use, including commercially for your own apps. Competing products and services are not permitted. Each version becomes Apache-2.0 two years after release.
