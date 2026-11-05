@@ -47,7 +47,10 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** examples validate; changed permission intent cannot reuse an old approval; result schemas cannot encode a blanket security verdict. See [the proposal example](examples/invoice-rule.proposed.json).
 
-## 2. Build a disposable Supabase demo
+## 2. Build a disposable Supabase demo — implemented; fresh-checkout gate verified with Phase 4
+
+**Implemented:** `supabase/config.toml` (CLI 2.122.1 template trimmed to Postgres, Auth, PostgREST and the gateway; signups off), migration `supabase/migrations/20261105000000_invoices_owner_read.sql` (explicit grants plus an owner-only SELECT policy), `packages/local-fixture` (admin-API provisioning, sign-in, independent verification, credentials in a 0600 env file), and `scripts/stack.mjs` (up/reset/down/status; refuses linked directories and keeps CLI key output out of logs). Manually verified on a real local stack: provisioning, re-provisioning, `fixture:verify`, public signup refused (422), and a real healthy run of all six assertions.
+
 
 **Deliverable:** local schema/migrations, synthetic seed script, fixture checks, and reset instructions.
 
@@ -59,7 +62,10 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** a fresh local instance reproduces both owner reads and all four denied reads; fixtures and identity ownership can be verified independently.
 
-## 3. Implement the local read-only runner
+## 3. Implement the local read-only runner — implemented; real-HTTP gate verified with Phase 4
+
+**Implemented:** `packages/runner`: propose/diff/approve/promote/history (local writer) and `run` (read-only baseline), the bounded fetch transport, identity verification via the target's Auth service, six assertions with dependency rules, a schema-validated and leak-checked JSON result, a terminal summary, and exit codes 0/1/2. 53 unit tests with a mocked transport cover transport failures, response shapes, limits, cancellation and output safety. Decisions D5 and D6 in [docs/DECISIONS.md](docs/DECISIONS.md).
+
 
 **Deliverable:** a CLI that consumes an approved rule revision and writes a local redacted JSON result.
 
