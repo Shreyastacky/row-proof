@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<title>Access-rule evidence report · invoice-owner-read</title>
+<style>
+:root {
+  color-scheme: dark;
+  --rp-bg: #04060b;
+  --rp-bg-2: #070b14;
+  --rp-ink: #e8eef7;
+  --rp-ink-2: #a3b1c4;
+  --rp-ink-3: #66768d;
+  --rp-line: rgba(148, 170, 200, 0.14);
+  --rp-line-strong: rgba(170, 195, 230, 0.24);
+  --rp-cyan: #6fe7ff;
+  --rp-blue: #5ab8ff;
+  --rp-violet: #9b8cff;
+  --rp-pass: #3ee0a1;
+  --rp-fail: #ff6b8a;
+  --rp-block: #ffc35c;
+  --rp-na: #8fa0b8;
+  --rp-glass: rgba(16, 24, 40, 0.46);
+  --rp-glass-strong: rgba(18, 28, 48, 0.62);
+  --rp-glass-solid: #0d1422;
+  --rp-radius: 22px;
+  --rp-radius-sm: 14px;
+  --rp-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.75), 0 2px 10px -2px rgba(0, 0, 0, 0.4);
+  --rp-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --rp-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body.rp {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--rp-font);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--rp-ink);
+  background-color: var(--rp-bg);
+  background-image:
+    radial-gradient(1100px 620px at 8% -8%, rgba(70, 200, 255, 0.16), transparent 62%),
+    radial-gradient(900px 560px at 100% 0%, rgba(140, 110, 255, 0.15), transparent 60%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(20, 220, 170, 0.08), transparent 60%),
+    linear-gradient(180deg, var(--rp-bg) 0%, var(--rp-bg-2) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* Faint security grid. */
+body.rp::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(150, 180, 220, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 180, 220, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 20%, #000 20%, transparent 75%);
+          mask-image: radial-gradient(ellipse at 50% 20%, #000 20%, transparent 75%);
+}
+body.rp > * { position: relative; z-index: 1; }
+
+a { color: var(--rp-cyan); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--rp-cyan); outline-offset: 3px; border-radius: 6px; }
+
+.rp-wrap { width: min(1120px, 100% - 32px); margin-inline: auto; }
+.rp-mono { font-family: var(--rp-mono); font-size: 0.86em; letter-spacing: -0.01em; }
+.rp-muted { color: var(--rp-ink-2); }
+.rp-faint { color: var(--rp-ink-3); }
+.rp-eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--rp-cyan);
+}
+.rp-h1 { font-size: clamp(30px, 4.4vw, 54px); line-height: 1.04; letter-spacing: -0.035em; font-weight: 650; margin: 0; }
+.rp-h2 { font-size: clamp(22px, 2.6vw, 32px); line-height: 1.15; letter-spacing: -0.025em; font-weight: 640; margin: 0; }
+.rp-h3 { font-size: 17px; letter-spacing: -0.01em; font-weight: 620; margin: 0; }
+.rp-gradient-text {
+  background: linear-gradient(100deg, #f4f8ff 0%, #bfe9ff 40%, var(--rp-cyan) 65%, var(--rp-violet) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* ---------- Liquid glass ---------- */
+.rp-glass {
+  position: relative;
+  border-radius: var(--rp-radius);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.015) 42%, rgba(255, 255, 255, 0.035)),
+    var(--rp-glass);
+  border: 1px solid var(--rp-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.015),
+    var(--rp-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+          backdrop-filter: blur(22px) saturate(165%);
+  isolation: isolate;
+}
+/* Specular sheen along the top edge. */
+.rp-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 15% -10%, rgba(255, 255, 255, 0.16), transparent 45%),
+    radial-gradient(80% 40% at 100% 0%, rgba(120, 220, 255, 0.07), transparent 60%);
+  z-index: -1;
+}
+/* Refraction rim: a thin gradient border via mask. */
+.rp-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.02) 35%, rgba(120, 200, 255, 0.12) 70%, rgba(155, 140, 255, 0.22));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0.7;
+}
+.rp-glass--strong { background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)), var(--rp-glass-strong); }
+.rp-glass--inset { border-radius: var(--rp-radius-sm); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+.rp-pad { padding: 28px; }
+.rp-pad-sm { padding: 18px 20px; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .rp-glass { background: var(--rp-glass-solid); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .rp-glass { background: var(--rp-glass-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .rp-glass::before, .rp-glass::after { display: none; }
+}
+
+/* ---------- Status ---------- */
+.rp-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 10px 3px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 640; letter-spacing: 0.04em; text-transform: uppercase;
+  border: 1px solid currentColor; white-space: nowrap;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.rp-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.rp-pass { color: var(--rp-pass); }
+.rp-fail { color: var(--rp-fail); }
+.rp-blocked { color: var(--rp-block); }
+.rp-na { color: var(--rp-na); }
+
+.rp-verdict {
+  display: flex; align-items: center; gap: 18px;
+}
+.rp-verdict__orb {
+  width: 64px; height: 64px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; font-size: 26px; font-weight: 700;
+  background: radial-gradient(circle at 35% 30%, #fff 0%, currentColor 42%, color-mix(in srgb, currentColor 55%, #000) 100%);
+  box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 16%, transparent), 0 0 40px -4px currentColor;
+}
+.rp-verdict__orb svg { width: 28px; height: 28px; color: #04060b; }
+
+/* ---------- Layout helpers ---------- */
+.rp-grid { display: grid; gap: 18px; }
+.rp-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rp-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rp-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 860px) { .rp-grid-3, .rp-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rp-grid-2, .rp-grid-3, .rp-grid-4 { grid-template-columns: 1fr; } }
+.rp-stack > * + * { margin-top: 14px; }
+.rp-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rp-spread { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+.rp-kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; font-size: 14px; }
+.rp-kv dt { color: var(--rp-ink-3); }
+.rp-kv dd { margin: 0; color: var(--rp-ink); overflow-wrap: anywhere; }
+
+.rp-stat { padding: 18px 20px; }
+.rp-stat__n { font-size: 30px; font-weight: 650; letter-spacing: -0.03em; line-height: 1.1; }
+.rp-stat__l { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--rp-ink-3); margin-top: 4px; }
+
+/* ---------- Tables ---------- */
+.rp-table-wrap { overflow-x: auto; }
+.rp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rp-table th { text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rp-ink-3); padding: 0 14px 12px; }
+.rp-table td { padding: 14px; border-top: 1px solid var(--rp-line); vertical-align: top; }
+.rp-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+/* ---------- Matrix ---------- */
+.rp-matrix { display: grid; gap: 10px; }
+.rp-matrix__head { font-size: 12px; color: var(--rp-ink-3); text-transform: uppercase; letter-spacing: 0.1em; align-self: end; padding: 0 4px 2px; }
+.rp-cell {
+  border-radius: 16px; padding: 14px 16px; min-height: 92px;
+  border: 1px solid var(--rp-line);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+}
+.rp-cell--pass { border-color: color-mix(in srgb, var(--rp-pass) 38%, transparent); box-shadow: inset 0 0 30px -18px var(--rp-pass); }
+.rp-cell--fail { border-color: color-mix(in srgb, var(--rp-fail) 60%, transparent); box-shadow: inset 0 0 40px -14px var(--rp-fail), 0 0 24px -12px var(--rp-fail); }
+.rp-cell--blocked { border-color: color-mix(in srgb, var(--rp-block) 45%, transparent); }
+.rp-cell__exp { font-size: 12.5px; color: var(--rp-ink-2); }
+.rp-actor { font-weight: 620; font-size: 14px; align-self: center; }
+.rp-actor small { display: block; font-weight: 400; color: var(--rp-ink-3); font-size: 12px; }
+
+/* ---------- Buttons ---------- */
+.rp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px 20px; border-radius: 999px; font-weight: 620; font-size: 15px; letter-spacing: -0.01em;
+  color: var(--rp-ink); text-decoration: none; cursor: pointer;
+  border: 1px solid var(--rp-line-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.rp-btn:hover { text-decoration: none; transform: translateY(-1px); border-color: rgba(200, 230, 255, 0.4); }
+.rp-btn--primary {
+  color: #03121a;
+  border-color: transparent;
+  background: linear-gradient(135deg, #a8f5ff 0%, var(--rp-cyan) 38%, var(--rp-blue) 72%, var(--rp-violet) 120%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 14px 40px -12px rgba(90, 184, 255, 0.65);
+}
+.rp-btn--primary:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 50px -12px rgba(111, 231, 255, 0.8); }
+
+.rp-logo { width: 28px; height: 28px; flex: none; }
+.rp-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 680; letter-spacing: -0.02em; font-size: 17px; color: var(--rp-ink); }
+.rp-brand:hover { text-decoration: none; }
+
+.rp-code {
+  font-family: var(--rp-mono); font-size: 13px; line-height: 1.7;
+  padding: 18px 20px; margin: 0; overflow-x: auto; color: #cfe3f6;
+  border-radius: var(--rp-radius-sm);
+  background: rgba(2, 6, 14, 0.66); border: 1px solid var(--rp-line);
+}
+.rp-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--rp-line-strong), transparent); border: 0; margin: 28px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ---------- Print: clean, ink-friendly evidence ---------- */
+@media print {
+  body.rp { background: #fff !important; color: #0b1220; font-size: 12px; }
+  body.rp::before { display: none; }
+  .rp-glass { background: #fff !important; box-shadow: none !important; border: 1px solid #c9d3e0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; break-inside: avoid; }
+  .rp-glass::before, .rp-glass::after { display: none; }
+  .rp-muted, .rp-kv dt, .rp-faint, .rp-table th { color: #475569 !important; }
+  .rp-gradient-text { color: #0b1220 !important; background: none !important; }
+  .rp-pass { color: #047857; } .rp-fail { color: #be123c; } .rp-blocked { color: #b45309; } .rp-na { color: #475569; }
+  .rp-cell { background: #fff !important; }
+  .rp-noprint { display: none !important; }
+  a { color: #0b1220; }
+}
+
+.rp-report header { padding: 36px 0 22px; }
+.rp-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+@media (max-width: 860px) { .rp-hero { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="rp rp-report">
+<div class="rp-noprint" style="text-align:center;padding:10px 16px;font-size:13px;color:#a3b1c4;border-bottom:1px solid rgba(148,170,200,.14)">Sample report generated from a real run against a deliberately broken local policy · <a href="index.html">Back to RowProof</a></div>
+<div class="rp-wrap">
+<header class="rp-spread">
+  <span class="rp-brand"><svg class="rp-logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><defs><linearGradient id="rp-lg" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8ef6ff"/><stop offset=".55" stop-color="#5ab8ff"/><stop offset="1" stop-color="#9b8cff"/></linearGradient></defs><path d="M16 2.6 4.6 7.1v8.1c0 7 4.8 12.5 11.4 14.2 6.6-1.7 11.4-7.2 11.4-14.2V7.1L16 2.6Z" fill="rgba(94,184,255,.08)" stroke="url(#rp-lg)" stroke-width="1.7" stroke-linejoin="round"/><rect x="10" y="10.4" width="12" height="2.5" rx="1.25" fill="url(#rp-lg)"/><rect x="10" y="14.9" width="12" height="2.5" rx="1.25" fill="url(#rp-lg)" opacity=".42"/><rect x="10" y="19.4" width="7.5" height="2.5" rx="1.25" fill="url(#rp-lg)" opacity=".42"/></svg>RowProof</span>
+  <span class="rp-faint" style="font-size:13px">Prepared for <strong>Invoice Portal (demo)</strong> by <strong>RowProof</strong></span>
+</header>
+
+<main>
+<section class="rp-hero">
+  <div class="rp-glass rp-glass--strong rp-pad">
+    <div class="rp-eyebrow">Access-rule evidence report</div>
+    <h1 class="rp-h1 rp-gradient-text" style="margin:12px 0 18px;font-size:clamp(28px,3.6vw,42px)">invoice-owner-read</h1>
+    <div class="rp-verdict rp-fail">
+      <div class="rp-verdict__orb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div><div style="font-size:24px;font-weight:660;letter-spacing:-0.02em">Fail</div><div class="rp-muted" style="max-width:46ch">At least one approved expectation was demonstrably violated.</div></div>
+    </div>
+    <hr class="rp-divider">
+    <div class="rp-grid rp-grid-4">
+      <div><div class="rp-stat__n rp-pass">4</div><div class="rp-stat__l">Passed</div></div>
+      <div><div class="rp-stat__n rp-fail">2</div><div class="rp-stat__l">Failed</div></div>
+      <div><div class="rp-stat__n rp-blocked">0</div><div class="rp-stat__l">Blocked</div></div>
+      <div><div class="rp-stat__n rp-na">0</div><div class="rp-stat__l">Not assessed</div></div>
+    </div>
+  </div>
+  <div class="rp-glass rp-pad">
+    <div class="rp-eyebrow">What was checked</div>
+    <dl class="rp-kv" style="margin-top:14px">
+      <dt>Observed</dt><dd class="rp-mono">2026-11-05 05:08:48 UTC</dd>
+      <dt>Approved rule</dt><dd class="rp-mono">revision 1<br>sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3</dd>
+      <dt>Approval</dt><dd>local-self-attested</dd>
+      <dt>Target</dt><dd class="rp-mono">http://127.0.0.1:54321</dd>
+      <dt>Environment</dt><dd>local-disposable</dd>
+      <dt>Route</dt><dd class="rp-mono">supabase-data-api-rest-v1</dd>
+      <dt>Source</dt><dd class="rp-mono">737252cc0f38ead98247370cab95b1675f36a346<br><span class="rp-blocked">uncommitted changes present</span></dd>
+      <dt>Completeness</dt><dd>complete</dd>
+      <dt>Freshness</dt><dd>unknown <span class="rp-faint">(no dependency observer)</span></dd>
+    </dl>
+  </div>
+</section>
+
+<section class="rp-glass rp-pad" style="margin-top:18px">
+  <div class="rp-spread"><div><div class="rp-eyebrow">Proof matrix</div><h2 class="rp-h3" style="margin-top:6px">Who may read which record</h2></div><span class="rp-faint" style="font-size:13px">Rows: actors · Columns: synthetic records</span></div>
+  <div style="margin-top:18px"><div class="rp-table-wrap"><div class="rp-matrix" style="grid-template-columns:minmax(110px, 0.8fr) repeat(2, minmax(130px, 1fr))"><div></div><div class="rp-matrix__head">invoice-a</div><div class="rp-matrix__head">invoice-b</div><div class="rp-actor">user-a<small>signed-in user</small></div><div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">Must read own record</div><div><span class="rp-pill rp-pass">Pass</span></div></div><div class="rp-cell rp-cell--fail"><div class="rp-cell__exp">Must not see record</div><div><span class="rp-pill rp-fail">Fail</span></div></div><div class="rp-actor">user-b<small>signed-in user</small></div><div class="rp-cell rp-cell--fail"><div class="rp-cell__exp">Must not see record</div><div><span class="rp-pill rp-fail">Fail</span></div></div><div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">Must read own record</div><div><span class="rp-pill rp-pass">Pass</span></div></div><div class="rp-actor">anonymous<small>no session</small></div><div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">Must not see record</div><div><span class="rp-pill rp-pass">Pass</span></div></div><div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">Must not see record</div><div><span class="rp-pill rp-pass">Pass</span></div></div></div></div></div>
+</section>
+
+<section class="rp-glass rp-pad" style="margin-top:18px">
+  <div class="rp-eyebrow">Assertions</div>
+  <h2 class="rp-h3" style="margin:6px 0 16px">Each expectation, what was observed, and what to do</h2>
+  <div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>Status</th><th>Assertion</th><th>Expectation</th><th>Finding</th></tr></thead><tbody><tr><td><span class="rp-pill rp-pass">Pass</span></td><td><div class="rp-mono">a-reads-a</div><div class="rp-faint" style="font-size:12.5px">user-a &rarr; invoice-a</div></td><td>Must read own record</td><td><div>Observed exactly what the approved rule expects.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">ok · HTTP 200</div></td></tr><tr><td><span class="rp-pill rp-pass">Pass</span></td><td><div class="rp-mono">b-reads-b</div><div class="rp-faint" style="font-size:12.5px">user-b &rarr; invoice-b</div></td><td>Must read own record</td><td><div>Observed exactly what the approved rule expects.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">ok · HTTP 200</div></td></tr><tr><td><span class="rp-pill rp-fail">Fail</span></td><td><div class="rp-mono">a-reads-b</div><div class="rp-faint" style="font-size:12.5px">user-a &rarr; invoice-b</div></td><td>Must not see record</td><td><div>A user who must not see this record received it. This is a real access-control regression for this route.</div><div class="rp-faint" style="font-size:12.5px;margin-top:4px">Next: Review recent changes to RLS policies, grants, views and security-definer functions on this table. Fix the policy, then re-run.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">fixture_disclosed · HTTP 200</div></td></tr><tr><td><span class="rp-pill rp-fail">Fail</span></td><td><div class="rp-mono">b-reads-a</div><div class="rp-faint" style="font-size:12.5px">user-b &rarr; invoice-a</div></td><td>Must not see record</td><td><div>A user who must not see this record received it. This is a real access-control regression for this route.</div><div class="rp-faint" style="font-size:12.5px;margin-top:4px">Next: Review recent changes to RLS policies, grants, views and security-definer functions on this table. Fix the policy, then re-run.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">fixture_disclosed · HTTP 200</div></td></tr><tr><td><span class="rp-pill rp-pass">Pass</span></td><td><div class="rp-mono">anon-reads-a</div><div class="rp-faint" style="font-size:12.5px">anonymous &rarr; invoice-a</div></td><td>Must not see record</td><td><div>Observed exactly what the approved rule expects.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">ok · HTTP 200</div></td></tr><tr><td><span class="rp-pill rp-pass">Pass</span></td><td><div class="rp-mono">anon-reads-b</div><div class="rp-faint" style="font-size:12.5px">anonymous &rarr; invoice-b</div></td><td>Must not see record</td><td><div>Observed exactly what the approved rule expects.</div><div class="rp-faint rp-mono" style="font-size:11.5px;margin-top:6px">ok · HTTP 200</div></td></tr></tbody></table></div>
+</section>
+
+<section class="rp-glass rp-pad" style="margin-top:18px">
+  <div class="rp-eyebrow">Controls</div>
+  <h2 class="rp-h3" style="margin:6px 0 16px">Preconditions established before any result was trusted</h2>
+  <div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>State</th><th>Control</th><th>Detail</th></tr></thead><tbody><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">baseline</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">target</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">api-key</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">setup-key</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">fixture:invoice-a</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">fixture:invoice-b</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">identity:user-a</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">identity:user-b</td><td><span class="rp-faint">OK</span></td></tr><tr><td><span class="rp-pill rp-pass">Established</span></td><td class="rp-mono">actors-distinct</td><td><span class="rp-faint">OK</span></td></tr></tbody></table></div>
+</section>
+<section class="rp-glass rp-pad" style="margin-top:18px"><div class="rp-eyebrow">Run history</div><h2 class="rp-h3" style="margin:6px 0 16px">2 runs in this report</h2><div class="rp-table-wrap"><table class="rp-table"><thead><tr><th>Observed</th><th>Outcome</th><th>Approved rule</th><th>Commit</th><th>Assertions</th></tr></thead><tbody><tr><td class="rp-mono">2026-11-05 05:08:47 UTC</td><td><span class="rp-pill rp-pass">Pass</span></td><td class="rp-mono">r1 · sha256:3807c4de60fc</td><td class="rp-mono">737252cc0f (modified)</td><td>6/6 passed</td></tr><tr><td class="rp-mono">2026-11-05 05:08:48 UTC</td><td><span class="rp-pill rp-fail">Fail</span></td><td class="rp-mono">r1 · sha256:3807c4de60fc</td><td class="rp-mono">737252cc0f (modified)</td><td>4/6 passed</td></tr></tbody></table></div></section>
+<section class="rp-glass rp-pad" style="margin-top:18px">
+  <div class="rp-eyebrow">Scope and limits</div>
+  <div class="rp-grid rp-grid-2" style="margin-top:12px">
+    <p class="rp-muted" style="margin:0">This report covers only the assertions listed above, against synthetic records, on the named target, at the observed time. It is not a security certification, a penetration test, or evidence about production or any other access path.</p>
+    <p class="rp-muted" style="margin:0">The approved rule was acknowledged locally (self-attested): anyone with write access to the approval store could change it. Results are produced on infrastructure controlled by whoever ran the check; provenance identifies the producer, not honest execution. Execution context declared: ci-development.</p>
+  </div>
+</section>
+</main>
+
+<footer class="rp-faint" style="font-size:12.5px;padding:28px 0 40px;text-align:center">
+  Generated by RowProof 0.1.0 · run <span class="rp-mono">cf85bba4-5c75-444d-a015-b7cc3979b828</span> · runner 0.1.0
+</footer>
+</div>
+</body>
+</html>

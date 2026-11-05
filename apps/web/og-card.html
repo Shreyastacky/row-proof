@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>RowProof social card</title>
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  body.rp { width: 1200px; height: 630px; overflow: hidden; display: grid; place-items: center; }
+  .card { width: 1080px; height: 520px; padding: 56px 64px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: center; }
+  .t { font-size: 66px; line-height: 1.02; letter-spacing: -0.045em; font-weight: 690; margin: 18px 0 18px; }
+  .s { font-size: 23px; color: var(--rp-ink-2); }
+  .m { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .m .rp-cell { min-height: 110px; }
+</style>
+</head>
+<body class="rp">
+  <div class="rp-glass rp-glass--strong card">
+    <div>
+      <span class="rp-brand" style="font-size:24px"><svg class="rp-logo" style="width:40px;height:40px" viewBox="0 0 32 32"><defs><linearGradient id="lg" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8ef6ff"/><stop offset=".55" stop-color="#5ab8ff"/><stop offset="1" stop-color="#9b8cff"/></linearGradient></defs><path d="M16 2.6 4.6 7.1v8.1c0 7 4.8 12.5 11.4 14.2 6.6-1.7 11.4-7.2 11.4-14.2V7.1L16 2.6Z" fill="rgba(94,184,255,.08)" stroke="url(#lg)" stroke-width="1.7" stroke-linejoin="round"/><rect x="10" y="10.4" width="12" height="2.5" rx="1.25" fill="url(#lg)"/><rect x="10" y="14.9" width="12" height="2.5" rx="1.25" fill="url(#lg)" opacity=".42"/><rect x="10" y="19.4" width="7.5" height="2.5" rx="1.25" fill="url(#lg)" opacity=".42"/></svg>RowProof</span>
+      <div class="t"><span class="rp-gradient-text">Proof</span> every user sees only their own data.</div>
+      <div class="s">Owner-approved access rules for Supabase, checked on every release.</div>
+    </div>
+    <div class="m">
+      <div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">user A → invoice A</div><span class="rp-pill rp-pass">Pass</span></div>
+      <div class="rp-cell rp-cell--fail"><div class="rp-cell__exp">user A → invoice B</div><span class="rp-pill rp-fail">Fail</span></div>
+      <div class="rp-cell rp-cell--fail"><div class="rp-cell__exp">user B → invoice A</div><span class="rp-pill rp-fail">Fail</span></div>
+      <div class="rp-cell rp-cell--pass"><div class="rp-cell__exp">user B → invoice B</div><span class="rp-pill rp-pass">Pass</span></div>
+    </div>
+  </div>
+</body>
+</html>

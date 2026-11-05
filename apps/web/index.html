@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>RowProof · Proof your Supabase access rules still hold</title>
+<meta name="description" content="RowProof turns who-can-read-what into an owner-approved, versioned rule and checks it against real Supabase requests on every release. If a policy change exposes one user's rows to another, the build fails with the exact record.">
+<meta property="og:title" content="RowProof · Proof your Supabase access rules still hold">
+<meta property="og:description" content="Owner-approved access rules, checked against real Supabase requests on every release. Cross-user leaks fail the build.">
+<meta property="og:image" content="assets/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#04060b">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="stylesheet" href="assets/site.css">
+<script src="config.js" defer></script>
+<script src="assets/site.js" defer></script>
+</head>
+<body class="rp">
+
+<nav class="nav rp-glass" aria-label="Primary">
+  <a class="rp-brand" href="#top" aria-label="RowProof home">
+    <svg class="rp-logo" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8ef6ff"/><stop offset=".55" stop-color="#5ab8ff"/><stop offset="1" stop-color="#9b8cff"/></linearGradient></defs><path d="M16 2.6 4.6 7.1v8.1c0 7 4.8 12.5 11.4 14.2 6.6-1.7 11.4-7.2 11.4-14.2V7.1L16 2.6Z" fill="rgba(94,184,255,.08)" stroke="url(#lg)" stroke-width="1.7" stroke-linejoin="round"/><rect x="10" y="10.4" width="12" height="2.5" rx="1.25" fill="url(#lg)"/><rect x="10" y="14.9" width="12" height="2.5" rx="1.25" fill="url(#lg)" opacity=".42"/><rect x="10" y="19.4" width="7.5" height="2.5" rx="1.25" fill="url(#lg)" opacity=".42"/></svg>
+    RowProof
+  </a>
+  <button class="nav__toggle" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="nav__links">
+    <a href="#how">How it works</a>
+    <a href="#different">Why RowProof</a>
+    <a href="#report">Evidence</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="#" data-repo>GitHub</a>
+  </div>
+  <a class="rp-btn rp-btn--primary nav__cta nav__cta--desktop" href="#pricing">Get a Boundary Check</a>
+</nav>
+
+<main id="top">
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="rp-wrap hero__grid">
+    <div>
+      <span class="chip"><span class="chip__dot"></span><b>For Supabase apps</b> built by teams, agencies and AI tools</span>
+      <h1 class="hero__title"><span class="rp-gradient-text">Proof</span> every user still sees only their own data.</h1>
+      <p class="hero__lede">RowProof turns <em>“Alice reads Alice’s invoices, Bob never sees them”</em> into an owner-approved, versioned rule, then checks it against real Supabase requests on every release. If a policy change exposes one user’s rows to another, the build fails with the exact record and rule revision.</p>
+      <div class="hero__ctas">
+        <a class="rp-btn rp-btn--primary" href="#pricing">Get a Boundary Check</a>
+        <a class="rp-btn" href="#start">Run it free</a>
+      </div>
+      <p class="hero__note">No production access. No customer data. Runs on a disposable copy of your schema, in your CI.</p>
+    </div>
+
+    <div class="hero__visual reveal">
+      <div class="rp-glass rp-glass--strong term">
+        <div class="term__bar"><i></i><i></i><i></i><span>rowproof run · after an AI-assisted policy edit</span></div>
+<pre><span class="t-dim">$</span> rowproof run --rule invoice-owner-read --html report.html
+
+  rule invoice-owner-read r1 <span class="t-dim">(sha256:3807c4de…)</span>
+  target http://127.0.0.1:54321 <span class="t-dim">(local-disposable)</span>
+
+  <span class="t-pass">PASS</span>  a-reads-a     user-a → invoice-a  owner reads own
+  <span class="t-pass">PASS</span>  b-reads-b     user-b → invoice-b  owner reads own
+  <span class="t-fail">FAIL</span>  a-reads-b     user-a → invoice-b  <span class="t-fail">fixture_disclosed</span>
+  <span class="t-fail">FAIL</span>  b-reads-a     user-b → invoice-a  <span class="t-fail">fixture_disclosed</span>
+  <span class="t-pass">PASS</span>  anon-reads-a  anonymous → invoice-a
+  <span class="t-pass">PASS</span>  anon-reads-b  anonymous → invoice-b
+
+  Outcome: <span class="t-fail">FAIL (demonstrated violation)</span> · exit 1</pre>
+      </div>
+      <div class="rp-glass float-card">
+        <div class="rp-spread"><span class="rp-eyebrow">Proof matrix</span><span class="rp-pill rp-fail">Fail</span></div>
+        <div class="rp-faint" style="font-size:13px;margin-top:8px">User A can read invoice B. Approved rule says: must not see record.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY NOW ================= -->
+<section id="why" style="padding-top:40px">
+  <div class="rp-wrap">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">Why now</div>
+      <h2 class="rp-h2" style="margin-top:10px">RLS doesn’t fail loudly. It fails silently.</h2>
+      <p>On Supabase, Row Level Security is often the only thing between one customer and another. A wrong policy doesn’t throw an error. It quietly returns someone else’s rows. And today, policies are increasingly written or rewritten by AI tools between releases.</p>
+    </div>
+    <div class="stat-band">
+      <div class="rp-glass reveal">
+        <div class="big-n rp-fail">170</div>
+        <div style="margin-top:10px">of 1,645 scanned Lovable showcase apps let anyone read or write tables with only the public key (CVE-2025-48757, CVSS 9.3).</div>
+        <div class="src">Reported by researcher Matt Palmer; see <a href="https://dbugs.ptsecurity.com/vulnerability/PT-2025-23236" rel="noopener">PT-2025-23236</a>.</div>
+      </div>
+      <div class="rp-glass reveal">
+        <div class="big-n rp-blocked">0</div>
+        <div style="margin-top:10px">errors you get when a policy leaks. Empty results and other users’ rows both come back as <span class="rp-mono">HTTP 200</span>. Only a test that knows who should see what can tell them apart.</div>
+        <div class="src">How Postgres RLS and PostgREST report filtered rows.</div>
+      </div>
+      <div class="rp-glass reveal">
+        <div class="big-n rp-pass">6</div>
+        <div style="margin-top:10px">assertions cover a whole user-owned table: both owners read their own record, nobody reads the other’s, anonymous reads neither. Each one runs on every release.</div>
+        <div class="src">Scaffolded for any table with <span class="rp-mono">rowproof init</span>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="how">
+  <div class="rp-wrap">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">How it works</div>
+      <h2 class="rp-h2" style="margin-top:10px">Agree the rule once. Prove it every release.</h2>
+      <p>The person responsible for the data approves the expectation. Code changes, including AI edits, can’t quietly change it.</p>
+    </div>
+    <div class="rp-grid rp-grid-3">
+      <div class="rp-glass card reveal">
+        <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <div class="step-n">01 · Approve</div>
+        <h3 class="rp-h3" style="margin-top:6px">A readable permission matrix</h3>
+        <p>Who may read which record, as a short JSON rule. The owner reviews a plain diff and approves one exact content hash. Any later change to intent needs a new approval.</p>
+      </div>
+      <div class="rp-glass card reveal">
+        <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="step-n">02 · Prove</div>
+        <h3 class="rp-h3" style="margin-top:6px">Real requests, real identities</h3>
+        <p>Synthetic users sign in for real. Each read goes through the Supabase Data API with a verified token. Owner reads are positive controls; timeouts, 404s and errors never count as a pass.</p>
+      </div>
+      <div class="rp-glass card reveal">
+        <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+        <div class="step-n">03 · Keep</div>
+        <h3 class="rp-h3" style="margin-top:6px">In CI, on every pull request</h3>
+        <p>The approved baseline is read from your protected branch, never from the PR. A leak fails the build (exit 1), with JUnit output, a PR summary and a client-ready HTML report.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DIFFERENT ================= -->
+<section id="different">
+  <div class="rp-wrap">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">Why RowProof</div>
+      <h2 class="rp-h2" style="margin-top:10px">Scanners ask what strangers can see. RowProof asks what each user should see.</h2>
+      <p>Anonymous-key scanners catch tables left wide open, and you should run one. They can’t tell you that a signed-in customer can read another customer’s invoice, because they don’t know your intent.</p>
+    </div>
+    <div class="rp-glass rp-pad reveal">
+      <div class="rp-table-wrap">
+        <table class="rp-table compare">
+          <thead><tr><th></th><th>Anon-key scanners</th><th>Hand-written pgTAP</th><th>RowProof</th></tr></thead>
+          <tbody>
+            <tr><td>Catches tables open to the public</td><td class="yes">Yes</td><td class="part">If written</td><td class="yes">Yes</td></tr>
+            <tr><td>Catches user A reading user B’s rows</td><td class="no">No</td><td class="part">If written</td><td class="yes">Yes</td></tr>
+            <tr><td>Tests through the real API with real Auth tokens</td><td class="part">Anon only</td><td class="no">No (SQL session)</td><td class="yes">Yes</td></tr>
+            <tr><td>Expected access approved separately from code</td><td class="no">No</td><td class="no">No</td><td class="yes">Hash-locked</td></tr>
+            <tr><td>Errors and timeouts can never look like a pass</td><td class="part">Varies</td><td class="part">Varies</td><td class="yes">By design</td></tr>
+            <tr><td>Client-ready evidence report</td><td class="part">Some</td><td class="no">No</td><td class="yes">Yes</td></tr>
+            <tr><td>Needs production access or data</td><td class="part">Live URL</td><td class="yes">No</td><td class="yes">No</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REPORT ================= -->
+<section id="report">
+  <div class="rp-wrap rp-grid rp-grid-2" style="align-items:center;gap:40px">
+    <div class="reveal">
+      <div class="rp-eyebrow">Evidence</div>
+      <h2 class="rp-h2" style="margin-top:10px">A report you can hand to a client.</h2>
+      <p class="rp-muted" style="font-size:18px">Every run can produce a self-contained HTML report: the verdict, the proof matrix, each finding in plain language with a next step, the exact approved rule hash, commit and target. White-label it with your agency’s name. It prints cleanly to PDF.</p>
+      <ul class="honest">
+        <li><strong>Plain language.</strong> “A user who must not see this record received it,” not a stack trace.</li>
+        <li><strong>Traceable.</strong> Rule revision, content hash, source commit, and whether the tree had uncommitted changes.</li>
+        <li><strong>Safe to share.</strong> No tokens, keys, row contents or response bodies are ever written.</li>
+      </ul>
+      <div class="hero__ctas" style="margin-top:24px"><a class="rp-btn" href="sample-report.html">Open a sample report</a></div>
+    </div>
+    <a class="rp-glass preview reveal" href="sample-report.html" aria-label="Open the sample evidence report">
+      <img src="assets/report-preview.png" alt="RowProof evidence report showing a FAIL verdict and a proof matrix where user A can read invoice B" width="1200" height="900" loading="lazy">
+    </a>
+  </div>
+</section>
+
+<!-- ================= HONEST ================= -->
+<section id="trust">
+  <div class="rp-wrap rp-grid rp-grid-2" style="gap:18px">
+    <div class="rp-glass rp-pad reveal">
+      <div class="rp-eyebrow">What a pass means</div>
+      <h3 class="rp-h3" style="margin:8px 0 12px">Precise claims, on purpose</h3>
+      <ul class="honest">
+        <li>The listed assertions held, on the named target, at that time.</li>
+        <li>Identities were verified by your Auth service; records were verified through a separate channel.</li>
+        <li>Every control was established. Anything less is <strong>blocked</strong>, never green.</li>
+      </ul>
+    </div>
+    <div class="rp-glass rp-pad reveal">
+      <div class="rp-eyebrow">What it doesn’t claim</div>
+      <h3 class="rp-h3" style="margin:8px 0 12px">No security theatre</h3>
+      <ul class="honest">
+        <li>Not a pentest, certification, or proof your whole app is secure.</li>
+        <li>Today: SELECT on user-owned tables via the Data API. Writes, tenants and shared records are scoped manually for now.</li>
+        <li>Not production evidence. Checks run on a disposable copy built from your migrations.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= START ================= -->
+<section id="start">
+  <div class="rp-wrap">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">Run it yourself</div>
+      <h2 class="rp-h2" style="margin-top:10px">Free CLI. From <span class="rp-mono" style="font-size:.8em">supabase start</span> to your first proof.</h2>
+      <p>Source-available under FSL-1.1 (each release becomes Apache-2.0 after two years). Use it on your own apps for free, forever.</p>
+    </div>
+    <div class="rp-glass term reveal">
+      <div class="term__bar"><i></i><i></i><i></i><span>terminal · in your Supabase project</span><button class="rp-btn copy-btn" data-copy="quickstart">Copy</button></div>
+<pre id="quickstart"><span class="t-dim">$</span> supabase start
+<span class="t-dim">$</span> rowproof init --table invoices --owner-column owner_id --marker-column title
+<span class="t-dim">$</span> rowproof fixture provision --rule invoices-owner-read.rule.json
+<span class="t-dim">$</span> rowproof propose --rule invoices-owner-read.rule.json --store .rowproof/approvals --proposed-by me --out p.json
+<span class="t-dim">$</span> rowproof approve --proposal p.json --store .rowproof/approvals --approver owner --acknowledge &lt;hash&gt; --promote
+<span class="t-dim">$</span> rowproof run --store .rowproof/approvals --rule invoices-owner-read --credentials .rowproof/local.env --html report.html</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section id="pricing">
+  <div class="rp-wrap">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">Pricing</div>
+      <h2 class="rp-h2" style="margin-top:10px">Use the tool free. Hire us to set it up and keep it true.</h2>
+      <p>Fixed scope, fixed price, written delivery. You never send credentials or customer data.</p>
+    </div>
+    <div class="plans">
+      <div class="rp-glass plan reveal">
+        <div class="plan__tag"></div>
+        <div class="plan__name">Open CLI</div>
+        <div class="plan__for">For developers who want to run it themselves.</div>
+        <div class="plan__price">$0</div>
+        <ul>
+          <li>Full CLI: init, fixtures, approvals, run, doctor</li>
+          <li>HTML, JUnit and PR-summary outputs</li>
+          <li>Runs locally and in your CI</li>
+          <li>Community support via GitHub</li>
+        </ul>
+        <a class="rp-btn" href="#start">Get started</a>
+      </div>
+      <div class="rp-glass plan plan--featured reveal">
+        <div class="plan__tag">Most popular first step</div>
+        <div class="plan__name">Boundary Check</div>
+        <div class="plan__for">One table, set up end to end before your next release.</div>
+        <div class="plan__price">$490 <small>one-time</small></div>
+        <ul>
+          <li>Permission matrix written and approved with you</li>
+          <li>Synthetic fixtures on a local copy of your schema</li>
+          <li>CI workflow pull request, pinned and minimal</li>
+          <li>Evidence report plus written walkthrough</li>
+          <li>Delivered in 3 business days</li>
+        </ul>
+        <a class="rp-btn rp-btn--primary" href="#" data-cta="boundaryCheck">Request a Boundary Check</a>
+      </div>
+      <div class="rp-glass plan reveal">
+        <div class="plan__tag">Ongoing</div>
+        <div class="plan__name">Release Assurance</div>
+        <div class="plan__for">For apps that ship weekly and can’t afford a leak.</div>
+        <div class="plan__price">$290 <small>/ app / month</small></div>
+        <ul>
+          <li>Up to 5 tables covered</li>
+          <li>Rule changes reviewed as intent diffs</li>
+          <li>Evidence report every release</li>
+          <li>Failures triaged within 1 business day</li>
+          <li>Cancel any time</li>
+        </ul>
+        <a class="rp-btn" href="#" data-cta="releaseAssurance">Start Release Assurance</a>
+      </div>
+      <div class="rp-glass plan reveal">
+        <div class="plan__tag">For agencies</div>
+        <div class="plan__name">Agency</div>
+        <div class="plan__for">Offer access-rule assurance to your own clients.</div>
+        <div class="plan__price">$990 <small>/ month</small></div>
+        <ul>
+          <li>Up to 6 client apps</li>
+          <li>White-label reports in your name</li>
+          <li>Setup for each new client app included</li>
+          <li>Quarterly boundary review</li>
+        </ul>
+        <a class="rp-btn" href="#" data-cta="agency">Talk about the Agency plan</a>
+      </div>
+    </div>
+    <p class="rp-faint" style="font-size:13.5px;margin-top:18px">Launch pricing, in USD. Scope today: Supabase Data API SELECT on user-owned tables. Multi-tenant and shared-record rules are scoped individually. Not a penetration test.</p>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section id="faq">
+  <div class="rp-wrap" style="max-width:860px">
+    <div class="section-head reveal">
+      <div class="rp-eyebrow">FAQ</div>
+      <h2 class="rp-h2" style="margin-top:10px">Straight answers</h2>
+    </div>
+    <div class="faq">
+      <details class="rp-glass"><summary>Do you need access to our production database or keys?</summary><p>No. RowProof runs against a disposable local Supabase stack built from your migrations, with synthetic users and records. For a Boundary Check we work from your repository (or a copy of your migrations) and deliver a pull request.</p></details>
+      <details class="rp-glass"><summary>How is this different from pgTAP tests?</summary><p>pgTAP is great, and you can keep it. RowProof tests through the same Data API and Auth path your app uses, with real tokens. It treats errors and timeouts as “blocked” instead of “denied”, and keeps the expected access approved separately from code, so a pull request can’t quietly redefine “correct”. It also produces evidence a non-engineer can read.</p></details>
+      <details class="rp-glass"><summary>Does it replace a penetration test or security review?</summary><p>No. It continuously checks one important class of bug, cross-user data exposure, against an agreed rule. Pair it with a security review for everything else.</p></details>
+      <details class="rp-glass"><summary>We use multi-tenant organizations, not per-user rows.</summary><p>Automated support today is single-owner tables. Tenant membership rules are on the roadmap. Until then we scope them by hand as part of Release Assurance. Ask us with a short description of your model.</p></details>
+      <details class="rp-glass"><summary>Is it AI? Will it change our code?</summary><p>No. RowProof is deterministic and read-only during a run. It never edits policies, approvals or your application. AI may help draft a rule; only a human approves it.</p></details>
+      <details class="rp-glass"><summary>What does the license allow?</summary><p>FSL-1.1 lets you use, modify and run RowProof for free for any purpose except offering a competing product or service. Each release converts to Apache-2.0 after two years.</p></details>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:20px">
+  <div class="rp-wrap">
+    <div class="rp-glass rp-glass--strong cta-final reveal">
+      <h2 class="rp-h2"><span class="rp-gradient-text">Know before your users do.</span></h2>
+      <p>Send a short brief: your tables, who should see what, and your next release date. We’ll reply with a fixed scope within one business day.</p>
+      <div class="hero__ctas" style="justify-content:center">
+        <a class="rp-btn rp-btn--primary" href="#" data-cta="boundaryCheck">Request a Boundary Check</a>
+        <a class="rp-btn" href="#" data-cta="book">Book a call</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="rp-wrap rp-spread">
+    <span>© <span data-year>2026</span> RowProof · Synthetic data only · Not a certification</span>
+    <span class="rp-row" style="gap:18px"><a href="privacy.html">Privacy</a><a href="#" data-repo>GitHub</a><a href="#" data-email>Contact</a></span>
+  </div>
+</footer>
+</body>
+</html>

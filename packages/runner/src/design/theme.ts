@@ -168,11 +168,10 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .rp-verdict__orb {
   width: 64px; height: 64px; border-radius: 50%; flex: none;
   display: grid; place-items: center; font-size: 26px; font-weight: 700;
-  color: #04060b;
   background: radial-gradient(circle at 35% 30%, #fff 0%, currentColor 42%, color-mix(in srgb, currentColor 55%, #000) 100%);
   box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 16%, transparent), 0 0 40px -4px currentColor;
 }
-.rp-verdict__orb svg { width: 28px; height: 28px; }
+.rp-verdict__orb svg { width: 28px; height: 28px; color: #04060b; }
 
 /* ---------- Layout helpers ---------- */
 .rp-grid { display: grid; gap: 18px; }
