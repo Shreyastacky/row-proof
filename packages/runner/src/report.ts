@@ -7,7 +7,7 @@
  */
 import { mkdir, open } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { findCredentialValues, validateSchema, type AssertionResult, type RunResult } from '@ship-safe/contracts';
+import { findCredentialValues, validateSchema, type AssertionResult, type RunResult } from '@rowproof/contracts';
 
 export class OutputSafetyError extends Error {
   constructor(readonly code: 'result_schema_invalid' | 'output_leak_prevented') {
@@ -56,7 +56,7 @@ const EXPECTED_LABEL: Record<AssertionResult['expected'], string> = {
 export function renderSummary(result: RunResult, resultPath: string | null): string {
   const lines: string[] = [];
   const hash = result.rule.contentHash ? `${result.rule.contentHash.slice(0, 19)}…` : 'none';
-  lines.push('Ship Safe read-isolation check');
+  lines.push('RowProof read-isolation check');
   lines.push(
     `  rule ${result.rule.ruleId} revision ${result.rule.revision ?? '-'} (${hash}); approval: ${result.provenance.approvalLevel ?? 'none'}`,
   );

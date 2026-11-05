@@ -9,7 +9,7 @@
  * - Concurrency 1 (callers await each request) and zero retries.
  * - Failures are reported as safe enum codes; raw errors are discarded.
  */
-import { parseExactOrigin, type RunLimits } from '@ship-safe/contracts';
+import { parseExactOrigin, type RunLimits } from '@rowproof/contracts';
 
 export type TransportFailureCode =
   | 'timeout'
@@ -39,8 +39,8 @@ export interface Transport {
 export type FetchLike = (input: URL, init: RequestInit) => Promise<Response>;
 
 /** Abort reasons used on the run-wide signal. */
-export const ABORT_CANCELLED = 'ship-safe:cancelled';
-export const ABORT_DEADLINE = 'ship-safe:run-deadline';
+export const ABORT_CANCELLED = 'rowproof:cancelled';
+export const ABORT_DEADLINE = 'rowproof:run-deadline';
 
 export interface BoundedTransportOptions {
   allowedOrigin: string;
@@ -84,7 +84,7 @@ export class BoundedFetchTransport implements Transport {
     this.count++;
 
     const perRequest = new AbortController();
-    const timer = setTimeout(() => perRequest.abort('ship-safe:request-timeout'), limits.requestTimeoutMs);
+    const timer = setTimeout(() => perRequest.abort('rowproof:request-timeout'), limits.requestTimeoutMs);
     const signal = AbortSignal.any([runSignal, perRequest.signal]);
     const failureFromAbort = (): HttpOutcome => ({
       kind: 'failure',

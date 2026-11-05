@@ -4,8 +4,8 @@
   "ruleId": "invoice-owner-read",
   "sequence": 1,
   "revision": 1,
-  "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+  "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
   "promotedBy": "demo-placeholder-not-owner",
-  "promotedAt": "2026-11-05T03:59:18.495Z",
+  "promotedAt": "2026-11-05T04:55:21.018Z",
   "previous": null
 }

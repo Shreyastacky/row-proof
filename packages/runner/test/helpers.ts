@@ -7,7 +7,7 @@ import {
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
-} from '@ship-safe/contracts';
+} from '@rowproof/contracts';
 import { DEFAULT_LIMITS, executeRun, type RunOutput } from '../src/engine.js';
 import { BoundedFetchTransport, type FetchLike } from '../src/transport.js';
 import { ORIGIN } from './fake-supabase.js';
@@ -55,13 +55,13 @@ export async function runEngine(fetchImpl: FetchLike, opts: RunOpts): Promise<Ru
     limits,
     runSignal: opts.signal ?? new AbortController().signal,
     fetchImpl,
-    userAgent: 'ship-safe-runner/test',
+    userAgent: 'rowproof-runner/test',
   });
   const out = await executeRun({
     baseline: opts.baseline ?? approvedBaseline(),
     baselineFailure: null,
     env: opts.env,
-    targetUrl: 'targetUrl' in opts ? opts.targetUrl : opts.env.SHIPSAFE_SUPABASE_URL,
+    targetUrl: 'targetUrl' in opts ? opts.targetUrl : opts.env.ROWPROOF_SUPABASE_URL,
     transport,
     limits,
     sourceCommit: null,

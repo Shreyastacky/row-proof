@@ -19,7 +19,7 @@ import {
   type Issue,
   type RuleContent,
   type RuleProposal,
-} from '@ship-safe/contracts';
+} from '@rowproof/contracts';
 import { diffIntent, renderDiff } from '../approval/diff.js';
 import { LocalApprovalStoreWriter } from '../approval/writer.js';
 import { readTextFile, requireString, UsageError, type CliIO } from '../io.js';
@@ -42,8 +42,8 @@ async function readJson(path: string): Promise<unknown> {
 }
 
 function storeFrom(v: string | undefined, io: CliIO): string {
-  const s = v ?? io.env.SHIPSAFE_APPROVAL_STORE;
-  if (!s) throw new UsageError('missing --store (or SHIPSAFE_APPROVAL_STORE)');
+  const s = v ?? io.env.ROWPROOF_APPROVAL_STORE;
+  if (!s) throw new UsageError('missing --store (or ROWPROOF_APPROVAL_STORE)');
   return resolve(io.cwd, s);
 }
 
@@ -69,7 +69,7 @@ async function loadProposal(path: string, io: CliIO): Promise<RuleProposal | nul
 export async function validateCommand(argv: string[], io: CliIO): Promise<number> {
   const { positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: {} });
   const file = positionals[0];
-  if (!file) throw new UsageError('usage: ship-safe validate <rule-or-proposal.json>');
+  if (!file) throw new UsageError('usage: rowproof validate <rule-or-proposal.json>');
   const raw = await readJson(resolve(io.cwd, file));
   const kind = raw !== null && typeof raw === 'object' ? (raw as { kind?: unknown }).kind : undefined;
   const result = kind === 'RuleProposal' ? verifyProposal(raw) : validateRuleContent(raw);
@@ -88,7 +88,7 @@ export async function validateCommand(argv: string[], io: CliIO): Promise<number
 
 export async function hashCommand(argv: string[], io: CliIO): Promise<number> {
   const { positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: {} });
-  if (!positionals[0]) throw new UsageError('usage: ship-safe hash <rule.json>');
+  if (!positionals[0]) throw new UsageError('usage: rowproof hash <rule.json>');
   const content = await loadContent(resolve(io.cwd, positionals[0]), io);
   if (!content) return 2;
   io.stdout(`${ruleContentHash(content)}\n`);
@@ -135,7 +135,7 @@ export async function proposeCommand(argv: string[], io: CliIO): Promise<number>
     await fh.close();
   }
   io.stdout(
-    `proposal written to ${out}\n  rule ${proposal.ruleId}, based on ${basedOn ? `revision ${basedOn.revision}` : 'no approved revision'}\n  content hash ${proposal.contentHash}\nA proposal has no authority. Review it with \`ship-safe diff\` and approve it explicitly.\n`,
+    `proposal written to ${out}\n  rule ${proposal.ruleId}, based on ${basedOn ? `revision ${basedOn.revision}` : 'no approved revision'}\n  content hash ${proposal.contentHash}\nA proposal has no authority. Review it with \`rowproof diff\` and approve it explicitly.\n`,
   );
   return 0;
 }
@@ -156,7 +156,7 @@ export async function diffCommand(argv: string[], io: CliIO): Promise<number> {
   }
   io.stdout(renderDiff(diffIntent(before, proposal.content), label, 'this proposal'));
   io.stdout(
-    `\nTo approve EXACTLY this content, the designated owner runs:\n  ship-safe approve --proposal <file> --store <dir> --approver <id> --acknowledge ${proposal.contentHash} --promote\n`,
+    `\nTo approve EXACTLY this content, the designated owner runs:\n  rowproof approve --proposal <file> --store <dir> --approver <id> --acknowledge ${proposal.contentHash} --promote\n`,
   );
   return 0;
 }
@@ -186,7 +186,7 @@ export async function approveCommand(argv: string[], io: CliIO): Promise<number>
       promote: values.promote === true,
     });
     io.stdout(
-      `approved ${revision.ruleId} revision ${revision.revision} (${revision.contentHash})${promoted ? ' and promoted it to the active baseline' : '; not yet active (run `ship-safe promote`)'}\n${SELF_ATTESTED_NOTE}`,
+      `approved ${revision.ruleId} revision ${revision.revision} (${revision.contentHash})${promoted ? ' and promoted it to the active baseline' : '; not yet active (run `rowproof promote`)'}\n${SELF_ATTESTED_NOTE}`,
     );
     return 0;
   } catch (e) {

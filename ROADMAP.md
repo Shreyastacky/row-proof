@@ -49,7 +49,7 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 ## 1. Freeze the first rule contract — complete (5 November 2026)
 
-**Verified:** `pnpm verify` includes the contract suite (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/ship-safe.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
+**Verified:** `pnpm verify` includes the contract suite (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/rowproof.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
 
 - [x] Schemas for RuleContent, RuleProposal, Approval, ApprovedRevision, Promotion, ActiveBaseline and RunResult; types generated from the same file with a drift check.
 - [x] RFC 8785 canonicalization and SHA-256 content hash; RFC sample vector and golden hash pinned; strict parser rejects duplicate keys.
@@ -130,7 +130,7 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 ## 5. Make customer-run CI reproducible — implemented; locally reproduced; GitHub-hosted run pending
 
-**Implemented:** [.github/workflows/ship-safe.yml](.github/workflows/ship-safe.yml) with jobs `verify`, `integration` (the harness, with redacted artifacts uploaded) and `assess-with-base-branch-baseline` (baseline materialized from the base branch by `scripts/fetch-trusted-baseline.mjs`; edits to `baseline/` in a PR are flagged and ignored). Actions pinned to full SHAs (checkout v7.0.1, setup-node v7.1.0, pnpm/action-setup v6.1.0, upload-artifact v7.0.2), `contents: read`, no persisted credentials, no secrets, no `pull_request_target`, teardown always runs. Instructions: [docs/INTEGRATION.md](docs/INTEGRATION.md).
+**Implemented:** [.github/workflows/rowproof.yml](.github/workflows/rowproof.yml) with jobs `verify`, `integration` (the harness, with redacted artifacts uploaded) and `assess-with-base-branch-baseline` (baseline materialized from the base branch by `scripts/fetch-trusted-baseline.mjs`; edits to `baseline/` in a PR are flagged and ignored). Actions pinned to full SHAs (checkout v7.0.1, setup-node v7.1.0, pnpm/action-setup v6.1.0, upload-artifact v7.0.2), `contents: read`, no persisted credentials, no secrets, no `pull_request_target`, teardown always runs. Instructions: [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 - [x] Healthy demo green, broken-policy demo red, setup failures blocked (harness, fresh clone).
 - [x] Approved baseline is an explicit input from a separate ref, not the PR tree (harness boundary scenario plus the CI job).

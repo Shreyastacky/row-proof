@@ -42,6 +42,6 @@ supabase/.branches/
 artifacts/
 test-results/
 
-# Ship Safe local execution state: generated credentials, approval stores used
+# RowProof local execution state: generated credentials, approval stores used
 # for local experiments, and run results. Never commit these.
-.ship-safe/
+.rowproof/

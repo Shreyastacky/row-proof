@@ -27,7 +27,7 @@ import {
   type Promotion,
   type RevisionPointer,
   type RuleProposal,
-} from '@ship-safe/contracts';
+} from '@rowproof/contracts';
 
 async function writeExclusive(path: string, value: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });

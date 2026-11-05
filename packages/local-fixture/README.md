@@ -1,4 +1,4 @@
-# @ship-safe/local-fixture
+# @rowproof/local-fixture
 
 Privileged, local-only setup tooling for the disposable demo. It is not part of the runner.
 
@@ -8,6 +8,6 @@ Privileged, local-only setup tooling for the disposable demo. It is not part of 
 2. replaces the rule's fixture rows;
 3. signs each user in with an isolated client (no persisted session, no auto-refresh);
 4. verifies each token with `auth.getUser(jwt)` and each fixture's owner and marker through the setup channel;
-5. writes credentials to `.ship-safe/local.env` with mode 0600.
+5. writes credentials to `.rowproof/local.env` with mode 0600.
 
 Every SDK error is checked and reported as a step plus status code, never as a raw payload. `verify` repeats step 4 without changing anything.

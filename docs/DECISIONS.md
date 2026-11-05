@@ -4,7 +4,7 @@ Short records of choices that shape trust boundaries or maintenance. Each says w
 
 ## D1. One JSON Schema bundle is the authoritative contract
 
-`packages/contracts/schemas/ship-safe.v1.schema.json` (draft 2020-12, `$id` `urn:ship-safe:schemas:v1`) defines every document type under `$defs`. Ajv validates documents at runtime against `$defs/<Kind>`. `src/types.generated.ts` is generated from the same file by `json-schema-to-typescript`; `pnpm check:generated` fails when the committed types drift from the schema.
+`packages/contracts/schemas/rowproof.v1.schema.json` (draft 2020-12, `$id` `urn:rowproof:schemas:v1`) defines every document type under `$defs`. Ajv validates documents at runtime against `$defs/<Kind>`. `src/types.generated.ts` is generated from the same file by `json-schema-to-typescript`; `pnpm check:generated` fails when the committed types drift from the schema.
 
 Why: portable for non-TypeScript consumers (a future hosted service, other runners), and one source for validation and types. Semantic rules JSON Schema cannot express (complete matrix, reference integrity, supported scope, credential-shaped values) live in `src/semantic.ts`.
 

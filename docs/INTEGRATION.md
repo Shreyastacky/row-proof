@@ -29,14 +29,14 @@ pnpm integration
 
 The harness (`tests/integration/harness.mjs`):
 
-1. **Stage A:** stops any `ship-safe-demo` stack, starts a fresh one from `supabase/`, provisions synthetic users and invoices, approves the example rule into a temporary store through the CLI, then runs identity, credential, target, baseline and limit scenarios.
-2. **Stage B:** stops it, copies the config into a temporary directory with a unique `ship-safe-lab-*` project id, and starts that **separate throwaway instance**. It applies the deliberately permissive policy (`supabase/lab/permissive-select.sql`) and other broken variants (each followed by `db reset` and re-provisioning), checks that the approved baseline is read from a protected git ref rather than a PR tree, then destroys the instance and checks that no containers or volumes remain.
+1. **Stage A:** stops any `rowproof-demo` stack, starts a fresh one from `supabase/`, provisions synthetic users and invoices, approves the example rule into a temporary store through the CLI, then runs identity, credential, target, baseline and limit scenarios.
+2. **Stage B:** stops it, copies the config into a temporary directory with a unique `rowproof-lab-*` project id, and starts that **separate throwaway instance**. It applies the deliberately permissive policy (`supabase/lab/permissive-select.sql`) and other broken variants (each followed by `db reset` and re-provisioning), checks that the approved baseline is read from a protected git ref rather than a PR tree, then destroys the instance and checks that no containers or volumes remain.
 3. **Stage C:** with no stack running, checks that a connection failure is blocked.
 4. Scans every captured output and result file for credential values and credential-shaped text.
 
 It prints one line per scenario, exits 0 only if every scenario behaves as expected, and writes redacted artifacts to `artifacts/integration/<timestamp>/` (`summary.json` and per-run result files). It always tears down, including on Ctrl-C.
 
-**Warning:** the harness stops the local `ship-safe-demo` stack and deletes its local data.
+**Warning:** the harness stops the local `rowproof-demo` stack and deletes its local data.
 
 Typical duration after images are cached: about 2.5 minutes.
 
@@ -67,10 +67,10 @@ pnpm fixture:provision
 ```
 
 ```bash
-pnpm ship-safe run --store baseline --rule invoice-owner-read --env-file .ship-safe/local.env
+pnpm rowproof run --store baseline --rule invoice-owner-read --env-file .rowproof/local.env
 ```
 
-Expected: six PASS lines and exit 0. `fixture:provision` writes credentials only to `.ship-safe/local.env` (mode 0600, git-ignored). Note that `baseline/` currently holds a placeholder approval; see [baseline/README.md](../baseline/README.md).
+Expected: six PASS lines and exit 0. `fixture:provision` writes credentials only to `.rowproof/local.env` (mode 0600, git-ignored). Note that `baseline/` currently holds a placeholder approval; see [baseline/README.md](../baseline/README.md).
 
 To see a regression, use the harness. Do **not** apply `supabase/lab/permissive-select.sql` to a stack you keep.
 
@@ -80,7 +80,7 @@ pnpm stack:down
 
 ## CI
 
-`.github/workflows/ship-safe.yml` runs three jobs on `pull_request` and on pushes to `main`:
+`.github/workflows/rowproof.yml` runs three jobs on `pull_request` and on pushes to `main`:
 
 | Job | What it proves | What it does not prove |
 | --- | --- | --- |

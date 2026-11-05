@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateSchema } from '@ship-safe/contracts';
+import { validateSchema } from '@rowproof/contracts';
 import { serializeResult } from '../src/report.js';
 import {
   baseEnv,
@@ -106,7 +106,7 @@ describe('sensitivity to the intended regression (mocked transport)', () => {
   it('a disclosure is retained as failed even when other controls are blocked', async () => {
     const fake = createFake();
     fake.policy = 'permissive-authenticated';
-    const env = { ...baseEnv(fake), SHIPSAFE_SETUP_SECRET_KEY: undefined };
+    const env = { ...baseEnv(fake), ROWPROOF_SETUP_SECRET_KEY: undefined };
     const { result } = await runEngine(fake.fetch, { env });
     expect(control(result, 'setup-key')).toEqual({ status: 'failed', diagnostic: 'setup_key_missing' });
     expect(byId(result)['a-reads-b']).toEqual({ status: 'failed', diagnostic: 'fixture_disclosed' });
@@ -120,7 +120,7 @@ describe('identity controls', () => {
     const fake = createFake();
     const second = userToken(USER_A);
     fake.users.set(second, { id: USER_A });
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_B_TOKEN: second } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_B_TOKEN: second } });
     expect(control(result, 'identity:user-b')).toEqual({ status: 'failed', diagnostic: 'user_id_mismatch' });
     expect(byId(result)['b-reads-a']!.status).toBe('blocked');
     expect(byId(result)['a-reads-b']).toEqual({ status: 'blocked', diagnostic: 'owner_control_not_passed' });
@@ -133,14 +133,14 @@ describe('identity controls', () => {
     const shared = userToken(USER_A);
     fake.users.set(shared, { id: USER_A });
     // Auth claims user-b's token is user A; expected ids differ so this is a mismatch, never a pass.
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_B_TOKEN: shared }, baseline: approvedBaseline(content) });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_B_TOKEN: shared }, baseline: approvedBaseline(content) });
     expect(result.summary.outcome).not.toBe('pass');
   });
 
   it('a token the Auth service rejects (expired, wrong project, invalid) is blocked', async () => {
     const fake = createFake();
     const foreign = userToken(USER_B); // not registered with this fake Auth service
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_B_TOKEN: foreign } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_B_TOKEN: foreign } });
     expect(control(result, 'identity:user-b')).toEqual({ status: 'failed', diagnostic: 'token_rejected_by_auth' });
     expect(result.summary.exitCode).toBe(2);
   });
@@ -149,7 +149,7 @@ describe('identity controls', () => {
     const fake = createFake();
     const t = userToken(USER_B, { iss: 'http://127.0.0.1:64321/auth/v1' });
     fake.users.set(t, { id: USER_B });
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_B_TOKEN: t } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_B_TOKEN: t } });
     expect(control(result, 'identity:user-b')).toEqual({ status: 'failed', diagnostic: 'token_issuer_mismatch' });
   });
 
@@ -157,7 +157,7 @@ describe('identity controls', () => {
     const fake = createFake();
     const t = userToken(USER_B, { exp: Math.floor(Date.now() / 1000) + 10 });
     fake.users.set(t, { id: USER_B });
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_B_TOKEN: t } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_B_TOKEN: t } });
     expect(control(result, 'identity:user-b')).toEqual({ status: 'failed', diagnostic: 'token_expired_or_expiring' });
   });
 
@@ -170,16 +170,16 @@ describe('identity controls', () => {
 
   it('elevated credentials are refused in user and app-key contexts before anything is sent with them', async () => {
     const fake = createFake();
-    const asUser = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_USER_A_TOKEN: SECRET } });
+    const asUser = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_USER_A_TOKEN: SECRET } });
     expect(control(asUser.result, 'identity:user-a')).toEqual({ status: 'failed', diagnostic: 'token_elevated_role' });
     expect(fake.requests.filter((r) => r.url.pathname !== '/rest/v1/invoices' || r.headers.apikey !== SECRET).every((r) => !JSON.stringify(r.headers).includes(SECRET))).toBe(true);
 
     const fake2 = createFake();
-    const legacyAsUser = await runEngine(fake2.fetch, { env: { ...baseEnv(fake2), SHIPSAFE_USER_A_TOKEN: LEGACY_SERVICE } });
+    const legacyAsUser = await runEngine(fake2.fetch, { env: { ...baseEnv(fake2), ROWPROOF_USER_A_TOKEN: LEGACY_SERVICE } });
     expect(control(legacyAsUser.result, 'identity:user-a')).toEqual({ status: 'failed', diagnostic: 'token_elevated_role' });
 
     const fake3 = createFake();
-    const asApiKey = await runEngine(fake3.fetch, { env: { ...baseEnv(fake3), SHIPSAFE_PUBLISHABLE_KEY: SECRET } });
+    const asApiKey = await runEngine(fake3.fetch, { env: { ...baseEnv(fake3), ROWPROOF_PUBLISHABLE_KEY: SECRET } });
     expect(control(asApiKey.result, 'api-key')).toEqual({ status: 'failed', diagnostic: 'api_key_elevated' });
     expect(asApiKey.requestsMade).toBe(0);
     expect(asApiKey.result.summary.exitCode).toBe(2);
@@ -187,7 +187,7 @@ describe('identity controls', () => {
 
   it('the setup channel refuses a non-elevated key', async () => {
     const fake = createFake();
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_SETUP_SECRET_KEY: 'sb_publishable_notasecret0001' } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_SETUP_SECRET_KEY: 'sb_publishable_notasecret0001' } });
     expect(control(result, 'setup-key')).toEqual({ status: 'failed', diagnostic: 'setup_key_wrong_class' });
     expect(result.summary.exitCode).toBe(2);
   });
@@ -196,15 +196,15 @@ describe('identity controls', () => {
 describe('legacy anon-key compatibility is explicit', () => {
   it('a legacy anon JWT is refused when the rule declares a publishable key', async () => {
     const fake = createFake();
-    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_PUBLISHABLE_KEY: LEGACY_ANON } });
+    const { result } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_PUBLISHABLE_KEY: LEGACY_ANON } });
     expect(control(result, 'api-key')).toEqual({ status: 'failed', diagnostic: 'api_key_wrong_class' });
   });
 
   it('a rule that declares legacy-anon works and sends the anon key as bearer for anonymous reads', async () => {
     const fake = createFake();
     const content = exampleRule();
-    content.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'SHIPSAFE_LEGACY_ANON_KEY' } };
-    const env = { ...baseEnv(fake), SHIPSAFE_LEGACY_ANON_KEY: LEGACY_ANON, SHIPSAFE_SETUP_SECRET_KEY: LEGACY_SERVICE };
+    content.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'ROWPROOF_LEGACY_ANON_KEY' } };
+    const env = { ...baseEnv(fake), ROWPROOF_LEGACY_ANON_KEY: LEGACY_ANON, ROWPROOF_SETUP_SECRET_KEY: LEGACY_SERVICE };
     const { result } = await runEngine(fake.fetch, { env, baseline: approvedBaseline(content) });
     expect(byId(result)).toEqual(ALL_PASS);
     const anon = fake.requests.filter((r) => r.headers.authorization === `Bearer ${LEGACY_ANON}`);
@@ -279,7 +279,7 @@ describe('target controls', () => {
 
   it('a missing target URL blocks', async () => {
     const fake = createFake();
-    const { result, requestsMade } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), SHIPSAFE_SUPABASE_URL: undefined } });
+    const { result, requestsMade } = await runEngine(fake.fetch, { env: { ...baseEnv(fake), ROWPROOF_SUPABASE_URL: undefined } });
     expect(requestsMade).toBe(0);
     expect(result.summary.exitCode).toBe(2);
   });
@@ -318,6 +318,6 @@ describe('output safety', () => {
   it('collects every loaded credential for the leak check', async () => {
     const fake = createFake();
     const out = await runEngine(fake.fetch, { env: baseEnv(fake) });
-    expect(new Set(out.sensitiveValues)).toEqual(new Set([baseEnv(fake).SHIPSAFE_PUBLISHABLE_KEY, SECRET, fake.tokenA, fake.tokenB]));
+    expect(new Set(out.sensitiveValues)).toEqual(new Set([baseEnv(fake).ROWPROOF_PUBLISHABLE_KEY, SECRET, fake.tokenA, fake.tokenB]));
   });
 });

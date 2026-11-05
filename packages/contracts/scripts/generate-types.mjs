@@ -5,16 +5,16 @@ import { fileURLToPath } from 'node:url';
 import { compile } from 'json-schema-to-typescript';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
-const schemaPath = `${here}../schemas/ship-safe.v1.schema.json`;
+const schemaPath = `${here}../schemas/rowproof.v1.schema.json`;
 const outPath = `${here}../src/types.generated.ts`;
 
 const schema = JSON.parse(await readFile(schemaPath, 'utf8'));
 const banner =
   '/* eslint-disable */\n' +
-  '// GENERATED FILE - do not edit. Source: packages/contracts/schemas/ship-safe.v1.schema.json\n' +
-  '// Regenerate with `pnpm --filter @ship-safe/contracts generate`.\n';
+  '// GENERATED FILE - do not edit. Source: packages/contracts/schemas/rowproof.v1.schema.json\n' +
+  '// Regenerate with `pnpm --filter @rowproof/contracts generate`.\n';
 
-const ts = await compile(schema, 'ShipSafeContractsV1', {
+const ts = await compile(schema, 'RowProofContractsV1', {
   bannerComment: banner,
   additionalProperties: false,
   unreachableDefinitions: true,
@@ -33,7 +33,7 @@ if (process.argv.includes('--check')) {
     // missing file is drift
   }
   if (current !== ts) {
-    console.error('types.generated.ts is out of date with the schema. Run: pnpm --filter @ship-safe/contracts generate');
+    console.error('types.generated.ts is out of date with the schema. Run: pnpm --filter @rowproof/contracts generate');
     process.exit(1);
   }
   console.log('types.generated.ts matches the schema.');

@@ -1,11 +1,11 @@
 {
-  "name": "@ship-safe/runner",
+  "name": "@rowproof/runner",
   "version": "0.1.0",
   "private": true,
-  "description": "Customer-run Ship Safe CLI: approval workflow and bounded read-isolation assertions.",
+  "description": "Customer-run RowProof CLI: approval workflow and bounded read-isolation assertions.",
   "type": "module",
   "bin": {
-    "ship-safe": "./dist/cli.js"
+    "rowproof": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -20,6 +20,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ship-safe/contracts": "workspace:*"
+    "@rowproof/contracts": "workspace:*"
   }
 }

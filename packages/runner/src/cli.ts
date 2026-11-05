@@ -3,7 +3,7 @@ import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { UsageError, type CliIO } from './io.js';
 
-const HELP = `ship-safe <command> [options]
+const HELP = `rowproof <command> [options]
 
 Approval workflow (writes the local, self-attested approval store):
   validate <file>     validate rule content or a proposal
@@ -15,7 +15,7 @@ Approval workflow (writes the local, self-attested approval store):
   history             list approved revisions and the active one
 
 Assessment (reads the approval store only):
-  run                 execute the approved matrix; see \`ship-safe run --help\`
+  run                 execute the approved matrix; see \`rowproof run --help\`
 `;
 
 export async function main(argv: string[], io: CliIO): Promise<number> {

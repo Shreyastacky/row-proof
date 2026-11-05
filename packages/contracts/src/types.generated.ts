@@ -1,107 +1,107 @@
 /* eslint-disable */
-// GENERATED FILE - do not edit. Source: packages/contracts/schemas/ship-safe.v1.schema.json
-// Regenerate with `pnpm --filter @ship-safe/contracts generate`.
+// GENERATED FILE - do not edit. Source: packages/contracts/schemas/rowproof.v1.schema.json
+// Regenerate with `pnpm --filter @rowproof/contracts generate`.
 
 /**
  * Lowercase identifier: letters, digits, single hyphens; 1-64 characters.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Slug".
  */
 export type Slug = string;
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ShortText".
  */
 export type ShortText = string;
 /**
  * scheme://host[:port] with no path, query, fragment, or credentials. Exact form is checked semantically.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Origin".
  */
 export type Origin = string;
 /**
  * Unquoted lowercase Postgres identifier. Quoted or mixed-case identifiers are unsupported in v1.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "SqlIdentifier".
  */
 export type SqlIdentifier = string;
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Actor".
  */
 export type Actor = AuthenticatedActor | AnonymousActor;
 /**
  * Canonical lowercase UUID. Uppercase is rejected so content hashes cannot vary by letter case.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Uuid".
  */
 export type Uuid = string;
 /**
  * Synthetic marker stored on the fixture row. The prefix makes accidental use of real records visible.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "FixtureMarker".
  */
 export type FixtureMarker = string;
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ExpectedObservation".
  */
 export type ExpectedObservation = 'exact_fixture_returned' | 'fixture_not_disclosed';
 /**
  * Short human-readable text without control characters.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "SafeText".
  */
 export type SafeText = string;
 /**
  * sha256 over the RFC 8785 canonical JSON of a RuleContent document.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ContentHash".
  */
 export type ContentHash = string;
 /**
  * Identifier for a person or system that proposed, approved, or promoted something. Not an email address requirement; avoid personal data where possible.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ActorId".
  */
 export type ActorId = string;
 /**
  * UTC RFC 3339 timestamp with a Z suffix and at most millisecond precision.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Timestamp".
  */
 export type Timestamp = string;
 /**
  * local-self-attested: a filesystem owner can bypass it. protected-ref: retrieved from a separately protected Git ref (protection must be verified separately). control-plane-authenticated: recorded by an authenticated hosted reviewer (not implemented).
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ApprovalProvenanceLevel".
  */
 export type ApprovalProvenanceLevel =
   'local-self-attested' | 'protected-ref' | 'control-plane-authenticated';
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "GitCommit".
  */
 export type GitCommit = string;
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ControlStatus".
  */
 export type ControlStatus = 'ok' | 'failed' | 'not_run';
 /**
  * Allowlisted diagnostic codes. Raw SDK errors, headers, bodies, and tokens are never serialized.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "DiagnosticCode".
  */
 export type DiagnosticCode =
@@ -157,14 +157,14 @@ export type DiagnosticCode =
   | 'unsupported_rule'
   | 'not_executed';
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "AssertionStatus".
  */
 export type AssertionStatus = 'passed' | 'failed' | 'blocked' | 'not_assessed';
 /**
  * What the response showed, as a safe enum. Raw rows are never recorded.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Observation".
  */
 export type Observation =
@@ -177,9 +177,9 @@ export type Observation =
   | 'not_requested';
 
 /**
- * Authoritative Ship Safe v1 contracts. Every document type is a $defs entry; the root properties exist only so code generation emits every named type. Validate a document against its $defs entry, never against this root.
+ * Authoritative RowProof v1 contracts. Every document type is a $defs entry; the root properties exist only so code generation emits every named type. Validate a document against its $defs entry, never against this root.
  */
-export interface ShipSafeContractsV1 {
+export interface RowProofContractsV1 {
   ruleContent?: RuleContent;
   ruleProposal?: RuleProposal;
   approval?: Approval;
@@ -191,7 +191,7 @@ export interface ShipSafeContractsV1 {
 /**
  * The permission intent. This exact document, canonicalized, is what a content hash and an approval identify.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RuleContent".
  */
 export interface RuleContent {
@@ -222,7 +222,7 @@ export interface RuleContent {
 /**
  * Hosted-facing identifiers. organizationId is null when the rule is used locally without a hosted account.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RuleScope".
  */
 export interface RuleScope {
@@ -231,7 +231,7 @@ export interface RuleScope {
   environmentId: Slug;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Target".
  */
 export interface Target {
@@ -256,18 +256,18 @@ export interface Target {
 /**
  * Reference to a credential supplied at execution time. Credential values never appear in rules or results.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "CredentialRef".
  */
 export interface CredentialRef {
   source: 'env';
   /**
-   * Environment variable name. The SHIPSAFE_ prefix keeps rules from pointing at unrelated process secrets.
+   * Environment variable name. The ROWPROOF_ prefix keeps rules from pointing at unrelated process secrets.
    */
   name: string;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Resource".
  */
 export interface Resource {
@@ -281,7 +281,7 @@ export interface Resource {
   markerColumn: SqlIdentifier;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "AuthenticatedActor".
  */
 export interface AuthenticatedActor {
@@ -291,7 +291,7 @@ export interface AuthenticatedActor {
   credential: CredentialRef;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "AnonymousActor".
  */
 export interface AnonymousActor {
@@ -299,7 +299,7 @@ export interface AnonymousActor {
   kind: 'anonymous';
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Fixture".
  */
 export interface Fixture {
@@ -309,7 +309,7 @@ export interface Fixture {
   marker: FixtureMarker;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Expectation".
  */
 export interface Expectation {
@@ -319,7 +319,7 @@ export interface Expectation {
   expected: ExpectedObservation;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "DeclaredScope".
  */
 export interface DeclaredScope {
@@ -332,7 +332,7 @@ export interface DeclaredScope {
 /**
  * A proposed change of intent. A proposal is never an approval and carries no authority.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RuleProposal".
  */
 export interface RuleProposal {
@@ -354,7 +354,7 @@ export interface RuleProposal {
   note: SafeText | null;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RevisionPointer".
  */
 export interface RevisionPointer {
@@ -364,7 +364,7 @@ export interface RevisionPointer {
 /**
  * An explicit acknowledgment that binds one approver to one exact content hash. acknowledgedHash is the hash the approver typed or confirmed and must equal contentHash.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Approval".
  */
 export interface Approval {
@@ -391,7 +391,7 @@ export interface Approval {
 /**
  * Immutable approved revision: the approved content plus the approval that names its hash.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ApprovedRevision".
  */
 export interface ApprovedRevision {
@@ -406,7 +406,7 @@ export interface ApprovedRevision {
 /**
  * Immutable record that an approved revision became the active baseline.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "Promotion".
  */
 export interface Promotion {
@@ -423,7 +423,7 @@ export interface Promotion {
 /**
  * Pointer to the currently active approved revision. It must agree with the latest Promotion record.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ActiveBaseline".
  */
 export interface ActiveBaseline {
@@ -437,7 +437,7 @@ export interface ActiveBaseline {
 /**
  * Bounded, redacted observation of one run. It reports listed assertions only; it has no field for an overall security verdict or score.
  *
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RunResult".
  */
 export interface RunResult {
@@ -450,7 +450,7 @@ export interface RunResult {
     contentHash: ContentHash | null;
   };
   runner: {
-    name: 'ship-safe-runner';
+    name: 'rowproof-runner';
     version: string;
   };
   source: {
@@ -513,7 +513,7 @@ export interface RunResult {
   };
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "RunLimits".
  */
 export interface RunLimits {
@@ -525,7 +525,7 @@ export interface RunLimits {
   retries: 0;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "ControlResult".
  */
 export interface ControlResult {
@@ -534,7 +534,7 @@ export interface ControlResult {
   diagnostic: DiagnosticCode;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "AssertionResult".
  */
 export interface AssertionResult {
@@ -548,7 +548,7 @@ export interface AssertionResult {
   httpStatus: number | null;
 }
 /**
- * This interface was referenced by `ShipSafeContractsV1`'s JSON-Schema
+ * This interface was referenced by `RowProofContractsV1`'s JSON-Schema
  * via the `definition` "DependencyFingerprint".
  */
 export interface DependencyFingerprint {

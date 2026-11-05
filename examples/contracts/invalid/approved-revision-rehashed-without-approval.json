@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "ruleId": "invoice-owner-read",
   "revision": 1,
-  "contentHash": "sha256:8783eaefc26dccf7ed108ac8f7e598269eb85e4b1a8233c89486339c5b02aed0",
+  "contentHash": "sha256:b25c93979425338f835facc4dabd184b9cd53d3b718ec6f7521be3e8da23ffe6",
   "content": {
     "kind": "RuleContent",
     "schemaVersion": 1,
@@ -22,14 +22,14 @@
         "kind": "publishable",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_PUBLISHABLE_KEY"
+          "name": "ROWPROOF_PUBLISHABLE_KEY"
         }
       },
       "fixtureVerification": {
         "channel": "supabase-secret-key",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_SETUP_SECRET_KEY"
+          "name": "ROWPROOF_SETUP_SECRET_KEY"
         }
       }
     },
@@ -50,7 +50,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_USER_A_TOKEN"
+          "name": "ROWPROOF_USER_A_TOKEN"
         }
       },
       {
@@ -59,7 +59,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_USER_B_TOKEN"
+          "name": "ROWPROOF_USER_B_TOKEN"
         }
       },
       {
@@ -137,8 +137,8 @@
     "approvalId": "7b2f0000-0000-4000-8000-0000000000a1",
     "ruleId": "invoice-owner-read",
     "revision": 1,
-    "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
-    "acknowledgedHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+    "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
+    "acknowledgedHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
     "proposalId": "7b2f0000-0000-4000-8000-000000000001",
     "decision": "approved",
     "approvedBy": {

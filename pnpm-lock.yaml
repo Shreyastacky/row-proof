@@ -33,7 +33,7 @@ importers:
 
   packages/local-fixture:
     dependencies:
-      '@ship-safe/contracts':
+      '@rowproof/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@supabase/supabase-js':
@@ -42,13 +42,13 @@ importers:
 
   packages/runner:
     dependencies:
-      '@ship-safe/contracts':
+      '@rowproof/contracts':
         specifier: workspace:*
         version: link:../contracts
 
   tests/integration:
     dependencies:
-      '@ship-safe/contracts':
+      '@rowproof/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@supabase/supabase-js':

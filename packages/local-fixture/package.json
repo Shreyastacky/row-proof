@@ -1,11 +1,11 @@
 {
-  "name": "@ship-safe/local-fixture",
+  "name": "@rowproof/local-fixture",
   "version": "0.1.0",
   "private": true,
   "description": "Privileged local-only tooling: provisions and verifies synthetic users and fixtures in a disposable Supabase stack.",
   "type": "module",
   "bin": {
-    "ship-safe-fixture": "./dist/cli.js"
+    "rowproof-fixture": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ship-safe/contracts": "workspace:*",
+    "@rowproof/contracts": "workspace:*",
     "@supabase/supabase-js": "2.118.0"
   }
 }

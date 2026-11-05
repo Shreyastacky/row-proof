@@ -1,4 +1,4 @@
-# Ship Safe CI: unit/contract checks, the real-HTTP integration harness, and an
+# RowProof CI: unit/contract checks, the real-HTTP integration harness, and an
 # assessment that reads the approved baseline from the BASE branch.
 #
 # Trust notes:
@@ -11,7 +11,7 @@
 #   example a required workflow from a separate repository). That is not configured.
 # - Reading `baseline/` from the base branch only matters if the base branch is
 #   protected. Branch protection/rulesets are not configured by this file.
-name: ship-safe
+name: rowproof
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ship-safe-${{ github.ref }}
+  group: rowproof-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -64,7 +64,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ship-safe-integration
+          name: rowproof-integration
           path: artifacts/integration/
           if-no-files-found: warn
           retention-days: 14
@@ -126,17 +126,17 @@ jobs:
       - name: Assess (exit 0 pass, 1 violation, 2 blocked)
         if: steps.baseline.outputs.available == 'true'
         run: >
-          pnpm ship-safe run
+          pnpm rowproof run
           --store "$RUNNER_TEMP/trusted-baseline"
           --rule invoice-owner-read
-          --env-file .ship-safe/local.env
+          --env-file .rowproof/local.env
           --execution-context ci-development
           --out artifacts/assessment/result.json
       - name: Upload redacted result
         if: always() && steps.baseline.outputs.available == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ship-safe-assessment
+          name: rowproof-assessment
           path: |
             artifacts/assessment/
             ${{ runner.temp }}/trusted-baseline/SOURCE.txt
@@ -146,4 +146,4 @@ jobs:
         if: always()
         run: |
           node scripts/stack.mjs down || true
-          rm -f .ship-safe/local.env
+          rm -f .rowproof/local.env

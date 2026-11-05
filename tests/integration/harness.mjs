@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Ship Safe real-HTTP integration harness (Phases 2-5 gate).
+// RowProof real-HTTP integration harness (Phases 2-5 gate).
 //
 // Stage A  healthy disposable stack (repo ./supabase): real authorization behaviour
 //          for the six assertions plus identity, credential, target and baseline controls.
@@ -9,7 +9,7 @@
 // Stage C  no stack running: confirm a real connection failure is blocked, never a pass.
 //
 // Always tears down. Writes only redacted artifacts to artifacts/integration/.
-// WARNING: stops the local `ship-safe-demo` stack and deletes its local data (--no-backup).
+// WARNING: stops the local `rowproof-demo` stack and deletes its local data (--no-backup).
 //
 // Usage: pnpm integration      (requires Docker and `pnpm install`)
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -40,7 +40,7 @@ const USER_B = RULE.actors[1].expectedUserId;
 const INVOICE_B = RULE.fixtures[1].id;
 const ORIGIN = RULE.target.allowedOrigin;
 
-const work = mkdtempSync(join(tmpdir(), 'ship-safe-it-'));
+const work = mkdtempSync(join(tmpdir(), 'rowproof-it-'));
 const runStamp = new Date().toISOString().replace(/[:.]/g, '-');
 const artifactDir = join(repo, 'artifacts', 'integration', runStamp);
 mkdirSync(join(artifactDir, 'results'), { recursive: true });
@@ -78,7 +78,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 
 // ---------------------------------------------------------------- helpers
 // Non-secret values that legitimately appear in output (the target origin) are never registered.
-const NOT_SECRET = new Set(['SHIPSAFE_SUPABASE_URL']);
+const NOT_SECRET = new Set(['ROWPROOF_SUPABASE_URL']);
 function remember(label, value) {
   if (typeof value === 'string' && value.length >= 16) sensitive.set(value, label);
 }
@@ -116,9 +116,9 @@ function writeEnv(base, changes, name) {
   return p;
 }
 
-function shipSafe(args) {
-  // Strip inherited SHIPSAFE_* so only the env file supplies credentials.
-  const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('SHIPSAFE_')));
+function rowproofCli(args) {
+  // Strip inherited ROWPROOF_* so only the env file supplies credentials.
+  const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('ROWPROOF_')));
   const r = sh('node', [runnerCli, ...args], { env: clean, timeout: 120_000 });
   captured.push(r.stdout, r.stderr);
   return r;
@@ -127,7 +127,7 @@ function shipSafe(args) {
 let runCounter = 0;
 function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
   const out = join(work, `${String(++runCounter).padStart(2, '0')}-${label}.json`);
-  const r = shipSafe(['run', '--store', store, '--rule', rule, '--env-file', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
+  const r = rowproofCli(['run', '--store', store, '--rule', rule, '--env-file', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
   const result = exists(out) ? JSON.parse(readFileSync(out, 'utf8')) : null;
   if (result) resultFiles.push(out);
   return { code: r.code, result, stdout: r.stdout, stderr: r.stderr };
@@ -135,10 +135,10 @@ function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
 
 function approve(store, ruleFile, by = 'client-owner') {
   const p = join(work, `proposal-${Math.random().toString(36).slice(2, 8)}.json`);
-  const pr = shipSafe(['propose', '--rule', ruleFile, '--store', store, '--proposed-by', 'integration', '--out', p]);
+  const pr = rowproofCli(['propose', '--rule', ruleFile, '--store', store, '--proposed-by', 'integration', '--out', p]);
   if (pr.code !== 0) throw new Error(`propose failed: ${pr.stderr}`);
   const hash = JSON.parse(readFileSync(p, 'utf8')).contentHash;
-  const ap = shipSafe(['approve', '--proposal', p, '--store', store, '--approver', by, '--acknowledge', hash, '--promote']);
+  const ap = rowproofCli(['approve', '--proposal', p, '--store', store, '--approver', by, '--acknowledge', hash, '--promote']);
   return { code: ap.code, stderr: ap.stderr, proposal: p, hash };
 }
 
@@ -197,7 +197,7 @@ async function main() {
   }
   const cliVersion = sh(join(repo, 'node_modules', '.bin', 'supabase'), ['--version']).stdout.trim();
   const env0 = { node: process.version, docker: docker.stdout.trim(), supabaseCli: cliVersion, platform: process.platform };
-  log(`Ship Safe integration harness  node ${env0.node}  docker ${env0.docker}  supabase CLI ${env0.supabaseCli}`);
+  log(`RowProof integration harness  node ${env0.node}  docker ${env0.docker}  supabase CLI ${env0.supabaseCli}`);
 
   // ============================================================ Stage A
   log('\nStage A: healthy disposable stack');
@@ -212,7 +212,7 @@ async function main() {
 
   const legacyRule = structuredClone(RULE);
   legacyRule.ruleId = `${RULE_ID}-legacy-anon`;
-  legacyRule.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'SHIPSAFE_LEGACY_ANON_KEY' } };
+  legacyRule.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'ROWPROOF_LEGACY_ANON_KEY' } };
   const legacyRuleFile = join(work, 'legacy.rule.json');
   writeFileSync(legacyRuleFile, JSON.stringify(legacyRule, null, 2));
   check(approve(store, legacyRuleFile).code === 0, 'legacy rule approval failed');
@@ -226,20 +226,20 @@ async function main() {
   });
 
   await scenario('A', 'runner identity check agrees with supabase-js getUser(jwt)', async () => {
-    const client = createClient(ORIGIN, henv.SHIPSAFE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-    const a = await client.auth.getUser(henv.SHIPSAFE_USER_A_TOKEN);
-    const b = await client.auth.getUser(henv.SHIPSAFE_USER_B_TOKEN);
+    const client = createClient(ORIGIN, henv.ROWPROOF_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const a = await client.auth.getUser(henv.ROWPROOF_USER_A_TOKEN);
+    const b = await client.auth.getUser(henv.ROWPROOF_USER_B_TOKEN);
     check(!a.error && a.data.user?.id === USER_A, 'getUser(A) returns user A');
     check(!b.error && b.data.user?.id === USER_B, 'getUser(B) returns user B');
     const forged = forgedToken(USER_B, `${ORIGIN}/auth/v1`);
     const f = await client.auth.getUser(forged);
     check(f.error !== null, 'getUser rejects a forged token');
-    const r = run('forged-token', { store, envFile: writeEnv(henv, { SHIPSAFE_USER_B_TOKEN: forged }, 'forged') });
+    const r = run('forged-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_B_TOKEN: forged }, 'forged') });
     expectRun(r, { exit: 2, controls: { 'identity:user-b': 'failed:token_rejected_by_auth' }, noPass: true });
   });
 
   await scenario('A', 'same-user sessions (B token is A) cannot produce an isolation pass', () => {
-    const r = run('same-user', { store, envFile: writeEnv(henv, { SHIPSAFE_USER_B_TOKEN: henv.SHIPSAFE_USER_A_TOKEN }, 'same-user') });
+    const r = run('same-user', { store, envFile: writeEnv(henv, { ROWPROOF_USER_B_TOKEN: henv.ROWPROOF_USER_A_TOKEN }, 'same-user') });
     expectRun(r, {
       exit: 2,
       controls: { 'identity:user-b': 'failed:user_id_mismatch' },
@@ -249,28 +249,28 @@ async function main() {
   });
 
   await scenario('A', 'expired token is rejected by the real Auth service and blocked', () => {
-    const expired = mintFromRealToken(henv.SHIPSAFE_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) - 120);
+    const expired = mintFromRealToken(henv.ROWPROOF_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) - 120);
     remember('minted:expired', expired);
-    const r = run('expired-token', { store, envFile: writeEnv(henv, { SHIPSAFE_USER_A_TOKEN: expired }, 'expired') });
+    const r = run('expired-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_A_TOKEN: expired }, 'expired') });
     expectRun(r, { exit: 2, controls: { 'identity:user-a': 'failed:token_rejected_by_auth' }, noPass: true });
   });
 
   await scenario('A', 'token accepted by Auth but about to expire is blocked by the runner', async () => {
-    const soon = mintFromRealToken(henv.SHIPSAFE_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) + 30);
+    const soon = mintFromRealToken(henv.ROWPROOF_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) + 30);
     remember('minted:expiring', soon);
-    const client = createClient(ORIGIN, henv.SHIPSAFE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const client = createClient(ORIGIN, henv.ROWPROOF_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
     const g = await client.auth.getUser(soon);
     check(!g.error && g.data.user?.id === USER_A, 'precondition: Auth accepts the near-expiry token');
-    const r = run('expiring-token', { store, envFile: writeEnv(henv, { SHIPSAFE_USER_A_TOKEN: soon }, 'expiring') });
+    const r = run('expiring-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_A_TOKEN: soon }, 'expiring') });
     expectRun(r, { exit: 2, controls: { 'identity:user-a': 'failed:token_expired_or_expiring' }, noPass: true });
   });
 
   await scenario('A', 'elevated credentials are refused in user and application-key contexts', () => {
     const cases = [
-      ['secret-as-user', { SHIPSAFE_USER_A_TOKEN: status.SECRET_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
-      ['service-role-as-user', { SHIPSAFE_USER_A_TOKEN: status.SERVICE_ROLE_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
-      ['secret-as-app-key', { SHIPSAFE_PUBLISHABLE_KEY: status.SECRET_KEY }, 'api-key', 'failed:api_key_elevated'],
-      ['service-role-as-app-key', { SHIPSAFE_PUBLISHABLE_KEY: status.SERVICE_ROLE_KEY }, 'api-key', 'failed:api_key_elevated'],
+      ['secret-as-user', { ROWPROOF_USER_A_TOKEN: status.SECRET_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
+      ['service-role-as-user', { ROWPROOF_USER_A_TOKEN: status.SERVICE_ROLE_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
+      ['secret-as-app-key', { ROWPROOF_PUBLISHABLE_KEY: status.SECRET_KEY }, 'api-key', 'failed:api_key_elevated'],
+      ['service-role-as-app-key', { ROWPROOF_PUBLISHABLE_KEY: status.SERVICE_ROLE_KEY }, 'api-key', 'failed:api_key_elevated'],
     ];
     for (const [label, change, controlId, want] of cases) {
       const r = run(label, { store, envFile: writeEnv(henv, change, label) });
@@ -282,20 +282,20 @@ async function main() {
   await scenario('A', 'legacy anon key works only when the rule declares it', () => {
     const ok = run('legacy-anon-declared', { store, envFile: healthyEnvFile, rule: legacyRule.ruleId });
     expectRun(ok, { exit: 0, assertions: ALL_PASSED });
-    const bad = run('legacy-anon-undeclared', { store, envFile: writeEnv(henv, { SHIPSAFE_PUBLISHABLE_KEY: henv.SHIPSAFE_LEGACY_ANON_KEY }, 'legacy-undeclared') });
+    const bad = run('legacy-anon-undeclared', { store, envFile: writeEnv(henv, { ROWPROOF_PUBLISHABLE_KEY: henv.ROWPROOF_LEGACY_ANON_KEY }, 'legacy-undeclared') });
     expectRun(bad, { exit: 2, controls: { 'api-key': 'failed:api_key_wrong_class' } });
   });
 
   await scenario('A', 'a target URL other than the approved origin is refused before any request', () => {
     for (const [label, url] of [['localhost-alias', 'http://localhost:54321'], ['other-port', 'http://127.0.0.1:54322'], ['remote', 'https://example.com']]) {
-      const r = run(`target-${label}`, { store, envFile: writeEnv(henv, { SHIPSAFE_SUPABASE_URL: url }, `target-${label}`) });
+      const r = run(`target-${label}`, { store, envFile: writeEnv(henv, { ROWPROOF_SUPABASE_URL: url }, `target-${label}`) });
       expectRun(r, { exit: 2, controls: { target: 'failed:origin_mismatch' } });
       check(r.result.assertions.every((a) => a.diagnostic === 'target_unverified'), 'all assertions blocked as target_unverified');
     }
   });
 
   await scenario('A', 'missing setup channel blocks fixture verification and every pass', () => {
-    const r = run('no-setup-key', { store, envFile: writeEnv(henv, { SHIPSAFE_SETUP_SECRET_KEY: undefined }, 'no-setup') });
+    const r = run('no-setup-key', { store, envFile: writeEnv(henv, { ROWPROOF_SETUP_SECRET_KEY: undefined }, 'no-setup') });
     expectRun(r, { exit: 2, controls: { 'setup-key': 'failed:setup_key_missing' }, noPass: true });
     check(r.result.summary.counts.passed === 0, 'no assertion passes without fixture verification');
   });
@@ -325,7 +325,7 @@ async function main() {
 
   // ============================================================ Stage B
   log('\nStage B: separate throwaway lab instance');
-  labProjectId = `ship-safe-lab-${Math.random().toString(36).slice(2, 10)}`;
+  labProjectId = `rowproof-lab-${Math.random().toString(36).slice(2, 10)}`;
   labDir = join(work, 'lab');
   mkdirSync(labDir, { recursive: true });
   cpSync(join(repo, 'supabase'), join(labDir, 'supabase'), {
@@ -384,7 +384,7 @@ async function main() {
     const gitRepo = join(work, 'trusted-repo');
     mkdirSync(gitRepo);
     const git = (...args) => {
-      const r = sh('git', ['-C', gitRepo, '-c', 'user.name=ship-safe-it', '-c', 'user.email=it@synthetic.ship-safe.test', '-c', 'commit.gpgsign=false', ...args]);
+      const r = sh('git', ['-C', gitRepo, '-c', 'user.name=rowproof-it', '-c', 'user.email=it@synthetic.rowproof.test', '-c', 'commit.gpgsign=false', ...args]);
       if (r.code !== 0) throw new Error(`git ${args[0]} failed: ${r.stderr}`);
       return r.stdout;
     };
@@ -423,7 +423,7 @@ async function main() {
 
   await scenario('B', 'policy open to anonymous: anonymous disclosures fail', () => {
     resetLab();
-    labSql(labProjectId, 'create policy shipsafe_lab_anon_open on public.invoices for select to anon using (true);');
+    labSql(labProjectId, 'create policy rowproof_lab_anon_open on public.invoices for select to anon using (true);');
     const r = run('lab-anon-open', { store, envFile: labEnvFile });
     expectRun(r, { exit: 1, assertions: { 'anon-reads-a': 'failed:fixture_disclosed', 'anon-reads-b': 'failed:fixture_disclosed', 'a-reads-b': 'passed:ok' } });
   });
@@ -513,7 +513,7 @@ async function main() {
   for (const f of resultFiles) cpSync(f, join(artifactDir, 'results', f.split(/[\\/]/).pop()));
   const failed = scenarios.filter((s) => s.outcome !== 'as-expected');
   const summary = {
-    kind: 'ShipSafeIntegrationSummary',
+    kind: 'RowProofIntegrationSummary',
     ranAt: new Date().toISOString(),
     environment: env0,
     scenarios,

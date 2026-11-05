@@ -1,5 +1,5 @@
 /**
- * `ship-safe run`: read the approved revision (read-only), execute the matrix,
+ * `rowproof run`: read the approved revision (read-only), execute the matrix,
  * write a safe JSON result and print a summary. This module must never import
  * the approval writer; a unit test enforces that.
  */
@@ -14,7 +14,7 @@ import {
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
-} from '@ship-safe/contracts';
+} from '@rowproof/contracts';
 import { DEFAULT_LIMITS, executeRun, type RunContext } from '../engine.js';
 import { loadEnvFile, optionalInt, requireString, RUNNER_VERSION, UsageError, type CliIO } from '../io.js';
 import { OutputSafetyError, renderSummary, serializeResult, writeResultFile } from '../report.js';
@@ -47,19 +47,19 @@ export interface RunCommandDeps {
   now?: () => Date;
 }
 
-export const RUN_HELP = `ship-safe run --store <dir> --rule <rule-id> [options]
+export const RUN_HELP = `rowproof run --store <dir> --rule <rule-id> [options]
 
 Reads the ACTIVE approved revision (read-only), verifies target, keys, fixtures and
 identities, then executes the approved read matrix against the Supabase Data API.
 
 Options:
-  --store <dir>              approval store to read (or SHIPSAFE_APPROVAL_STORE)
+  --store <dir>              approval store to read (or ROWPROOF_APPROVAL_STORE)
   --rule <id>                rule id
   --revision <n>             require that the active revision is n
   --expect-hash <sha256:..>  require that the active content hash is exactly this
   --env-file <path>          read credentials from a dotenv file (not process-wide)
-  --target-url <origin>      target origin (or SHIPSAFE_SUPABASE_URL); must equal the approved origin
-  --out <path>               result JSON path (default artifacts/ship-safe/<run-id>.json)
+  --target-url <origin>      target origin (or ROWPROOF_SUPABASE_URL); must equal the approved origin
+  --out <path>               result JSON path (default artifacts/rowproof/<run-id>.json)
   --source-commit <sha>      source commit (default GITHUB_SHA or git rev-parse HEAD)
   --execution-context <c>    local-developer | ci-development | ci-trusted-pinned-declared
   --max-requests <n>  --request-timeout-ms <n>  --run-timeout-ms <n>  --max-response-bytes <n>
@@ -95,8 +95,8 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
     io.stdout(RUN_HELP);
     return 0;
   }
-  const store = values.store ?? io.env.SHIPSAFE_APPROVAL_STORE;
-  if (!store) throw new UsageError('missing --store (or SHIPSAFE_APPROVAL_STORE)');
+  const store = values.store ?? io.env.ROWPROOF_APPROVAL_STORE;
+  if (!store) throw new UsageError('missing --store (or ROWPROOF_APPROVAL_STORE)');
   const ruleId = requireString(values.rule, 'rule');
   const pinRevision = optionalInt(values.revision, 'revision', 1, 1_000_000);
   const pinHash = values['expect-hash'];
@@ -118,7 +118,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
 
   const fileEnv = values['env-file'] ? await loadEnvFile(resolve(io.cwd, values['env-file'])) : {};
   const env: Record<string, string | undefined> = { ...io.env, ...fileEnv };
-  const targetUrl = values['target-url'] ?? env.SHIPSAFE_SUPABASE_URL;
+  const targetUrl = values['target-url'] ?? env.ROWPROOF_SUPABASE_URL;
   const sourceCommit = detectCommit(values['source-commit'], io.env, io.cwd);
 
   // Approved baseline: read-only.
@@ -157,7 +157,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
         allowedOrigin,
         limits,
         runSignal: controller.signal,
-        userAgent: `ship-safe-runner/${RUNNER_VERSION}`,
+        userAgent: `rowproof-runner/${RUNNER_VERSION}`,
         ...(deps.fetchImpl && { fetchImpl: deps.fetchImpl }),
       }),
       limits,
@@ -173,7 +173,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
     process.removeListener('SIGTERM', onSignal);
   }
 
-  const outPath = resolve(io.cwd, values.out ?? `artifacts/ship-safe/${runId}.json`);
+  const outPath = resolve(io.cwd, values.out ?? `artifacts/rowproof/${runId}.json`);
   let text: string;
   try {
     text = serializeResult(output.result, output.sensitiveValues);

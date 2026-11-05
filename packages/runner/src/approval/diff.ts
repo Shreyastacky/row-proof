@@ -3,7 +3,7 @@
  * Expectation changes are shown as matrix cells (actor -> fixture), because that
  * is what an owner actually agrees to. Everything else is shown by JSON path.
  */
-import type { RuleContent } from '@ship-safe/contracts';
+import type { RuleContent } from '@rowproof/contracts';
 
 export interface IntentChange {
   area: 'expectation' | 'actor' | 'fixture' | 'target' | 'resource' | 'scope' | 'declared-scope' | 'metadata';

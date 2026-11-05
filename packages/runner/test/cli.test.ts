@@ -2,7 +2,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { contentHashOf, parseStrictJson, type RuleProposal, type RunResult } from '@ship-safe/contracts';
+import { contentHashOf, parseStrictJson, type RuleProposal, type RunResult } from '@rowproof/contracts';
 import { main } from '../src/cli.js';
 import { runCommand } from '../src/commands/run.js';
 import type { CliIO } from '../src/io.js';
@@ -18,7 +18,7 @@ function io(env: Record<string, string | undefined> = {}): CliIO {
 }
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'ship-safe-cli-'));
+  dir = await mkdtemp(join(tmpdir(), 'rowproof-cli-'));
   out = [];
   err = [];
 });
@@ -136,7 +136,7 @@ describe('run command', () => {
 
     const fake2 = createFake();
     expect(
-      await runCommand(['--store', 'store', '--rule', 'invoice-owner-read', '--out', 'blocked.json'], io({ ...baseEnv(fake2), SHIPSAFE_USER_A_TOKEN: undefined }), {
+      await runCommand(['--store', 'store', '--rule', 'invoice-owner-read', '--out', 'blocked.json'], io({ ...baseEnv(fake2), ROWPROOF_USER_A_TOKEN: undefined }), {
         fetchImpl: fake2.fetch,
       }),
     ).toBe(2);

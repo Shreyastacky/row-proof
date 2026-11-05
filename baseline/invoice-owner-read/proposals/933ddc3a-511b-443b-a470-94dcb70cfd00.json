@@ -1,9 +1,9 @@
 {
   "kind": "RuleProposal",
   "schemaVersion": 1,
-  "proposalId": "3c10002d-1a7e-4d64-b1fe-cc6e655bd425",
+  "proposalId": "933ddc3a-511b-443b-a470-94dcb70cfd00",
   "ruleId": "invoice-owner-read",
-  "contentHash": "sha256:1b9f55aa616a164d8fb853c4cac187ef4854fb3b6b8981387f968917cba9f9b3",
+  "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
   "content": {
     "kind": "RuleContent",
     "schemaVersion": 1,
@@ -22,14 +22,14 @@
         "kind": "publishable",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_PUBLISHABLE_KEY"
+          "name": "ROWPROOF_PUBLISHABLE_KEY"
         }
       },
       "fixtureVerification": {
         "channel": "supabase-secret-key",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_SETUP_SECRET_KEY"
+          "name": "ROWPROOF_SETUP_SECRET_KEY"
         }
       }
     },
@@ -50,7 +50,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_USER_A_TOKEN"
+          "name": "ROWPROOF_USER_A_TOKEN"
         }
       },
       {
@@ -59,7 +59,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
         "credential": {
           "source": "env",
-          "name": "SHIPSAFE_USER_B_TOKEN"
+          "name": "ROWPROOF_USER_B_TOKEN"
         }
       },
       {
@@ -136,6 +136,6 @@
     "id": "implementation-session",
     "kind": "local-user"
   },
-  "proposedAt": "2026-11-05T03:59:18.264Z",
+  "proposedAt": "2026-11-05T04:55:20.844Z",
   "note": "Initial owner-only invoice read rule for the public synthetic demo."
 }

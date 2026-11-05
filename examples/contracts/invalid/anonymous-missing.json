@@ -16,14 +16,14 @@
       "kind": "publishable",
       "credential": {
         "source": "env",
-        "name": "SHIPSAFE_PUBLISHABLE_KEY"
+        "name": "ROWPROOF_PUBLISHABLE_KEY"
       }
     },
     "fixtureVerification": {
       "channel": "supabase-secret-key",
       "credential": {
         "source": "env",
-        "name": "SHIPSAFE_SETUP_SECRET_KEY"
+        "name": "ROWPROOF_SETUP_SECRET_KEY"
       }
     }
   },
@@ -44,7 +44,7 @@
       "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
       "credential": {
         "source": "env",
-        "name": "SHIPSAFE_USER_A_TOKEN"
+        "name": "ROWPROOF_USER_A_TOKEN"
       }
     },
     {
@@ -53,7 +53,7 @@
       "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
       "credential": {
         "source": "env",
-        "name": "SHIPSAFE_USER_B_TOKEN"
+        "name": "ROWPROOF_USER_B_TOKEN"
       }
     }
   ],

@@ -42,7 +42,7 @@ export function readEnvFile(path) {
 
 /** Apply SQL inside a LAB instance's own database container. Refuses anything else. */
 export function labSql(projectId, sql) {
-  if (!/^ship-safe-lab-[a-z0-9]+$/.test(projectId)) throw new Error('labSql refuses non-lab projects');
+  if (!/^rowproof-lab-[a-z0-9]+$/.test(projectId)) throw new Error('labSql refuses non-lab projects');
   const container = `supabase_db_${projectId}`;
   const r = sh('docker', ['exec', '-i', container, 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-q', '-f', '-'], {
     input: sql,

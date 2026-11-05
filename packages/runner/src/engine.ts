@@ -34,7 +34,7 @@ import {
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
-} from '@ship-safe/contracts';
+} from '@rowproof/contracts';
 import { classifyApiKey, decodeJwtUnverified, isElevated, isHeaderSafe, precheckUserToken } from './credentials.js';
 import type { HttpOutcome, Transport, TransportFailureCode } from './transport.js';
 
@@ -164,7 +164,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
         revision: rev?.revision ?? null,
         contentHash: rev?.contentHash ?? null,
       },
-      runner: { name: 'ship-safe-runner', version: ctx.runnerVersion },
+      runner: { name: 'rowproof-runner', version: ctx.runnerVersion },
       source: { commit: ctx.sourceCommit },
       scope: content?.scope ?? null,
       target: {

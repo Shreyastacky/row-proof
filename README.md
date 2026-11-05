@@ -1,8 +1,8 @@
-# Ship Safe
+# RowProof
 
 **Keep agreed access rules intact as your app changes.**
 
-Ship Safe is an early-stage tool for recording who should be able to read which records, keeping the owner's approved expectations separate from routine code edits, and rerunning checks after changes to report exactly what passed, failed, or could not be assessed.
+RowProof is an early-stage tool for recording who should be able to read which records, keeping the owner's approved expectations separate from routine code edits, and rerunning checks after changes to report exactly what passed, failed, or could not be assessed.
 
 The first supported integration is Supabase: two synthetic users should each read their own invoice and never receive the other's through the direct Data API; an anonymous client should receive neither.
 
@@ -12,7 +12,7 @@ The first supported integration is Supabase: two synthetic users should each rea
 
 What this is not: a hosted service, a security certification, a scanner, or evidence about production. There is no approval authority beyond what you configure. The local approval store is self-attested, and base-branch protection for `baseline/` is not configured. See [what remains](ROADMAP.md#maintainer-actions-this-work-cannot-do).
 
-The existing Ship Safe checklist/kit and the separate `ship-safe-check` secrets scanner are earlier products, not this implementation.
+The existing RowProof checklist/kit and the separate `ship-safe-check` secrets scanner are earlier products, not this implementation.
 
 ## The supported boundary
 
@@ -43,7 +43,7 @@ pnpm verify
 pnpm integration
 ```
 
-`pnpm integration` starts and destroys local Supabase stacks (about 2.5 minutes once images are cached) and stops any running `ship-safe-demo` stack.
+`pnpm integration` starts and destroys local Supabase stacks (about 2.5 minutes once images are cached) and stops any running `rowproof-demo` stack.
 
 ### The workflow, by hand
 
@@ -52,19 +52,19 @@ pnpm build && pnpm stack:up && pnpm fixture:provision
 ```
 
 ```bash
-pnpm ship-safe propose --rule examples/invoice-owner-read.rule.json --store .ship-safe/approvals --proposed-by you --out .ship-safe/proposal.json
+pnpm rowproof propose --rule examples/invoice-owner-read.rule.json --store .rowproof/approvals --proposed-by you --out .rowproof/proposal.json
 ```
 
 ```bash
-pnpm ship-safe diff --proposal .ship-safe/proposal.json --store .ship-safe/approvals
+pnpm rowproof diff --proposal .rowproof/proposal.json --store .rowproof/approvals
 ```
 
 ```bash
-pnpm ship-safe approve --proposal .ship-safe/proposal.json --store .ship-safe/approvals --approver owner --acknowledge <hash printed by diff> --promote
+pnpm rowproof approve --proposal .rowproof/proposal.json --store .rowproof/approvals --approver owner --acknowledge <hash printed by diff> --promote
 ```
 
 ```bash
-pnpm ship-safe run --store .ship-safe/approvals --rule invoice-owner-read --env-file .ship-safe/local.env
+pnpm rowproof run --store .rowproof/approvals --rule invoice-owner-read --env-file .rowproof/local.env
 ```
 
 Exit codes: **0** every required assertion passed with valid controls; **1** at least one demonstrated violation (even if other checks are blocked); **2** blocked or incomplete without a demonstrated violation.
@@ -74,7 +74,7 @@ Exit codes: **0** every required assertion passed with valid controls; **1** at 
 ```text
 packages/contracts/    JSON Schema bundle (authoritative), canonical hashing, approval semantics,
                        read-only approved-baseline reader, outcome rules
-packages/runner/       ship-safe CLI: propose/diff/approve/promote/history and run
+packages/runner/       rowproof CLI: propose/diff/approve/promote/history and run
 packages/local-fixture/ privileged local-only setup: synthetic users and fixtures
 supabase/              disposable stack config, migration (owner-only RLS), lab-only broken policy
 tests/integration/     real-HTTP harness: healthy and throwaway broken-policy instances

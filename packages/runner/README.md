@@ -1,6 +1,6 @@
-# @ship-safe/runner
+# @rowproof/runner
 
-The `ship-safe` CLI. Customer-run; credentials stay in the customer's environment; output stays local.
+The `rowproof` CLI. Customer-run; credentials stay in the customer's environment; output stays local.
 
 ## Commands
 
@@ -24,4 +24,4 @@ The `ship-safe` CLI. Customer-run; credentials stay in the customer's environmen
 - `src/engine.ts` orders controls before assertions and never adds an owner filter to reads.
 - `src/report.ts` validates the result against the schema and refuses to write or print it if any loaded credential appears.
 
-Tests: `pnpm --filter @ship-safe/runner test` (mocked transport for failure modes). Real authorization behaviour is covered only by `tests/integration`.
+Tests: `pnpm --filter @rowproof/runner test` (mocked transport for failure modes). Real authorization behaviour is covered only by `tests/integration`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable local Supabase stack lifecycle for the Ship Safe demo.
+// Disposable local Supabase stack lifecycle for the RowProof demo.
 //
 //   node scripts/stack.mjs up      [--workdir <dir>]   start Postgres, Auth, PostgREST, gateway
 //   node scripts/stack.mjs reset   [--workdir <dir>]   re-apply migrations to the LOCAL database
@@ -45,7 +45,7 @@ switch (command) {
     // `supabase start` prints every key to stdout when stdout is not a terminal (e.g. CI).
     // Capture and discard stdout so keys never reach logs; progress still goes to stderr.
     code = supabase(['start', '-x', EXCLUDE], { quiet: true });
-    if (code === 0) console.log('Local stack is up. Keys were not printed; `pnpm fixture:provision` writes them to .ship-safe/local.env (mode 0600).');
+    if (code === 0) console.log('Local stack is up. Keys were not printed; `pnpm fixture:provision` writes them to .rowproof/local.env (mode 0600).');
     break;
   case 'reset':
     code = supabase(['db', 'reset']);
