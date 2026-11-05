@@ -80,7 +80,18 @@ Initial plan: 5 November 2026. Every item below is unfinished unless explicitly 
 
 **Done when:** every applicable runner scenario in [ACCEPTANCE.md](docs/ACCEPTANCE.md) passes, including setup failures and credential separation.
 
-## 4. Prove sensitivity to the intended regression
+## 4. Prove sensitivity to the intended regression — complete (5 November 2026)
+
+**Verified by actually running** `pnpm integration` (tests/integration/harness.mjs) in this environment: 23/23 scenarios behaved as expected against real local Supabase (CLI 2.122.1, Postgres 17, GoTrue 2.197.0, PostgREST 16.5) over real HTTP, in about 2.5 minutes. Teardown left 0 containers and 0 volumes.
+
+- [x] Healthy policy passes all six (exit 0); the runner's identity result agrees with supabase-js `getUser(jwt)`.
+- [x] Separate throwaway lab instance (unique project id, copied config) with the deliberately permissive policy: `a-reads-b` and `b-reads-a` fail with `fixture_disclosed` (exit 1); the lab is then destroyed and its volumes deleted.
+- [x] Lab variants: anonymous-open policy (anonymous disclosures fail), owner policy dropped (owner reads fail, denials blocked), SELECT grant revoked (403 is never a denial pass), missing / wrong-owner / wrong-marker fixtures (blocked, never pass or false disclosure).
+- [x] Same-user sessions, forged-signature (wrong-project) token, expired token rejected by the real Auth service, token about to expire, elevated keys in user and app-key contexts, legacy anon key (declared vs undeclared), wrong target origins, missing setup channel, baseline pin mismatch, tampered store, request budget, connection refused.
+- [x] Weakening the proposed rule alongside the broken policy is refused at approval, and the run still reports the disclosure against the approved hash.
+- [x] Leak scan: no loaded credential (keys, tokens, minted tokens, JWT secret) or credential-shaped text appears in any captured CLI output or result file.
+- [x] Transport failures (redirects, timeouts, 429, 5xx, generic 404, oversized/malformed/invalid-UTF-8 bodies, network errors, cancellation, request budget) are covered with a mocked transport in `packages/runner/test`, as the spec directs. Authorization behaviour is covered only by the real-HTTP harness.
+
 
 **Deliverable:** an integration harness running against disposable local Supabase instances.
 
