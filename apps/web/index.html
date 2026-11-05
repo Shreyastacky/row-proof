@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>Pyx · Access review for Supabase apps</title>
-<meta name="description" content="Before every release, Pyx signs in as your test users and asks for records they must not see, through your tables, RPC functions and API routes. When someone gains access, the pull request says who, to what, and how.">
+<meta name="description" content="Pyx signs in as your test users before every release and tells you if anyone can see data they shouldn’t, through your tables, RPC functions and API routes.">
 <meta property="og:title" content="Pyx · Access review for Supabase apps">
-<meta property="og:description" content="Alice can’t open Bob’s invoice. Pyx checks again before every release.">
+<meta property="og:description" content="Alice can’t open Bob’s invoice. Pyx checks before every release.">
 <meta property="og:image" content="assets/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -18,10 +18,10 @@
 <script src="config.js" defer></script>
 <script src="assets/site.js" defer></script>
 </head>
-<body>
+<body class="home">
 <a class="skip" href="#main">Skip to content</a>
 
-<header class="nav" id="nav">
+<header class="nav nav--top" id="nav">
   <div class="nav__bar">
     <a class="brand" href="#top" aria-label="Pyx home">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3.75" y="3.75" width="24.5" height="24.5" rx="8.25" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/><circle cx="16" cy="16" r="6.4" fill="#fff"/><path d="M13.4 16.2l1.8 1.8 3.4-3.6" stroke="#0a0c12" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -33,278 +33,180 @@
       <a href="trust.html">Trust</a>
       <a href="#pricing">Pricing</a>
     </nav>
-    <a class="btn btn--sm" href="#pricing">Book a setup</a>
+    <a class="btn btn--sm" href="#pricing">Get started</a>
   </div>
 </header>
 
 <main id="main">
 
-<!-- ============================================================ hero -->
 <section class="hero" id="top">
-  <div class="wrap hero__grid">
-    <div class="hero__copy">
-      <p class="label in in-1">Access review for Supabase apps</p>
-      <h1 class="in in-2">Alice can’t open Bob’s invoice. <span class="dim">Pyx checks before every release.</span></h1>
-      <p class="lede in in-3">It signs in as your test users and asks for records they must not see, through your tables, RPC functions and API routes. When someone gains access, the pull request says who, to what, and through which route.</p>
-      <div class="ctas in in-4">
-        <a class="btn" href="#pricing">Book a setup</a>
-        <button class="cmd" type="button" data-copy-text="npm install -g pyx-cli" aria-label="Copy the install command"><span class="cmd__p">$</span> npm install -g pyx-cli <span class="cmd__c" aria-hidden="true">copy</span></button>
-      </div>
-      <ul class="proofline in in-5" aria-label="Why you can trust it">
-        <li><a href="#proof">8 of 8 seeded leaks caught</a></li>
-        <li><a href="trust.html#production">Never touches production</a></li>
-        <li><a href="trust.html#ledger">Every request on the record</a></li>
-        <li><a href="#" data-repo>Source on GitHub</a></li>
-      </ul>
+  <div class="wrap hero__center">
+    <h1 class="in in-1">Alice can’t open<br>Bob’s invoice.</h1>
+    <p class="lede in in-2">Pyx checks it before every release.</p>
+    <div class="ctas in in-3">
+      <a class="btn" href="#pricing">Get started</a>
+      <button class="cmd" type="button" data-copy-text="npm install -g pyx-cli" aria-label="Copy the install command"><span class="cmd__p">$</span> npm i -g pyx-cli <span class="cmd__c" aria-hidden="true">copy</span></button>
     </div>
-
-    <figure class="ledger in in-3" id="ledger" aria-label="Eighteen requests. Every one returned 200 OK. Under the lens, two of them are leaks.">
+  </div>
+  <div class="wrap">
+    <figure class="ledger in in-4" id="ledger" aria-label="Eighteen requests, all 200 OK. Under the lens, two are leaks.">
       <div class="ledger__head" aria-hidden="true"><span>as</span><span>record</span><span>path</span><span>http</span><span>meaning</span></div>
       <div class="ledger__rows" id="ledger-base" aria-hidden="true"></div>
       <div class="lens" id="lens" aria-hidden="true"><div class="lens__in" id="lens-in"><div class="lens__mag" id="lens-mag"><div class="ledger__head"><span>as</span><span>record</span><span>path</span><span>http</span><span>meaning</span></div><div class="ledger__rows" id="ledger-mag"></div></div></div></div>
-      <figcaption>Every response here says <b>200 OK</b>. Move the lens to read what each one means.</figcaption>
+      <figcaption>Every row says 200 OK. Look closer.</figcaption>
     </figure>
   </div>
 </section>
 
-<!-- ============================================================ 01 silent -->
 <section class="sec" id="why">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">01 &nbsp;Why it slips through</p>
-    <div class="sec__body">
-      <h2 class="reveal">A leak and a denial look the same from the outside.</h2>
-      <div class="specimens reveal">
-        <div class="specimen">
-          <div class="specimen__req">GET /api/invoices/inv_b <span>as Alice</span></div>
-          <div class="specimen__res"><span class="ok">200 OK</span> <code>{ "invoice": null }</code></div>
-          <div class="specimen__verdict specimen__verdict--pass">Denied. As intended.</div>
-        </div>
-        <div class="specimen specimen--leak">
-          <div class="specimen__req">GET /api/invoices/inv_b <span>as Alice</span></div>
-          <div class="specimen__res"><span class="ok">200 OK</span> <code>{ "invoice": { "owner": "bob", "total": 3400 } }</code></div>
-          <div class="specimen__verdict specimen__verdict--leak">Bob’s invoice. A leak.</div>
-        </div>
+  <div class="wrap center">
+    <h2 class="reveal">Leaks look like success.</h2>
+    <div class="specimens reveal">
+      <div class="specimen">
+        <div class="specimen__req">GET /api/invoices/inv_b <span>as Alice</span></div>
+        <div class="specimen__res"><span class="ok">200 OK</span> <code>{ "invoice": null }</code></div>
+        <div class="specimen__verdict specimen__verdict--pass">Denied</div>
       </div>
-      <p class="body reveal">No error, no alert, nothing in the logs. Uptime checks pass. Scanners that try your public key see a stranger getting nothing. Only a check that signs in as Alice and knows she must not see Bob’s invoice can tell these apart.</p>
+      <div class="specimen specimen--leak">
+        <div class="specimen__req">GET /api/invoices/inv_b <span>as Alice</span></div>
+        <div class="specimen__res"><span class="ok">200 OK</span> <code>{ "owner": "bob", "total": 3400 }</code></div>
+        <div class="specimen__verdict specimen__verdict--leak">Leaked</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================ 02 doors -->
 <section class="sec" id="paths">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">02 &nbsp;Every door</p>
-    <div class="sec__body">
-      <h2 class="reveal">Row rules guard the table. Your app has other doors.</h2>
-      <div class="doors reveal" role="table" aria-label="Request paths Pyx checks">
-        <div class="doors__row doors__row--head" role="row"><span role="columnheader">Door</span><span role="columnheader">Example</span><span role="columnheader">Row-level security</span><span role="columnheader">Pyx checks it</span></div>
-        <div class="doors__row" role="row"><span role="cell"><b>Database API</b></span><span role="cell" class="mono">GET /rest/v1/invoices</span><span role="cell" class="t-pass">Applies</span><span role="cell">As each user</span></div>
-        <div class="doors__row" role="row"><span role="cell"><b>RPC function</b></span><span role="cell" class="mono">GET /rest/v1/rpc/get_invoice</span><span role="cell" class="t-warn">Skipped by security definer, unless the function checks the caller</span><span role="cell">As each user</span></div>
-        <div class="doors__row" role="row"><span role="cell"><b>Your API route</b></span><span role="cell" class="mono">GET /api/invoices/:id</span><span role="cell" class="t-leak">Skipped when the server uses the secret key</span><span role="cell">With each user’s token</span></div>
-      </div>
-      <p class="body reveal">The same test users and the same synthetic records go through every door your app has. Supabase keys never leave Supabase: your route only ever receives the user’s own token.</p>
+  <div class="wrap center">
+    <h2 class="reveal">Every door. Not just the table.</h2>
+    <div class="doors reveal">
+      <div class="door"><span class="door__name">Database API</span><span class="door__path">/rest/v1/invoices</span><span class="door__tag t-pass">Row rules apply</span></div>
+      <div class="door"><span class="door__name">RPC functions</span><span class="door__path">/rest/v1/rpc/get_invoice</span><span class="door__tag t-warn">Can skip them</span></div>
+      <div class="door"><span class="door__name">Your API routes</span><span class="door__path">/api/invoices/:id</span><span class="door__tag t-leak">Can skip them</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============================================================ 03 review -->
 <section class="sec" id="review">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">03 &nbsp;Release review</p>
-    <div class="sec__body">
-      <h2 class="reveal">Every pull request gets a list of who gained access.</h2>
-      <p class="body reveal">Pyx runs your approved rules against the base branch, then against the pull request, and prints the difference. Click through four releases of a demo invoice app.</p>
-    </div>
+  <div class="wrap center">
+    <h2 class="reveal">See who gained access.</h2>
+    <p class="sub reveal">On every pull request.</p>
   </div>
   <div class="wrap">
     <div class="window reveal" id="window">
       <div class="window__bar">
-        <span class="window__title"><b>invoice-portal</b> · release review</span>
+        <span class="window__title"><b>invoice-portal</b></span>
         <div class="tabs" role="tablist" aria-label="View">
           <span class="tabs__thumb" aria-hidden="true"></span>
-          <button role="tab" aria-selected="true" data-view="changes">Access changes</button>
+          <button role="tab" aria-selected="true" data-view="changes">Changes</button>
           <button role="tab" aria-selected="false" data-view="matrix">Who sees what</button>
-          <button role="tab" aria-selected="false" data-view="evidence">Evidence</button>
         </div>
       </div>
       <div class="window__body">
         <div class="rels" id="rels" aria-label="Releases">
           <button class="rel" data-rel="43" aria-pressed="false"><b>Release 43</b><span class="dot dot--pass" aria-label="passed"></span><small>Scope export by owner</small></button>
-          <button class="rel" data-rel="42" aria-pressed="true"><b>Release 42</b><span class="dot dot--leak" aria-label="failed"></span><small>Add invoice export route</small></button>
-          <button class="rel" data-rel="41" aria-pressed="false"><b>Release 41</b><span class="dot dot--pass" aria-label="passed"></span><small>Billing page copy</small></button>
-          <button class="rel" data-rel="40" aria-pressed="false"><b>Release 40</b><span class="dot dot--leak" aria-label="failed"></span><small>Simplify invoice policy</small></button>
+          <button class="rel" data-rel="42" aria-pressed="true"><b>Release 42</b><span class="dot dot--leak" aria-label="failed"></span><small>Add invoice export</small></button>
+          <button class="rel" data-rel="41" aria-pressed="false"><b>Release 41</b><span class="dot dot--pass" aria-label="passed"></span><small>Billing copy</small></button>
+          <button class="rel" data-rel="40" aria-pressed="false"><b>Release 40</b><span class="dot dot--leak" aria-label="failed"></span><small>Simplify policy</small></button>
         </div>
         <div class="pane" id="pane" aria-live="polite">
-          <div class="pane__head"><h3>Release 42</h3><span class="status status--leak">Build failed</span></div>
-          <p class="pane__sub">Add invoice export route · compared with release 41</p>
+          <div class="pane__head"><h3>Release 42</h3><span class="status status--leak">Blocked</span></div>
           <ul class="changes">
-            <li class="change change--gain"><span class="change__text"><b>Alice can now open Bob’s invoice</b><small>Expected: hidden from Alice. Got: the full record.</small></span><span class="route">GET /api/invoices/:id</span></li>
-            <li class="change change--gain"><span class="change__text"><b>Bob can now open Alice’s invoice</b><small>Same route. The database rules still hold.</small></span><span class="route">GET /api/invoices/:id</span></li>
-            <li class="change change--ok"><span class="change__text"><b>Database API and RPC unchanged</b><small>Each user still sees only their own invoice.</small></span><span class="route">/rest/v1</span></li>
+            <li class="change change--gain"><span class="change__text"><b>Alice can now open Bob’s invoice</b></span><span class="route">/api/invoices/:id</span></li>
+            <li class="change change--gain"><span class="change__text"><b>Bob can now open Alice’s invoice</b></span><span class="route">/api/invoices/:id</span></li>
+            <li class="change change--ok"><span class="change__text"><b>Database and RPC unchanged</b></span><span class="route">/rest/v1</span></li>
           </ul>
         </div>
       </div>
     </div>
   </div>
-  <div class="wrap sec__grid sec__grid--tight">
-    <p class="label sec__label">From the terminal</p>
-    <div class="sec__body">
-      <div class="term reveal">
-        <div class="term__bar"><span>pyx compare release-41-pass.json release-42-fail.json</span><button class="term__copy" type="button" data-copy-text="pyx compare release-41-pass.json release-42-fail.json">copy</button></div>
-<pre><code>Pyx access review: invoice-three-paths
-  before  release-41 · r1 · pass
-  after   release-42 · r1 · fail
-
-  <span class="t-leak">GAINED ACCESS</span>  user-a can now read invoice-b  [app-invoice-route]
-  <span class="t-leak">GAINED ACCESS</span>  user-b can now read invoice-a  [app-invoice-route]
-
-  2 regressions, 0 still exposed, 0 fixed, 0 unverified, 16 unchanged; exit 1</code></pre>
-      </div>
-      <p class="note reveal">Real output from the two result files in the repository. Open them yourself in the <a href="verify.html">result verifier</a>.</p>
-    </div>
-  </div>
 </section>
 
-<!-- ============================================================ 04 proof (generated) -->
 <section class="sec" id="proof">
 <!-- benchmark:start -->
-  <div class="wrap sec__grid">
-    <p class="label sec__label">04 &nbsp;Proof</p>
-    <div class="sec__body">
-      <h2 class="reveal">We seed leaks into a real Supabase project and publish what Pyx catches.</h2>
-      <p class="body reveal">Each row is one deliberate change to a throwaway project, followed by a real run. Including the one Pyx misses.</p>
-      <div class="score reveal">
-        <div class="score__item score__item--pass"><div class="score__n">8<small>of 8</small></div><div class="score__l">access bugs caught, across policies, grants, RPC functions and API routes</div></div>
-        <div class="score__item score__item--warn"><div class="score__n">7<small>of 7</small></div><div class="score__l">broken test setups stopped instead of passing</div></div>
-        <div class="score__item"><div class="score__n">1</div><div class="score__l">known miss, published: a door the rule doesn’t list</div></div>
-      </div>
-      <div class="bench reveal">
-        <div class="bench__row"><span>App route fetches with the secret key and only checks sign-in</span><span class="bench__layer">app route</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>SELECT policy <code>using (true)</code> for every signed-in user</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>SELECT policy open to the anon role</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>Owner SELECT policy dropped (owners lose access)</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>SELECT grant revoked from authenticated</span><span class="bench__layer">grant</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>SECURITY DEFINER RPC without an owner check</span><span class="bench__layer">rpc</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>Owner policy typo: <code>owner_id = owner_id</code></span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>Row level security disabled on the table</span><span class="bench__layer">policy</span><span class="bench__got bench__got--detected">detected</span></div>
-        <div class="bench__row"><span>Same RPC bug, but the rule lists only the Data API path</span><span class="bench__layer">rpc</span><span class="bench__got bench__got--missed">missed</span></div>
-      </div>
-      <p class="note reveal">Run 2026-11-05 on Supabase CLI 2.122.1, 16 runs in total. The full table, with the setup faults, is in <a href="#" data-repo="/blob/HEAD/docs/BENCHMARK.md">docs/BENCHMARK.md</a>. Reproduce it with <code>pnpm integration</code>.</p>
+  <div class="wrap center">
+    <h2 class="reveal">Tested on real leaks.</h2>
+    <div class="score reveal">
+      <div class="score__item score__item--pass"><div class="score__n">8/8</div><div class="score__l">seeded leaks caught</div></div>
+      <div class="score__item score__item--warn"><div class="score__n">7/7</div><div class="score__l">broken setups stopped</div></div>
+      <div class="score__item"><div class="score__n">1</div><div class="score__l">miss, published</div></div>
     </div>
+    <p class="sub reveal"><a class="link" href="#" data-repo="/blob/HEAD/docs/BENCHMARK.md">See every run</a></p>
   </div>
 <!-- benchmark:end -->
 </section>
 
-<!-- ============================================================ 05 trust -->
 <section class="sec" id="trust">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">05 &nbsp;Trust</p>
-    <div class="sec__body">
-      <h2 class="reveal">Built so you don’t have to take our word for it.</h2>
-      <div class="facts reveal">
-        <div class="fact"><h3>Production stays closed</h3><p>Pyx runs on a throwaway copy of your database built from your migrations, with synthetic users and records. We never ask for production keys or customer data.</p><a href="trust.html#production">What Pyx touches</a></div>
-        <div class="fact"><h3>Every request on the record</h3><p>The request ledger lists each GET Pyx sent, which test user it was sent as, and what came back. No credential is ever written down.</p><a href="trust.html#ledger">See a ledger</a></div>
-        <div class="fact"><h3>Check any result yourself</h3><p>Open a result file in your browser. The verifier recounts every check and flags a file whose verdict doesn’t match its contents. Nothing is uploaded.</p><a href="verify.html">Open the verifier</a></div>
-        <div class="fact"><h3>Read every line</h3><p>The source is public under FSL-1.1, and each release becomes Apache-2.0 after two years. Dependencies are pinned, and security reports have a published route.</p><a href="#" data-repo>Source on GitHub</a></div>
-      </div>
+  <div class="wrap center">
+    <h2 class="reveal">Nothing to take on faith.</h2>
+    <div class="pillars reveal">
+      <a class="pillar" href="trust.html#production"><b>No production access</b><span>Synthetic data only</span></a>
+      <a class="pillar" href="trust.html#ledger"><b>Every request logged</b><span>See the ledger</span></a>
+      <a class="pillar" href="verify.html"><b>Verify any result</b><span>In your browser</span></a>
+      <a class="pillar" href="#" data-repo><b>Source available</b><span>Read every line</span></a>
     </div>
   </div>
 </section>
 
-<!-- ============================================================ 06 report -->
 <section class="sec" id="evidence">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">06 &nbsp;Reports</p>
-    <div class="sec__body split">
-      <div class="reveal">
-        <h2>A report your client can read.</h2>
-        <p class="body">It opens with what changed since the last release, then shows who can read which record on every path, what to do about each failure, and the full request ledger. White-label for agencies. No tokens, keys or real rows inside.</p>
-        <p><a class="link" href="sample-report.html">Open a sample report</a></p>
-      </div>
-      <a class="shot reveal" href="sample-report.html" aria-label="Open the sample report"><img src="assets/report-preview.png" alt="Pyx report: release 42 failed because two users gained access through the API route" width="1200" height="900" loading="lazy"></a>
-    </div>
+  <div class="wrap center">
+    <h2 class="reveal">Reports your client can read.</h2>
+    <p class="sub reveal"><a class="link" href="sample-report.html">Open a sample</a></p>
+    <a class="shot reveal" href="sample-report.html" aria-label="Open the sample report"><img src="assets/report-preview.png" alt="Pyx report showing two users who gained access through an API route" width="1200" height="900" loading="lazy"></a>
   </div>
 </section>
 
-<!-- ============================================================ 07 pricing -->
 <section class="sec" id="pricing">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">07 &nbsp;Pricing</p>
-    <div class="sec__body">
-      <h2 class="reveal">We set it up. You keep shipping.</h2>
-      <p class="body reveal">Fixed prices. You never send us credentials or customer data.</p>
-    </div>
-  </div>
-  <div class="wrap">
+  <div class="wrap center">
+    <h2 class="reveal">Simple pricing.</h2>
     <div class="plans reveal">
       <div class="plan">
         <p class="plan__name">Setup</p>
-        <p class="plan__price">$490 <small>once</small></p>
-        <p class="plan__for">Pyx running on one app before your next release.</p>
-        <ul><li>Rules for up to three tables, approved with you</li><li>Database API, RPC and one API route</li><li>A CI pull request, ready to merge</li><li>A report you can share, in three business days</li></ul>
-        <a class="btn btn--block" href="#" data-cta="boundaryCheck">Book a setup</a>
+        <p class="plan__price">$490</p>
+        <p class="plan__per">once</p>
+        <ul><li>Up to three tables</li><li>Every door checked</li><li>Live in three days</li></ul>
+        <a class="btn btn--ghost btn--block" href="#" data-cta="boundaryCheck">Book a setup</a>
       </div>
       <div class="plan plan--main">
         <p class="plan__name">Release review</p>
-        <p class="plan__price">$99 <small>per app, per month</small></p>
-        <p class="plan__for">For apps that ship every week.</p>
-        <ul><li>Who gained or lost access, every release</li><li>Rule changes reviewed before approval</li><li>Failures looked at within one business day</li><li>A reproduction pack for each failure</li></ul>
-        <a class="btn btn--block" href="#" data-cta="releaseAssurance">Start release review</a>
+        <p class="plan__price">$99</p>
+        <p class="plan__per">per app, monthly</p>
+        <ul><li>Every release reviewed</li><li>Failures triaged in a day</li><li>Repro pack per failure</li></ul>
+        <a class="btn btn--block" href="#" data-cta="releaseAssurance">Start</a>
       </div>
       <div class="plan">
         <p class="plan__name">Agency</p>
-        <p class="plan__price">$299 <small>per month</small></p>
-        <p class="plan__for">For studios looking after client apps.</p>
-        <ul><li>Up to five client apps</li><li>Reports under your studio’s name</li><li>Release history per client</li><li>Each new client’s setup at half price</li></ul>
+        <p class="plan__price">$299</p>
+        <p class="plan__per">monthly</p>
+        <ul><li>Five client apps</li><li>Your brand on reports</li><li>Half-price setups</li></ul>
         <a class="btn btn--ghost btn--block" href="#" data-cta="agency">Talk to us</a>
       </div>
     </div>
-    <p class="note plans__note">Founding customers: the first three setups are half price in exchange for a written review we can publish. The CLI is free on your own apps and in client work (<a href="#" data-repo>source</a>). Today Pyx checks reads of user-owned records; team and workspace rules are scoped by hand. It is not a penetration test.</p>
+    <p class="fine">First three setups half price. The CLI is free.</p>
   </div>
 </section>
 
-<!-- ============================================================ 08 faq -->
-<section class="sec" id="faq">
-  <div class="wrap sec__grid">
-    <p class="label sec__label">08 &nbsp;Questions</p>
-    <div class="sec__body faq">
-      <details><summary>We already have Supabase’s Security Advisor and some pgTAP tests.</summary><p>Keep them. The advisor flags tables without rules, and pgTAP tests SQL directly. Pyx goes through the doors your app actually uses, as real signed-in users, including RPC functions and your own routes where row rules don’t apply.</p></details>
-      <details><summary>Do you need access to our production project?</summary><p>No. Pyx starts a disposable copy from your migrations, creates synthetic users and records, and tests that. It refuses to touch any existing user or row that isn’t one of its own.</p></details>
-      <details><summary>What happens when a check fails?</summary><p>The run exits 1 and the pull request shows who gained access, to which record, through which route. <code>pyx repro</code> writes a short README and a curl script that replays the failing request against your local copy.</p></details>
-      <details><summary>What if the test setup itself is broken?</summary><p>Then nothing passes. Expired tokens, two users who are secretly the same account, a test record that changed mid-run or a stack that isn’t reachable all end as “blocked”, never as a green check.</p></details>
-      <details><summary>Who approves the rules?</summary><p>The person responsible for the data. They approve an exact version of the rule, and CI reads it from your protected branch, so a pull request can’t quietly redefine what “correct” means.</p></details>
-      <details><summary>What doesn’t it cover?</summary><p>Writes, list queries, team and workspace membership, storage and edge functions are not checked automatically yet. We publish what Pyx misses in the <a href="#proof">benchmark</a>.</p></details>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================================ close -->
 <section class="close">
-  <div class="wrap">
-    <h2 class="reveal">Find out who can see what in your app. <span class="dim">This week.</span></h2>
-    <div class="ctas reveal">
-      <a class="btn" href="#" data-cta="book">Book a setup</a>
-      <a class="btn btn--ghost" href="verify.html">Try the verifier</a>
-    </div>
+  <div class="wrap center">
+    <h2 class="reveal">Ship without guessing.</h2>
+    <div class="ctas reveal"><a class="btn" href="#" data-cta="book">Get started</a></div>
   </div>
 </section>
 
 </main>
 
 <footer class="foot">
-  <div class="wrap foot__grid">
-    <div class="foot__brand">Pyx</div>
+  <div class="wrap foot__row">
+    <span class="foot__brand-sm">Pyx</span>
     <nav aria-label="Footer">
-      <a href="verify.html">Verify a result</a>
       <a href="trust.html">Trust</a>
-      <a href="#proof">Benchmark</a>
+      <a href="verify.html">Verify</a>
       <a href="sample-report.html">Sample report</a>
       <a href="#" data-repo>Source</a>
       <a href="privacy.html">Privacy</a>
       <a href="terms.html">Terms</a>
       <a href="#" data-email>Contact</a>
     </nav>
-    <p class="foot__small">© <span data-year>2026</span> Pyx. Synthetic test data only. Not a penetration test or a certification.</p>
   </div>
 </footer>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="lens-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lens-map" x="0" y="0" width="220" height="220" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>

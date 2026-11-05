@@ -88,21 +88,14 @@ const tick = (t) => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>');
 const caught = mutations.filter((r) => r.got === 'detected').length;
 const safe = faults.filter((r) => r.got === 'blocked').length;
 const section = `<!-- benchmark:start -->
-  <div class="wrap sec__grid">
-    <p class="label sec__label">04 &nbsp;Proof</p>
-    <div class="sec__body">
-      <h2 class="reveal">We seed leaks into a real Supabase project and publish what Pyx catches.</h2>
-      <p class="body reveal">Each row is one deliberate change to a throwaway project, followed by a real run. Including the one Pyx misses.</p>
-      <div class="score reveal">
-        <div class="score__item score__item--pass"><div class="score__n">${caught}<small>of ${mutations.length}</small></div><div class="score__l">access bugs caught, across policies, grants, RPC functions and API routes</div></div>
-        <div class="score__item score__item--warn"><div class="score__n">${safe}<small>of ${faults.length}</small></div><div class="score__l">broken test setups stopped instead of passing</div></div>
-        <div class="score__item"><div class="score__n">${gaps.length}</div><div class="score__l">known miss, published: a door the rule doesn’t list</div></div>
-      </div>
-      <div class="bench reveal">
-${[...mutations, ...gaps].map((r) => `        <div class="bench__row"><span>${tick(r.mutation)}</span><span class="bench__layer">${esc(r.layer)}</span><span class="bench__got bench__got--${esc(r.got)}">${esc(r.got)}</span></div>`).join('\n')}
-      </div>
-      <p class="note reveal">Run ${esc(s.ranAt.slice(0, 10))} on Supabase CLI ${esc(s.environment.supabaseCli)}, ${s.benchmark.length} runs in total. The full table, with the setup faults, is in <a href="#" data-repo="/blob/HEAD/docs/BENCHMARK.md">docs/BENCHMARK.md</a>. Reproduce it with <code>pnpm integration</code>.</p>
+  <div class="wrap center">
+    <h2 class="reveal">Tested on real leaks.</h2>
+    <div class="score reveal">
+      <div class="score__item score__item--pass"><div class="score__n">${caught}/${mutations.length}</div><div class="score__l">seeded leaks caught</div></div>
+      <div class="score__item score__item--warn"><div class="score__n">${safe}/${faults.length}</div><div class="score__l">broken setups stopped</div></div>
+      <div class="score__item"><div class="score__n">${gaps.length}</div><div class="score__l">miss, published</div></div>
     </div>
+    <p class="sub reveal"><a class="link" href="#" data-repo="/blob/HEAD/docs/BENCHMARK.md">See every run</a></p>
   </div>
 <!-- benchmark:end -->`;
 const indexPath = join(repo, 'apps', 'web', 'index.html');

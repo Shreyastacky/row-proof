@@ -177,13 +177,13 @@
   // Per pair and route: R = owner reads it, H = hidden, L = leaked.
   var RELEASES = {
     43: { pass: true, title: 'Scope export by owner', vs: 42, commit: '9f2c1ab', exit: 0, grid: ['RRR', 'HHH', 'HHH', 'HHH'],
-      changes: [['ok', 'Alice can no longer open Bob’s invoice', 'The export route now checks who is asking.', 'GET /api/invoices/:id'], ['ok', 'Bob can no longer open Alice’s invoice', 'Same fix, same route.', 'GET /api/invoices/:id'], ['ok', 'Everything else matches the approved rule', '18 checks on 3 paths, all held.', 'all paths']] },
+      changes: [['ok', 'Alice can no longer open Bob’s invoice', 'The export route now checks who is asking.', 'GET /api/invoices/:id'], ['ok', 'Bob can no longer open Alice’s invoice', 'Same fix, same route.', 'GET /api/invoices/:id'], ['ok', 'Everything else unchanged', '18 checks on 3 paths, all held.', 'all paths']] },
     42: { pass: false, title: 'Add invoice export route', vs: 41, commit: 'c41e07d', exit: 1, grid: ['RRR', 'HHL', 'HHL', 'HHH'],
-      changes: [['gain', 'Alice can now open Bob’s invoice', 'Expected: hidden from Alice. Got: the full record.', 'GET /api/invoices/:id'], ['gain', 'Bob can now open Alice’s invoice', 'Same route. The database rules still hold.', 'GET /api/invoices/:id'], ['ok', 'Database API and RPC unchanged', 'Each user still sees only their own invoice.', '/rest/v1']] },
+      changes: [['gain', 'Alice can now open Bob’s invoice', 'Expected: hidden from Alice. Got: the full record.', 'GET /api/invoices/:id'], ['gain', 'Bob can now open Alice’s invoice', 'Same route. The database rules still hold.', 'GET /api/invoices/:id'], ['ok', 'Database and RPC unchanged', 'Each user still sees only their own invoice.', '/rest/v1']] },
     41: { pass: true, title: 'Billing page copy', vs: 40, commit: '2b77e90', exit: 0, grid: ['RRR', 'HHH', 'HHH', 'HHH'],
-      changes: [['ok', 'No one gained or lost access', 'The policy fix from release 40 holds.', 'all paths'], ['ok', 'Anonymous visitors see nothing', 'No session, no rows, on every path.', 'all paths']] },
+      changes: [['ok', 'No access changes', 'The policy fix from release 40 holds.', 'all paths'], ['ok', 'Anonymous sees nothing', 'No session, no rows, on every path.', 'all paths']] },
     40: { pass: false, title: 'Simplify invoice policy', vs: 39, commit: '7da03f4', exit: 1, grid: ['RRR', 'LHH', 'LHH', 'HHH'],
-      changes: [['gain', 'Alice can now open Bob’s invoice', 'A policy edit let any signed-in user read every invoice.', 'GET /rest/v1/invoices'], ['gain', 'Bob can now open Alice’s invoice', 'Same policy, same door.', 'GET /rest/v1/invoices'], ['ok', 'RPC and API route unaffected', 'Both check the caller themselves.', 'rpc · /api']] },
+      changes: [['gain', 'Alice can now open Bob’s invoice', 'A policy edit let any signed-in user read every invoice.', 'GET /rest/v1/invoices'], ['gain', 'Bob can now open Alice’s invoice', 'Same policy, same door.', 'GET /rest/v1/invoices'], ['ok', 'RPC and API unchanged', 'Both check the caller themselves.', 'rpc · /api']] },
   };
   var pane = document.getElementById('pane');
   var rels = document.getElementById('rels');
@@ -194,7 +194,7 @@
   function renderView(r) {
     if (current.view === 'changes') {
       return '<ul class="changes">' + r.changes.map(function (c) {
-        return '<li class="change change--' + c[0] + '"><span class="change__text"><b>' + esc(c[1]) + '</b><small>' + esc(c[2]) + '</small></span><span class="route">' + esc(c[3]) + '</span></li>';
+        return '<li class="change change--' + c[0] + '"><span class="change__text"><b>' + esc(c[1]) + '</b></span><span class="route">' + esc(c[3]) + '</span></li>';
       }).join('') + '</ul>';
     }
     if (current.view === 'matrix') {
@@ -218,8 +218,8 @@
   function render() {
     var r = RELEASES[current.rel];
     pane.innerHTML =
-      '<div class="pane__head"><h3>Release ' + current.rel + '</h3><span class="status ' + (r.pass ? 'status--pass">Passed' : 'status--leak">Build failed') + '</span></div>' +
-      '<p class="pane__sub">' + esc(r.title) + ' · compared with release ' + r.vs + '</p><div class="view">' + renderView(r) + '</div>';
+      '<div class="pane__head"><h3>Release ' + current.rel + '</h3><span class="status ' + (r.pass ? 'status--pass">Passed' : 'status--leak">Blocked') + '</span></div>' +
+      '<div class="view">' + renderView(r) + '</div>';
     rels.querySelectorAll('.rel').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-rel') === current.rel ? 'true' : 'false'); });
     tabs.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-view') === current.view ? 'true' : 'false'); });
     moveThumb();
