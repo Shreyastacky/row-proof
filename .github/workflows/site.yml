@@ -1,0 +1,58 @@
+# Deploys the website (apps/web, static, no build step) to Cloudflare Pages.
+#   main             -> production
+#   any other branch -> a preview URL for that branch
+#
+# One-time setup (see docs/DEPLOY.md):
+#   1. Cloudflare dashboard -> My Profile -> API Tokens -> Create token with
+#      "Account / Cloudflare Pages / Edit" for your account.
+#   2. GitHub repo -> Settings -> Secrets and variables -> Actions:
+#      CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# Without those secrets the job skips with a notice instead of failing.
+name: site
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['apps/web/**', '.github/workflows/site.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT: pyx
+  WRANGLER: wrangler@4.40.0
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Check for Cloudflare credentials
+        id: creds
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set; skipping the deploy. See docs/DEPLOY.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create the Pages project if it does not exist
+        if: steps.creds.outputs.ok == 'true'
+        run: npx --yes "$WRANGLER" pages project create "$PROJECT" --production-branch main || true
+      - name: Deploy
+        if: steps.creds.outputs.ok == 'true'
+        run: npx --yes "$WRANGLER" pages deploy apps/web --project-name "$PROJECT" --branch "$GITHUB_REF_NAME" --commit-hash "$GITHUB_SHA" --commit-dirty=false

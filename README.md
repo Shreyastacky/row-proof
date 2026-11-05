@@ -134,6 +134,6 @@ pnpm package
 
 ## License
 
-[FSL-1.1-ALv2](LICENSE.md). You may use, modify and run Pyx for free for any purpose except a competing commercial product or service, including professional services you provide to your own clients. Each release becomes Apache-2.0 two years after it is published.
+[FSL-1.1-ALv2](LICENSE.md). You may use, modify and run Pyx for free for any purpose except offering a competing commercial product or service. Using it in professional services you provide to your own clients is explicitly permitted. Each release becomes Apache-2.0 two years after it is published.
 
 Security reports: see [SECURITY.md](SECURITY.md). Earlier, unrelated products by the same author (the Ship Safe checklist/kit and `ship-safe-check`) are not part of Pyx.

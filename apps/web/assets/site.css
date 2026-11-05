@@ -17,7 +17,7 @@
   --line-2: rgba(255, 255, 255, 0.13);
   --text: #ededef;
   --t2: rgba(237, 237, 239, 0.66);
-  --t3: rgba(237, 237, 239, 0.42);
+  --t3: rgba(237, 237, 239, 0.56);
   --pass: #5fe0b0;
   --leak: #ff6a5c;
   --warn: #ffc457;
@@ -139,7 +139,7 @@ h3 { font-size: 19px; letter-spacing: -0.015em; font-weight: 560; }
   display: grid; grid-template-columns: 0.9fr 1fr 1.25fr 0.55fr 0.85fr; gap: 10px; padding: 0 22px;
   font: 400 12.5px/1.25 var(--mono); white-space: nowrap;
 }
-.ledger__head { color: var(--t3); padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 11.5px; }
+.ledger__head { color: var(--t3); padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
 .ledger__row { height: 30px; align-items: center; color: rgba(237, 237, 239, 0.46); border-bottom: 1px solid rgba(255, 255, 255, 0.035); }
 .ledger__row span { overflow: hidden; text-overflow: ellipsis; }
 .ledger__rows { position: relative; }
@@ -179,7 +179,7 @@ h3 { font-size: 19px; letter-spacing: -0.015em; font-weight: 560; }
 .lens__mag .ledger__row { color: rgba(237, 237, 239, 0.86); }
 .lens__mag .ledger__head { color: rgba(237, 237, 239, 0.6); }
 @media (max-width: 640px) {
-  .ledger__head, .ledger__row { grid-template-columns: 0.85fr 0.6fr 1.45fr 0.95fr; gap: 8px; padding: 0 14px; font-size: 11px; }
+  .ledger__head, .ledger__row { grid-template-columns: 0.85fr 0.6fr 1.45fr 0.95fr; gap: 8px; padding: 0 12px; font-size: 12px; }
   .ledger__head span:nth-child(4), .ledger__row span:nth-child(4) { display: none; }
   .lens { --r: 84px; }
 }
@@ -452,3 +452,7 @@ h3 { font-size: 19px; letter-spacing: -0.015em; font-weight: 560; }
 .foot__row nav { display: flex; flex-wrap: wrap; gap: 10px 24px; }
 .foot__row nav a { color: var(--t3); text-decoration: none; font-size: 14px; transition: color 0.2s; }
 .foot__row nav a:hover { color: var(--text); }
+
+/* Reserve the ledger's height before the script fills it (no layout shift). */
+#ledger-base, #ledger-mag { min-height: 540px; }
+.label, .door__path, .route, .bench__layer, .term__bar, .doors__row--head, .table th { font-size: max(12px, 1em); }

@@ -1,0 +1,35 @@
+name: Bug report
+description: Something Pyx did that it should not have, or did not do.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do **not** include credentials, tokens, customer data or private endpoints.
+        For security problems, email the address in SECURITY.md instead of opening an issue.
+  - type: input
+    id: version
+    attributes:
+      label: Pyx version
+      description: Output of `pyx --version`.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: Include the exit code and the diagnostic codes from the summary.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A redacted rule file and the commands you ran. `pyx repro` output is ideal.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node version, Supabase CLI version.

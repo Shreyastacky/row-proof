@@ -8,6 +8,7 @@
 <meta name="description" content="Open a Pyx result file in your browser. It recounts every check, flags a file whose verdict doesn't match its contents, and compares two releases. Nothing is uploaded.">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/verify.css">
 <script src="config.js" defer></script>
@@ -33,7 +34,7 @@
   </div>
 
   <div class="wrap vf">
-    <div class="vf__drop" id="drop" tabindex="0" role="button" aria-label="Open result files">
+    <div class="vf__drop" id="drop" tabindex="0" role="button" aria-label="Drop one or two result.json files here, or choose files">
       <input type="file" id="files" accept="application/json,.json" multiple hidden>
       <p class="vf__drop-main">Drop one or two <code>result.json</code> files here</p>
       <p class="vf__drop-sub">or <span class="link-ish">choose files</span></p>

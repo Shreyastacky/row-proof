@@ -2,15 +2,38 @@
   "name": "pyx-cli",
   "version": "0.1.0",
   "description": "Owner-approved access rules for Supabase, checked against real requests on every release. Cross-user data leaks fail the build.",
-  "keywords": ["supabase", "rls", "row-level-security", "authorization", "access-control", "security-testing", "ci", "postgrest"],
+  "keywords": [
+    "supabase",
+    "rls",
+    "row-level-security",
+    "authorization",
+    "access-control",
+    "security-testing",
+    "ci",
+    "postgrest"
+  ],
   "license": "FSL-1.1-ALv2",
+  "author": "Shreyastacky (https://github.com/Shreyastacky)",
   "homepage": "https://github.com/Shreyastacky/row-proof#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/Shreyastacky/row-proof.git", "directory": "packages/cli" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shreyastacky/row-proof.git",
+    "directory": "packages/cli"
+  },
   "bugs": "https://github.com/Shreyastacky/row-proof/issues",
   "type": "module",
-  "bin": { "pyx": "./dist/pyx.mjs" },
-  "files": ["dist", "schemas", "README.md", "LICENSE.md"],
-  "engines": { "node": ">=22.12.0" },
+  "bin": {
+    "pyx": "./dist/pyx.mjs"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "build": "node build.mjs",
     "smoke": "node build.mjs --smoke"

@@ -32,6 +32,8 @@ const out = join(here, 'dist/pyx.mjs');
 const text = readFileSync(out, 'utf8').replace(/\n#!\/usr\/bin\/env node\n/, '\n');
 writeFileSync(out, text, { mode: 0o755 });
 
+// Start from an empty schemas folder so a renamed or removed schema is never shipped.
+rmSync(join(here, 'schemas'), { recursive: true, force: true });
 mkdirSync(join(here, 'schemas'), { recursive: true });
 cpSync(join(repo, 'packages/contracts/schemas/pyx.v1.schema.json'), join(here, 'schemas/pyx.v1.schema.json'));
 cpSync(join(repo, 'LICENSE.md'), join(here, 'LICENSE.md'));

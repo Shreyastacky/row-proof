@@ -1,0 +1,5 @@
+# The approved baseline is the security contract: only its owner may change it.
+# Takes effect when branch protection requires review from code owners.
+/baseline/                 @Shreyastacky
+/.github/workflows/        @Shreyastacky
+/packages/contracts/schemas/ @Shreyastacky
