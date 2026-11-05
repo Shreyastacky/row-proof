@@ -82,7 +82,7 @@ async function expectCode(p: Promise<unknown>, code: string): Promise<void> {
 let reader: ApprovedBaselineReader;
 
 beforeEach(async () => {
-  store = await mkdtemp(join(tmpdir(), 'rowproof-store-'));
+  store = await mkdtemp(join(tmpdir(), 'pyx-store-'));
   reader = openFileBaselineReader(store);
 });
 afterEach(async () => {

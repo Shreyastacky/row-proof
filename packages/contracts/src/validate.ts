@@ -11,7 +11,7 @@ import type {
   RunResult,
 } from './types.generated.js';
 
-export const SCHEMA_ID = 'urn:rowproof:schemas:v1';
+export const SCHEMA_ID = 'urn:pyx:schemas:v1';
 
 export type DocumentKind =
   | 'RuleContent'
@@ -44,7 +44,7 @@ export interface Issue {
 
 export type ValidationResult<T> = { ok: true; value: T; issues: Issue[] } | { ok: false; issues: Issue[] };
 
-const schemaUrl = new URL('../schemas/rowproof.v1.schema.json', import.meta.url);
+const schemaUrl = new URL('../schemas/pyx.v1.schema.json', import.meta.url);
 export const schemaBundle: unknown = JSON.parse(readFileSync(schemaUrl, 'utf8'));
 
 const ajv = new Ajv2020({

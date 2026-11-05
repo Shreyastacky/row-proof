@@ -1,11 +1,11 @@
 {
-  "name": "@rowproof/runner",
+  "name": "@pyx/runner",
   "version": "0.1.0",
   "private": true,
-  "description": "Customer-run RowProof CLI: approval workflow and bounded read-isolation assertions.",
+  "description": "Customer-run Pyx CLI: approval workflow and bounded read-isolation assertions.",
   "type": "module",
   "bin": {
-    "rowproof": "./dist/cli.js"
+    "pyx": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -22,8 +22,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rowproof/contracts": "workspace:*",
-    "@rowproof/local-fixture": "workspace:*"
+    "@pyx/contracts": "workspace:*",
+    "@pyx/local-fixture": "workspace:*"
   },
   "license": "FSL-1.1-ALv2"
 }

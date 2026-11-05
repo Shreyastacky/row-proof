@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>RowProof · Every user sees their own data. Nothing else.</title>
-<meta name="description" content="RowProof turns who-can-read-what into an owner-approved rule and proves it against real Supabase requests on every release. A cross-user leak fails the build, with the exact record and rule revision.">
-<meta property="og:title" content="RowProof · Every user sees their own data. Nothing else.">
+<title>Pyx · Every user sees their own data. Nothing else.</title>
+<meta name="description" content="Pyx turns who-can-read-what into an owner-approved rule and proves it against real Supabase requests on every release. A cross-user leak fails the build, with the exact record and rule revision.">
+<meta property="og:title" content="Pyx · Every user sees their own data. Nothing else.">
 <meta property="og:description" content="Owner-approved access rules for Supabase, proven against real requests on every release.">
 <meta property="og:image" content="assets/og.png">
 <meta property="og:type" content="website">
@@ -24,9 +24,9 @@
 
 <header class="nav" id="nav">
   <div class="wrap nav__inner">
-    <a class="rp-brand" href="#top" aria-label="RowProof home">
+    <a class="rp-brand" href="#top" aria-label="Pyx home">
       <svg class="rp-logo" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="b1" x1="3" y1="3" x2="29" y2="29" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#efe2c2"/><stop offset=".5" stop-color="#c9b38a"/><stop offset="1" stop-color="#8f7a55"/></linearGradient></defs><path d="M9 3.5h14l5.5 5.5v14L23 28.5H9L3.5 23V9L9 3.5Z" fill="none" stroke="url(#b1)" stroke-width="1.5"/><path d="M10 11.5h12" stroke="url(#b1)" stroke-width="2.2" stroke-linecap="round"/><path d="M10 16h12M10 20.5h7" stroke="#ece6db" stroke-opacity=".38" stroke-width="2.2" stroke-linecap="round"/></svg>
-      RowProof
+      Pyx
     </a>
     <nav class="nav__links" aria-label="Primary">
       <a href="#method">Method</a>
@@ -53,7 +53,7 @@
     </h1>
     <div class="hero__sub">
       <div class="fade-in">
-        <p class="lead">RowProof turns <em>who may read what</em> into a rule your data owner approves, then proves it against real Supabase requests on every release. When a policy change lets one customer read another’s records, the build stops, with the exact record and rule revision.</p>
+        <p class="lead">Pyx turns <em>who may read what</em> into a rule your data owner approves, then proves it against real Supabase requests on every release. When a policy change lets one customer read another’s records, the build stops, with the exact record and rule revision.</p>
         <div class="hero__ctas">
           <a class="rp-btn rp-btn--primary" href="#pricing">Book a Boundary Check</a>
           <a class="rp-btn" href="#start">Run the free CLI</a>
@@ -67,7 +67,7 @@
       </ul>
     </div>
 
-    <figure class="instrument" aria-label="Animated example: RowProof checking which invoices user A can read across three releases">
+    <figure class="instrument" aria-label="Animated example: Pyx checking which invoices user A can read across three releases">
       <div class="rp-glass rp-glass--strong ledger" id="ledger">
         <div class="ledger__head">
           <span class="ledger__table">public.invoices</span>
@@ -138,12 +138,12 @@
 <section class="rule-top" id="difference">
   <div class="wrap">
     <div class="section-intro reveal">
-      <div><span class="label">The difference</span><h2 class="h2">Scanners ask what strangers can see. <em>RowProof asks what each user should.</em></h2></div>
-      <p class="lead">Public-key scanners catch tables left open, and you should run one. They cannot know that a signed-in customer must never read another customer’s invoice. That knowledge is your intent, and RowProof keeps it.</p>
+      <div><span class="label">The difference</span><h2 class="h2">Scanners ask what strangers can see. <em>Pyx asks what each user should.</em></h2></div>
+      <p class="lead">Public-key scanners catch tables left open, and you should run one. They cannot know that a signed-in customer must never read another customer’s invoice. That knowledge is your intent, and Pyx keeps it.</p>
     </div>
     <div class="table-scroll reveal">
       <table class="compare">
-        <thead><tr><th></th><th>Public-key scanners</th><th>Hand-written SQL tests</th><th class="us">RowProof</th></tr></thead>
+        <thead><tr><th></th><th>Public-key scanners</th><th>Hand-written SQL tests</th><th class="us">Pyx</th></tr></thead>
         <tbody>
           <tr><td>Tables open to anyone</td><td class="y">Detected</td><td>If someone wrote it</td><td class="us y">Detected</td></tr>
           <tr><td>User A reading user B’s rows</td><td class="n">Not visible to them</td><td>If someone wrote it</td><td class="us y">Detected</td></tr>
@@ -172,7 +172,7 @@
       <div class="hero__ctas"><a class="rp-btn" href="sample-report.html">Open the sample report</a></div>
     </div>
     <a class="frame-link reveal" href="sample-report.html" aria-label="Open the sample evidence report">
-      <div class="rp-glass frame" id="frame"><img src="assets/report-preview.png" alt="RowProof evidence report: a failing verdict and a proof matrix in which user A can read invoice B" width="1200" height="900" loading="lazy"></div>
+      <div class="rp-glass frame" id="frame"><img src="assets/report-preview.png" alt="Pyx evidence report: a failing verdict and a proof matrix in which user A can read invoice B" width="1200" height="900" loading="lazy"></div>
     </a>
   </div>
 </section>
@@ -210,13 +210,13 @@
     </div>
     <div class="rp-glass term reveal">
       <div class="term__bar"><span>Inside your Supabase project</span><button class="rp-btn copy-btn" data-copy="quickstart" type="button">Copy</button></div>
-<pre id="quickstart"><span class="p">$ </span>npm install -g rowproof
+<pre id="quickstart"><span class="p">$ </span>npm install -g pyx-cli
 <span class="p">$ </span>supabase start
-<span class="p">$ </span>rowproof init --table invoices --owner-column owner_id --marker-column title
-<span class="p">$ </span>rowproof fixture provision --rule invoices-owner-read.rule.json
-<span class="p">$ </span>rowproof propose --rule invoices-owner-read.rule.json --store .rowproof/approvals --proposed-by me --out p.json
-<span class="p">$ </span>rowproof approve --proposal p.json --store .rowproof/approvals --approver owner --acknowledge &lt;hash&gt; --promote
-<span class="p">$ </span>rowproof run --store .rowproof/approvals --rule invoices-owner-read --credentials .rowproof/local.env --html report.html</pre>
+<span class="p">$ </span>pyx init --table invoices --owner-column owner_id --marker-column title
+<span class="p">$ </span>pyx fixture provision --rule invoices-owner-read.rule.json
+<span class="p">$ </span>pyx propose --rule invoices-owner-read.rule.json --store .pyx/approvals --proposed-by me --out p.json
+<span class="p">$ </span>pyx approve --proposal p.json --store .pyx/approvals --approver owner --acknowledge &lt;hash&gt; --promote
+<span class="p">$ </span>pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --html report.html</pre>
     </div>
   </div>
 </section>
@@ -258,12 +258,12 @@
   <div class="wrap faq">
     <div class="faq__head reveal"><span class="label">Questions</span><h2 class="h2" style="margin-top:22px">Straight <em>answers.</em></h2></div>
     <div class="faq__list reveal">
-      <details><summary>Do you need access to our production database or keys?</summary><p>No. RowProof runs against a disposable local Supabase stack built from your migrations, with synthetic users and records. A Boundary Check works from your repository, or a copy of your migrations, and arrives as a pull request.</p></details>
-      <details><summary>How is this different from writing pgTAP tests?</summary><p>Keep your pgTAP tests. RowProof checks through the same API and sign-in path your application uses, treats errors and timeouts as blocked rather than denied, and keeps the expected access approved apart from code, so a pull request cannot quietly change what correct means. It also produces evidence a non-engineer can read.</p></details>
+      <details><summary>Do you need access to our production database or keys?</summary><p>No. Pyx runs against a disposable local Supabase stack built from your migrations, with synthetic users and records. A Boundary Check works from your repository, or a copy of your migrations, and arrives as a pull request.</p></details>
+      <details><summary>How is this different from writing pgTAP tests?</summary><p>Keep your pgTAP tests. Pyx checks through the same API and sign-in path your application uses, treats errors and timeouts as blocked rather than denied, and keeps the expected access approved apart from code, so a pull request cannot quietly change what correct means. It also produces evidence a non-engineer can read.</p></details>
       <details><summary>Does it replace a penetration test?</summary><p>No. It continuously checks one class of failure that matters a great deal, cross-customer data exposure, against a rule your team agreed. Pair it with a security review for everything else.</p></details>
       <details><summary>We use organisations and teams, not per-user rows.</summary><p>Automated support today covers single-owner tables. Tenant membership is on the roadmap; until then we scope those rules by hand within Release Assurance.</p></details>
-      <details><summary>Is it AI? Will it change our code?</summary><p>No. RowProof is deterministic and read-only while it runs. It never edits policies, approvals or your application. An assistant may help draft a rule; only a person approves it.</p></details>
-      <details><summary>What does the licence allow?</summary><p>FSL-1.1 lets you use, modify and run RowProof for any purpose except offering a competing product or service, including in professional work for your own clients. Each release becomes Apache-2.0 two years after it ships.</p></details>
+      <details><summary>Is it AI? Will it change our code?</summary><p>No. Pyx is deterministic and read-only while it runs. It never edits policies, approvals or your application. An assistant may help draft a rule; only a person approves it.</p></details>
+      <details><summary>What does the licence allow?</summary><p>FSL-1.1 lets you use, modify and run Pyx for any purpose except offering a competing product or service, including in professional work for your own clients. Each release becomes Apache-2.0 two years after it ships.</p></details>
     </div>
   </div>
 </section>
@@ -280,8 +280,8 @@
 
 <footer class="site">
   <div class="wrap">
-    <span class="rp-brand" style="font-size:12px">RowProof</span>
-    <span>© <span data-year>2026</span> RowProof. Synthetic data only. Not a certification.</span>
+    <span class="rp-brand" style="font-size:12px">Pyx</span>
+    <span>© <span data-year>2026</span> Pyx. Synthetic data only. Not a certification.</span>
     <nav aria-label="Footer"><a href="privacy.html">Privacy</a><a href="#" data-repo>Source</a><a href="#" data-email>Contact</a></nav>
   </div>
 </footer>

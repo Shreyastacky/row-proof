@@ -1,5 +1,5 @@
 /**
- * RowProof design system, "vault": obsidian ground, bone type, a single brushed-brass
+ * Pyx design system, "vault": obsidian ground, bone type, a single brushed-brass
  * accent, calm signal colours (jade pass, vermilion leak, amber blocked) and quiet
  * liquid-glass surfaces. Single source of truth: embedded in HTML reports and copied to
  * the website (`apps/web/assets/theme.css`) by scripts/build-site.mjs.

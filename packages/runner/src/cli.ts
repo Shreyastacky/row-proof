@@ -3,7 +3,7 @@ import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { UsageError, type CliIO } from './io.js';
 
-const HELP = `rowproof <command> [options]
+const HELP = `pyx <command> [options]
 
 Get started:
   init                scaffold a rule for a user-owned table (random synthetic ids)
@@ -20,7 +20,7 @@ Approval workflow (writes the local, self-attested approval store):
   history             list approved revisions and the active one
 
 Assessment (reads the approval store only):
-  run                 execute the approved matrix; see \`rowproof run --help\`
+  run                 execute the approved matrix; see \`pyx run --help\`
   report              build an HTML evidence report from one or more result files
 `;
 
@@ -40,14 +40,14 @@ export async function main(argv: string[], io: CliIO): Promise<number> {
         return await { init: t.initCommand, report: t.reportCommand, doctor: t.doctorCommand }[command](rest, io);
       }
       case 'fixture': {
-        const { runFixtureCli } = await import('@rowproof/local-fixture/cli');
+        const { runFixtureCli } = await import('@pyx/local-fixture/cli');
         return await runFixtureCli(rest);
       }
       case 'version':
       case '--version':
       case '-v': {
         const { RUNNER_VERSION } = await import('./io.js');
-        io.stdout(`rowproof ${RUNNER_VERSION}\n`);
+        io.stdout(`pyx ${RUNNER_VERSION}\n`);
         return 0;
       }
       case 'validate':

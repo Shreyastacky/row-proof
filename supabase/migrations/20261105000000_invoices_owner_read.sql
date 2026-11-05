@@ -1,4 +1,4 @@
--- RowProof disposable demo: one user-owned table with an owner-only SELECT policy.
+-- Pyx disposable demo: one user-owned table with an owner-only SELECT policy.
 -- Synthetic data only. Applied by `supabase start` / `supabase db reset` on the local stack.
 
 create table public.invoices (
@@ -11,7 +11,7 @@ create table public.invoices (
   created_at timestamptz not null default now()
 );
 
-comment on table public.invoices is 'RowProof synthetic demo fixture. Owner-only read access.';
+comment on table public.invoices is 'Pyx synthetic demo fixture. Owner-only read access.';
 
 create index invoices_owner_id_idx on public.invoices (owner_id);
 

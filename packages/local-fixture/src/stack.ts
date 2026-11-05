@@ -4,7 +4,7 @@
  */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { parseExactOrigin } from '@rowproof/contracts';
+import { parseExactOrigin } from '@pyx/contracts';
 
 const run = promisify(execFile);
 

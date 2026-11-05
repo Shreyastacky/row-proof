@@ -1,5 +1,5 @@
 {
-  "name": "@rowproof/integration-tests",
+  "name": "@pyx/integration-tests",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     "test": "node harness.mjs"
   },
   "dependencies": {
-    "@rowproof/contracts": "workspace:*",
+    "@pyx/contracts": "workspace:*",
     "@supabase/supabase-js": "2.118.0"
   }
 }

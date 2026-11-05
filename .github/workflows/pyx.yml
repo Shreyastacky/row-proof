@@ -1,4 +1,4 @@
-# RowProof CI: unit/contract checks, the real-HTTP integration harness, and an
+# Pyx CI: unit/contract checks, the real-HTTP integration harness, and an
 # assessment that reads the approved baseline from the BASE branch.
 #
 # Trust notes:
@@ -11,7 +11,7 @@
 #   example a required workflow from a separate repository). That is not configured.
 # - Reading `baseline/` from the base branch only matters if the base branch is
 #   protected. Branch protection/rulesets are not configured by this file.
-name: rowproof
+name: pyx
 
 on:
   pull_request:
@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: rowproof-${{ github.ref }}
+  group: pyx-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
       - name: Build and smoke-test the npm package from a clean install
-        run: pnpm --filter rowproof run smoke
+        run: pnpm --filter pyx-cli run smoke
       - name: Check the website's generated files are current
         run: node scripts/build-site.mjs && git diff --exit-code -- apps/web/assets/theme.css apps/web/sample-report.html apps/web/favicon.svg
 
@@ -68,7 +68,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: rowproof-integration
+          name: pyx-integration
           path: artifacts/integration/
           if-no-files-found: warn
           retention-days: 14
@@ -130,17 +130,17 @@ jobs:
       - name: Assess (exit 0 pass, 1 violation, 2 blocked)
         if: steps.baseline.outputs.available == 'true'
         run: >
-          pnpm rowproof run
+          pnpm pyx run
           --store "$RUNNER_TEMP/trusted-baseline"
           --rule invoice-owner-read
-          --credentials .rowproof/local.env
+          --credentials .pyx/local.env
           --execution-context ci-development
           --out artifacts/assessment/result.json
       - name: Upload redacted result
         if: always() && steps.baseline.outputs.available == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: rowproof-assessment
+          name: pyx-assessment
           path: |
             artifacts/assessment/
             ${{ runner.temp }}/trusted-baseline/SOURCE.txt
@@ -150,4 +150,4 @@ jobs:
         if: always()
         run: |
           node scripts/stack.mjs down || true
-          rm -f .rowproof/local.env
+          rm -f .pyx/local.env

@@ -1,15 +1,15 @@
 {
-  "name": "@rowproof/contracts",
+  "name": "@pyx/contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "RowProof v1 schemas, canonicalization, approval semantics, and safe result model.",
+  "description": "Pyx v1 schemas, canonicalization, approval semantics, and safe result model.",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./schemas/rowproof.v1.schema.json": "./schemas/rowproof.v1.schema.json"
+    "./schemas/pyx.v1.schema.json": "./schemas/pyx.v1.schema.json"
   },
   "files": [
     "dist",

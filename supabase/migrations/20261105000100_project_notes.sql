@@ -1,4 +1,4 @@
--- A second, customer-shaped table used to test `rowproof init` on an arbitrary user-owned table:
+-- A second, customer-shaped table used to test `pyx init` on an arbitrary user-owned table:
 -- an extra NOT NULL column (needs --fixture-defaults), a foreign key WITHOUT cascade, and the
 -- marker stored in an ordinary text column. Synthetic data only.
 

@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { schemaBundle, validateRuleContent, type RunResult } from '@rowproof/contracts';
+import { schemaBundle, validateRuleContent, type RunResult } from '@pyx/contracts';
 import { renderJunit, renderMarkdownSummary } from '../src/ci-formats.js';
 import { scaffoldRule } from '../src/commands/tools.js';
 import { runCommand } from '../src/commands/run.js';
@@ -20,7 +20,7 @@ async function sampleResults(): Promise<{ pass: RunResult; fail: RunResult; bloc
   bad.policy = 'permissive-authenticated';
   const fail = await runEngine(bad.fetch, { env: baseEnv(bad) });
   const blk = createFake();
-  const blocked = await runEngine(blk.fetch, { env: { ...baseEnv(blk), ROWPROOF_USER_A_TOKEN: undefined } });
+  const blocked = await runEngine(blk.fetch, { env: { ...baseEnv(blk), PYX_USER_A_TOKEN: undefined } });
   return { pass: pass.result, fail: fail.result, blocked: blocked.result, secrets: [...pass.sensitiveValues, ...fail.sensitiveValues] };
 }
 
@@ -79,7 +79,7 @@ describe('CI formats', () => {
   it('Markdown summary states the outcome and escapes table-breaking characters', async () => {
     const { fail } = await sampleResults();
     const md = renderMarkdownSummary(fail);
-    expect(md).toContain('RowProof: FAIL');
+    expect(md).toContain('Pyx: FAIL');
     expect(md).toContain('❌ FAIL');
     const hostile = { ...fail, rule: { ...fail.rule, ruleId: 'x|y`z' } };
     expect(renderMarkdownSummary(hostile)).toContain('x\\|y\\`z');
@@ -106,7 +106,7 @@ describe('init', () => {
 describe('run output safety', () => {
   let dir: string;
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'rowproof-out-'));
+    dir = await mkdtemp(join(tmpdir(), 'pyx-out-'));
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -134,6 +134,6 @@ describe('run output safety', () => {
     expect(await readFile(join(dir, 'j.xml'), 'utf8')).toContain('<testsuites');
     const md = await readFile(join(dir, 'summary.md'), 'utf8');
     expect(md.startsWith('# existing\n')).toBe(true);
-    expect(md).toContain('RowProof: PASS');
+    expect(md).toContain('Pyx: PASS');
   });
 });

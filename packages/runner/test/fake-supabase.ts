@@ -128,10 +128,10 @@ export function createFake(): FakeSupabase & { tokenA: string; tokenB: string } 
 
 export function baseEnv(fake: { tokenA: string; tokenB: string }): Record<string, string> {
   return {
-    ROWPROOF_SUPABASE_URL: ORIGIN,
-    ROWPROOF_PUBLISHABLE_KEY: PUBLISHABLE,
-    ROWPROOF_SETUP_SECRET_KEY: SECRET,
-    ROWPROOF_USER_A_TOKEN: fake.tokenA,
-    ROWPROOF_USER_B_TOKEN: fake.tokenB,
+    PYX_SUPABASE_URL: ORIGIN,
+    PYX_PUBLISHABLE_KEY: PUBLISHABLE,
+    PYX_SETUP_SECRET_KEY: SECRET,
+    PYX_USER_A_TOKEN: fake.tokenA,
+    PYX_USER_B_TOKEN: fake.tokenB,
   };
 }

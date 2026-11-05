@@ -1,5 +1,5 @@
 {
-  "name": "rowproof",
+  "name": "pyx-cli",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.28.0",
@@ -7,20 +7,20 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run build",
-    "typecheck": "pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run typecheck",
-    "test": "pnpm run build && pnpm -r --filter \"./packages/*\" --filter \"!rowproof\" run test",
-    "check:generated": "pnpm --filter @rowproof/contracts run check:generated",
+    "build": "pnpm -r --filter \"./packages/*\" --filter \"!pyx-cli\" run build",
+    "typecheck": "pnpm -r --filter \"./packages/*\" --filter \"!pyx-cli\" run typecheck",
+    "test": "pnpm run build && pnpm -r --filter \"./packages/*\" --filter \"!pyx-cli\" run test",
+    "check:generated": "pnpm --filter @pyx/contracts run check:generated",
     "verify": "pnpm run check:generated && pnpm run test && pnpm run typecheck",
     "stack:up": "node scripts/stack.mjs up",
     "stack:down": "node scripts/stack.mjs down",
     "stack:reset": "node scripts/stack.mjs reset",
     "stack:status": "node scripts/stack.mjs status",
     "fixture:provision": "node packages/local-fixture/dist/bin.js provision --rule examples/invoice-owner-read.rule.json --supabase-bin node_modules/.bin/supabase",
-    "fixture:verify": "node packages/local-fixture/dist/bin.js verify --rule examples/invoice-owner-read.rule.json --credentials .rowproof/local.env --supabase-bin node_modules/.bin/supabase",
-    "rowproof": "node packages/runner/dist/cli.js",
+    "fixture:verify": "node packages/local-fixture/dist/bin.js verify --rule examples/invoice-owner-read.rule.json --credentials .pyx/local.env --supabase-bin node_modules/.bin/supabase",
+    "pyx": "node packages/runner/dist/cli.js",
     "integration": "pnpm run build && node tests/integration/harness.mjs",
-    "package": "pnpm run build && pnpm --filter rowproof run smoke",
+    "package": "pnpm run build && pnpm --filter pyx-cli run smoke",
     "site": "pnpm run build && node scripts/build-site.mjs"
   },
   "devDependencies": {

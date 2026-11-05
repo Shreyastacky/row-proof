@@ -1,11 +1,11 @@
 {
-  "name": "@rowproof/local-fixture",
+  "name": "@pyx/local-fixture",
   "version": "0.1.0",
   "private": true,
   "description": "Privileged local-only tooling: provisions and verifies synthetic users and fixtures in a disposable Supabase stack.",
   "type": "module",
   "bin": {
-    "rowproof-fixture": "./dist/bin.js"
+    "pyx-fixture": "./dist/bin.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rowproof/contracts": "workspace:*",
+    "@pyx/contracts": "workspace:*",
     "@supabase/supabase-js": "2.118.0"
   },
   "exports": {

@@ -1,5 +1,5 @@
 /**
- * `rowproof run`: read the approved revision (read-only), execute the matrix,
+ * `pyx run`: read the approved revision (read-only), execute the matrix,
  * write a safe JSON result and print a summary. This module must never import
  * the approval writer; a unit test enforces that.
  */
@@ -15,7 +15,7 @@ import {
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
-} from '@rowproof/contracts';
+} from '@pyx/contracts';
 import { DEFAULT_LIMITS, executeRun, type RunContext } from '../engine.js';
 import { loadEnvFile, optionalInt, requireString, RUNNER_VERSION, UsageError, type CliIO } from '../io.js';
 import { appendFile } from 'node:fs/promises';
@@ -56,20 +56,20 @@ export interface RunCommandDeps {
   now?: () => Date;
 }
 
-export const RUN_HELP = `rowproof run --store <dir> --rule <rule-id> [options]
+export const RUN_HELP = `pyx run --store <dir> --rule <rule-id> [options]
 
 Reads the ACTIVE approved revision (read-only), verifies target, keys, fixtures and
 identities, then executes the approved read matrix against the Supabase Data API.
 
 Options:
-  --store <dir>              approval store to read (or ROWPROOF_APPROVAL_STORE)
+  --store <dir>              approval store to read (or PYX_APPROVAL_STORE)
   --rule <id>                rule id
   --revision <n>             require that the active revision is n
   --expect-hash <sha256:..>  require that the active content hash is exactly this
   --credentials <path>       read credentials from a dotenv file (kept out of process.env;
                              named so Node does not intercept it like --env-file)
-  --target-url <origin>      target origin (or ROWPROOF_SUPABASE_URL); must equal the approved origin
-  --out <path>               result JSON path (default artifacts/rowproof/<run-id>.json)
+  --target-url <origin>      target origin (or PYX_SUPABASE_URL); must equal the approved origin
+  --out <path>               result JSON path (default artifacts/pyx/<run-id>.json)
   --html <path>              also write a self-contained HTML evidence report
   --junit <path>             also write JUnit XML (one test case per assertion) for CI test reporters
   --summary-md <path>        append a Markdown summary (use "$GITHUB_STEP_SUMMARY" in GitHub Actions)
@@ -113,8 +113,8 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
     io.stdout(RUN_HELP);
     return 0;
   }
-  const store = values.store ?? io.env.ROWPROOF_APPROVAL_STORE;
-  if (!store) throw new UsageError('missing --store (or ROWPROOF_APPROVAL_STORE)');
+  const store = values.store ?? io.env.PYX_APPROVAL_STORE;
+  if (!store) throw new UsageError('missing --store (or PYX_APPROVAL_STORE)');
   const ruleId = requireString(values.rule, 'rule');
   const pinRevision = optionalInt(values.revision, 'revision', 1, 1_000_000);
   const pinHash = values['expect-hash'];
@@ -136,12 +136,12 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
 
   const fileEnv = values['credentials'] ? await loadEnvFile(resolve(io.cwd, values['credentials'])) : {};
   const env: Record<string, string | undefined> = { ...io.env, ...fileEnv };
-  const targetUrl = values['target-url'] ?? env.ROWPROOF_SUPABASE_URL;
+  const targetUrl = values['target-url'] ?? env.PYX_SUPABASE_URL;
   const source = detectSource(values['source-commit'], io.env, io.cwd);
 
   // Fail before assessing if an output path is unusable, so a finding is never lost to a write error.
   const runId = randomUUID();
-  const outPath = resolve(io.cwd, values.out ?? `artifacts/rowproof/${runId}.json`);
+  const outPath = resolve(io.cwd, values.out ?? `artifacts/pyx/${runId}.json`);
   const extraOutputs = [values.html, values.junit].filter((p): p is string => typeof p === 'string').map((p) => resolve(io.cwd, p));
   if (!values.force) {
     for (const p of [outPath, ...extraOutputs]) {
@@ -184,7 +184,7 @@ export async function runCommand(argv: string[], io: CliIO, deps: RunCommandDeps
         allowedOrigin,
         limits,
         runSignal: controller.signal,
-        userAgent: `rowproof-runner/${RUNNER_VERSION}`,
+        userAgent: `pyx-runner/${RUNNER_VERSION}`,
         ...(deps.fetchImpl && { fetchImpl: deps.fetchImpl }),
       }),
       limits,

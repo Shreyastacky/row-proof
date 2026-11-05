@@ -3,7 +3,7 @@
  * reporters) and a Markdown summary (for $GITHUB_STEP_SUMMARY or PR comments).
  * Built only from validated, enum-valued fields.
  */
-import type { AssertionResult, RunResult } from '@rowproof/contracts';
+import type { AssertionResult, RunResult } from '@pyx/contracts';
 import { explain } from './explain.js';
 
 function xml(value: unknown): string {
@@ -16,7 +16,7 @@ const EXPECTED: Record<AssertionResult['expected'], string> = {
 };
 
 export function renderJunit(r: RunResult): string {
-  const cls = `rowproof.${r.rule.ruleId}`;
+  const cls = `pyx.${r.rule.ruleId}`;
   const failedControls = r.controls.filter((c) => c.status !== 'ok');
   const cases: string[] = [];
   for (const c of failedControls) {
@@ -38,7 +38,7 @@ export function renderJunit(r: RunResult): string {
   const errors = r.summary.counts.blocked + failedControls.length;
   const skipped = r.summary.counts.not_assessed;
   return `<?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="rowproof" tests="${cases.length}" failures="${failures}" errors="${errors}" skipped="${skipped}">
+<testsuites name="pyx" tests="${cases.length}" failures="${failures}" errors="${errors}" skipped="${skipped}">
   <testsuite name="${xml(cls)}" tests="${cases.length}" failures="${failures}" errors="${errors}" skipped="${skipped}" timestamp="${xml(r.observedAt.startedAt.replace(/\.\d+Z$/, ''))}">
     <properties>
       <property name="rule.revision" value="${xml(r.rule.revision ?? '')}"/>
@@ -60,7 +60,7 @@ function md(value: unknown): string {
 }
 
 export function renderMarkdownSummary(r: RunResult): string {
-  const head = { pass: '✅ RowProof: PASS', fail: '❌ RowProof: FAIL (demonstrated violation)', blocked: '⚠️ RowProof: BLOCKED (no trustworthy assessment)' }[
+  const head = { pass: '✅ Pyx: PASS', fail: '❌ Pyx: FAIL (demonstrated violation)', blocked: '⚠️ Pyx: BLOCKED (no trustworthy assessment)' }[
     r.summary.outcome
   ];
   const lines = [

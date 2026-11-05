@@ -18,7 +18,7 @@ import {
   type AuthenticatedActor,
   type RuleContent,
   type RunResult,
-} from '@rowproof/contracts';
+} from '@pyx/contracts';
 import { classifyApiKey, decodeJwtUnverified, isElevated, precheckUserToken } from '../credentials.js';
 import { DEFAULT_LIMITS } from '../engine.js';
 import { renderHtmlReport } from '../html-report.js';
@@ -56,8 +56,8 @@ export function scaffoldRule(o: {
       adapter: 'supabase',
       environmentClass: 'local-disposable',
       allowedOrigin: o.origin,
-      apiKey: { kind: 'publishable', credential: { source: 'env', name: 'ROWPROOF_PUBLISHABLE_KEY' } },
-      fixtureVerification: { channel: 'supabase-secret-key', credential: { source: 'env', name: 'ROWPROOF_SETUP_SECRET_KEY' } },
+      apiKey: { kind: 'publishable', credential: { source: 'env', name: 'PYX_PUBLISHABLE_KEY' } },
+      fixtureVerification: { channel: 'supabase-secret-key', credential: { source: 'env', name: 'PYX_SETUP_SECRET_KEY' } },
     },
     resource: {
       schema: o.schema,
@@ -70,8 +70,8 @@ export function scaffoldRule(o: {
       markerColumn: o.markerColumn,
     },
     actors: [
-      { ref: 'user-a', kind: 'authenticated', expectedUserId: ua, credential: { source: 'env', name: 'ROWPROOF_USER_A_TOKEN' } },
-      { ref: 'user-b', kind: 'authenticated', expectedUserId: ub, credential: { source: 'env', name: 'ROWPROOF_USER_B_TOKEN' } },
+      { ref: 'user-a', kind: 'authenticated', expectedUserId: ua, credential: { source: 'env', name: 'PYX_USER_A_TOKEN' } },
+      { ref: 'user-b', kind: 'authenticated', expectedUserId: ub, credential: { source: 'env', name: 'PYX_USER_B_TOKEN' } },
       { ref: 'anonymous', kind: 'anonymous' },
     ],
     fixtures: [
@@ -149,11 +149,11 @@ export async function initCommand(argv: string[], io: CliIO): Promise<number> {
       '',
       'Next:',
       '  1. Review the file. The marker column must be a text column the fixtures can set (it holds synthetic-* values).',
-      `  2. Provision fixtures on your LOCAL stack:  rowproof fixture provision --rule ${values.out ?? `${ruleId}.rule.json`}`,
+      `  2. Provision fixtures on your LOCAL stack:  pyx fixture provision --rule ${values.out ?? `${ruleId}.rule.json`}`,
       '     (add --fixture-defaults defaults.json if your table has other required columns)',
-      `  3. rowproof propose --rule ${values.out ?? `${ruleId}.rule.json`} --store .rowproof/approvals --proposed-by <you> --out proposal.json`,
-      '  4. The owner reviews `rowproof diff` and runs `rowproof approve ... --acknowledge <hash> --promote`',
-      `  5. rowproof run --store .rowproof/approvals --rule ${ruleId} --credentials .rowproof/local.env --html report.html`,
+      `  3. pyx propose --rule ${values.out ?? `${ruleId}.rule.json`} --store .pyx/approvals --proposed-by <you> --out proposal.json`,
+      '  4. The owner reviews `pyx diff` and runs `pyx approve ... --acknowledge <hash> --promote`',
+      `  5. pyx run --store .pyx/approvals --rule ${ruleId} --credentials .pyx/local.env --html report.html`,
       '',
     ].join('\n'),
   );
@@ -168,7 +168,7 @@ export async function reportCommand(argv: string[], io: CliIO): Promise<number> 
     allowPositionals: true,
     options: { out: { type: 'string' }, client: { type: 'string' }, 'prepared-by': { type: 'string' }, title: { type: 'string' }, force: { type: 'boolean' } },
   });
-  if (positionals.length === 0) throw new UsageError('usage: rowproof report <result.json> [more results...] --out report.html');
+  if (positionals.length === 0) throw new UsageError('usage: pyx report <result.json> [more results...] --out report.html');
   if (positionals.length > 200) throw new UsageError('at most 200 results per report');
   const results: RunResult[] = [];
   for (const p of positionals) {
@@ -180,7 +180,7 @@ export async function reportCommand(argv: string[], io: CliIO): Promise<number> 
       throw e;
     }
     const v = validateSchema('RunResult', raw);
-    if (!v.ok) throw new UsageError(`${p} is not a valid RowProof result`);
+    if (!v.ok) throw new UsageError(`${p} is not a valid Pyx result`);
     results.push(v.value);
   }
   for (const [flag, val] of [['client', values.client], ['prepared-by', values['prepared-by']], ['title', values.title]] as const) {
@@ -192,7 +192,7 @@ export async function reportCommand(argv: string[], io: CliIO): Promise<number> 
     ...(values.title !== undefined && { title: values.title }),
   });
   assertOutputSafe(html, []);
-  const out = resolve(io.cwd, values.out ?? 'rowproof-report.html');
+  const out = resolve(io.cwd, values.out ?? 'pyx-report.html');
   if (existsSync(out) && !values.force) throw new UsageError(`output file already exists: ${out} (use --force to replace it)`);
   await writeFile(out, html, { mode: 0o644 });
   io.stdout(`wrote ${out} (${results.length} run${results.length === 1 ? '' : 's'})\n`);
@@ -216,13 +216,13 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
   const add = (ok: boolean | null, label: string, hint?: string) => checks.push({ ok, label, ...(hint !== undefined && { hint }) });
 
   const [major, minor] = process.versions.node.split('.').map(Number) as [number, number];
-  add(major > 22 || (major === 22 && minor >= 12), `Node.js ${process.versions.node}`, 'RowProof needs Node 22.12 or newer.');
+  add(major > 22 || (major === 22 && minor >= 12), `Node.js ${process.versions.node}`, 'Pyx needs Node 22.12 or newer.');
 
   // Rule: from a file, or the active approved revision in a store.
   let rule: RuleContent | null = null;
   if (values.rule) {
     const v = validateRuleContent(parseStrictJson(await readTextFile(resolve(io.cwd, values.rule))));
-    if (!v.ok) add(false, `rule file ${values.rule} is invalid`, `Run: rowproof validate ${values.rule}`);
+    if (!v.ok) add(false, `rule file ${values.rule} is invalid`, `Run: pyx validate ${values.rule}`);
     else if (v.issues.length > 0) add(false, `rule ${v.value.ruleId} is outside supported scope (${v.issues.map((i) => i.code).join(', ')})`);
     else {
       rule = v.value;
@@ -239,7 +239,7 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
         rule ??= b.revision.content;
       } catch (e) {
         if (!(e instanceof BaselineError)) throw e;
-        add(false, `approved baseline for ${ruleId}: ${e.code}`, e.code === 'not_found' ? 'Propose and approve the rule first (rowproof propose / approve --promote).' : 'Inspect with rowproof history.');
+        add(false, `approved baseline for ${ruleId}: ${e.code}`, e.code === 'not_found' ? 'Propose and approve the rule first (pyx propose / approve --promote).' : 'Inspect with pyx history.');
       }
     }
   }
@@ -250,13 +250,13 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
 
   const env: Record<string, string | undefined> = { ...io.env, ...(values['credentials'] ? await loadEnvFile(resolve(io.cwd, values['credentials'])) : {}) };
   const origin = rule.target.allowedOrigin;
-  const target = values['target-url'] ?? env.ROWPROOF_SUPABASE_URL;
+  const target = values['target-url'] ?? env.PYX_SUPABASE_URL;
   const parsedTarget = target === undefined ? null : parseExactOrigin(target.replace(/\/+$/, ''));
   const parsedOrigin = parseExactOrigin(origin);
   add(
     !!parsedTarget && parsedTarget.ok && parsedOrigin.ok && parsedTarget.value.origin === parsedOrigin.value.origin,
     `target ${target ?? '(unset)'} matches approved origin ${origin}`,
-    'Set ROWPROOF_SUPABASE_URL to the approved origin exactly (127.0.0.1 and localhost differ).',
+    'Set PYX_SUPABASE_URL to the approved origin exactly (127.0.0.1 and localhost differ).',
   );
 
   const apiKey = env[rule.target.apiKey.credential.name];
@@ -264,7 +264,7 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
   add(
     apiCls === rule.target.apiKey.kind,
     `${rule.target.apiKey.credential.name}: ${apiKey ? `present (${apiCls})` : 'missing'}; rule expects ${rule.target.apiKey.kind}`,
-    apiCls && isElevated(apiCls) ? 'That is a secret key. Use the publishable key.' : 'Run `rowproof fixture provision` or copy the publishable key from `supabase status`.',
+    apiCls && isElevated(apiCls) ? 'That is a secret key. Use the publishable key.' : 'Run `pyx fixture provision` or copy the publishable key from `supabase status`.',
   );
   const setupKey = env[rule.target.fixtureVerification.credential.name];
   const setupCls = setupKey ? classifyApiKey(setupKey) : null;
@@ -276,9 +276,9 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
 
   const reachable = parsedOrigin.ok && apiKey && apiCls === rule.target.apiKey.kind;
   if (reachable) {
-    const t = new BoundedFetchTransport({ allowedOrigin: origin, limits: { ...DEFAULT_LIMITS, maxRequests: 16 }, runSignal: new AbortController().signal, userAgent: `rowproof-doctor/${RUNNER_VERSION}` });
+    const t = new BoundedFetchTransport({ allowedOrigin: origin, limits: { ...DEFAULT_LIMITS, maxRequests: 16 }, runSignal: new AbortController().signal, userAgent: `pyx-doctor/${RUNNER_VERSION}` });
     const health = await t.send({ url: new URL('/auth/v1/health', origin), headers: { apikey: apiKey!, Accept: 'application/json' } });
-    add(health.kind === 'response' && health.status === 200, `Auth service at ${origin}: ${health.kind === 'response' ? `HTTP ${health.status}` : health.code}`, 'Start the stack: `supabase start` (or `pnpm stack:up` in the RowProof repo).');
+    add(health.kind === 'response' && health.status === 200, `Auth service at ${origin}: ${health.kind === 'response' ? `HTTP ${health.status}` : health.code}`, 'Start the stack: `supabase start` (or `pnpm stack:up` in the Pyx repo).');
     const r = rule.resource;
     const probe = new URL(`/rest/v1/${r.table}`, origin);
     probe.searchParams.set('select', r.idColumn);
@@ -295,7 +295,7 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
     for (const a of rule.actors.filter((x): x is AuthenticatedActor => x.kind === 'authenticated')) {
       const token = env[a.credential.name];
       if (!token) {
-        add(false, `${a.credential.name} (${a.ref}): missing`, 'Run `rowproof fixture provision`.');
+        add(false, `${a.credential.name} (${a.ref}): missing`, 'Run `pyx fixture provision`.');
         continue;
       }
       const pre = precheckUserToken(token);
@@ -317,7 +317,7 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
       add(
         id === a.expectedUserId,
         `${a.credential.name} (${a.ref}): ${id === a.expectedUserId ? `verified by Auth${mins !== null ? `, expires in ${mins} min` : ''}` : u.kind === 'response' ? `rejected or wrong user (HTTP ${u.status})` : u.code}`,
-        'Tokens expire (default 1 hour). Re-run `rowproof fixture provision`.',
+        'Tokens expire (default 1 hour). Re-run `pyx fixture provision`.',
       );
     }
   } else {
@@ -327,14 +327,14 @@ export async function doctorCommand(argv: string[], io: CliIO): Promise<number> 
 }
 
 function report(checks: Check[], io: CliIO): number {
-  const lines = ['RowProof doctor', ''];
+  const lines = ['Pyx doctor', ''];
   for (const c of checks) {
     const mark = c.ok === true ? '  ok  ' : c.ok === false ? '  FIX ' : '  --  ';
     lines.push(`${mark} ${c.label}`);
     if (c.ok === false && c.hint) lines.push(`        -> ${c.hint}`);
   }
   const bad = checks.filter((c) => c.ok === false).length;
-  lines.push('', bad === 0 ? 'Everything RowProof needs is in place.' : `${bad} item${bad === 1 ? '' : 's'} to fix before a run can be trusted.`, '');
+  lines.push('', bad === 0 ? 'Everything Pyx needs is in place.' : `${bad} item${bad === 1 ? '' : 's'} to fix before a run can be trusted.`, '');
   io.stdout(lines.join('\n'));
   return bad === 0 ? 0 : 2;
 }

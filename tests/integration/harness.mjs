@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// RowProof real-HTTP integration harness (Phases 2-5 gate).
+// Pyx real-HTTP integration harness (Phases 2-5 gate).
 //
 // Stage A  healthy disposable stack (repo ./supabase): real authorization behaviour
 //          for the six assertions plus identity, credential, target and baseline controls.
@@ -9,7 +9,7 @@
 // Stage C  no stack running: confirm a real connection failure is blocked, never a pass.
 //
 // Always tears down. Writes only redacted artifacts to artifacts/integration/.
-// WARNING: stops the local `rowproof-demo` stack and deletes its local data (--no-backup).
+// WARNING: stops the local `pyx-demo` stack and deletes its local data (--no-backup).
 //
 // Usage: pnpm integration      (requires Docker and `pnpm install`)
 import { randomUUID } from 'node:crypto';
@@ -41,7 +41,7 @@ const USER_B = RULE.actors[1].expectedUserId;
 const INVOICE_B = RULE.fixtures[1].id;
 const ORIGIN = RULE.target.allowedOrigin;
 
-const work = mkdtempSync(join(tmpdir(), 'rowproof-it-'));
+const work = mkdtempSync(join(tmpdir(), 'pyx-it-'));
 const runStamp = new Date().toISOString().replace(/[:.]/g, '-');
 const artifactDir = join(repo, 'artifacts', 'integration', runStamp);
 mkdirSync(join(artifactDir, 'results'), { recursive: true });
@@ -79,7 +79,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 
 // ---------------------------------------------------------------- helpers
 // Non-secret values that legitimately appear in output (the target origin) are never registered.
-const NOT_SECRET = new Set(['ROWPROOF_SUPABASE_URL']);
+const NOT_SECRET = new Set(['PYX_SUPABASE_URL']);
 function remember(label, value) {
   if (typeof value === 'string' && value.length >= 16) sensitive.set(value, label);
 }
@@ -117,9 +117,9 @@ function writeEnv(base, changes, name) {
   return p;
 }
 
-function rowproofCli(args) {
-  // Strip inherited ROWPROOF_* so only the env file supplies credentials.
-  const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('ROWPROOF_')));
+function pyxCli(args) {
+  // Strip inherited PYX_* so only the env file supplies credentials.
+  const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('PYX_')));
   const r = sh('node', [runnerCli, ...args], { env: clean, timeout: 120_000 });
   captured.push(r.stdout, r.stderr);
   return r;
@@ -128,7 +128,7 @@ function rowproofCli(args) {
 let runCounter = 0;
 function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
   const out = join(work, `${String(++runCounter).padStart(2, '0')}-${label}.json`);
-  const r = rowproofCli(['run', '--store', store, '--rule', rule, '--credentials', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
+  const r = pyxCli(['run', '--store', store, '--rule', rule, '--credentials', envFile, '--out', out, '--execution-context', 'ci-development', ...extra]);
   const result = exists(out) ? JSON.parse(readFileSync(out, 'utf8')) : null;
   if (result) resultFiles.push(out);
   return { code: r.code, result, stdout: r.stdout, stderr: r.stderr };
@@ -136,10 +136,10 @@ function run(label, { store, envFile, rule = RULE_ID, extra = [] }) {
 
 function approve(store, ruleFile, by = 'client-owner') {
   const p = join(work, `proposal-${Math.random().toString(36).slice(2, 8)}.json`);
-  const pr = rowproofCli(['propose', '--rule', ruleFile, '--store', store, '--proposed-by', 'integration', '--out', p]);
+  const pr = pyxCli(['propose', '--rule', ruleFile, '--store', store, '--proposed-by', 'integration', '--out', p]);
   if (pr.code !== 0) throw new Error(`propose failed: ${pr.stderr}`);
   const hash = JSON.parse(readFileSync(p, 'utf8')).contentHash;
-  const ap = rowproofCli(['approve', '--proposal', p, '--store', store, '--approver', by, '--acknowledge', hash, '--promote']);
+  const ap = pyxCli(['approve', '--proposal', p, '--store', store, '--approver', by, '--acknowledge', hash, '--promote']);
   return { code: ap.code, stderr: ap.stderr, proposal: p, hash };
 }
 
@@ -198,7 +198,7 @@ async function main() {
   }
   const cliVersion = sh(join(repo, 'node_modules', '.bin', 'supabase'), ['--version']).stdout.trim();
   const env0 = { node: process.version, docker: docker.stdout.trim(), supabaseCli: cliVersion, platform: process.platform };
-  log(`RowProof integration harness  node ${env0.node}  docker ${env0.docker}  supabase CLI ${env0.supabaseCli}`);
+  log(`Pyx integration harness  node ${env0.node}  docker ${env0.docker}  supabase CLI ${env0.supabaseCli}`);
 
   // ============================================================ Stage A
   log('\nStage A: healthy disposable stack');
@@ -213,7 +213,7 @@ async function main() {
 
   const legacyRule = structuredClone(RULE);
   legacyRule.ruleId = `${RULE_ID}-legacy-anon`;
-  legacyRule.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'ROWPROOF_LEGACY_ANON_KEY' } };
+  legacyRule.target.apiKey = { kind: 'legacy-anon', credential: { source: 'env', name: 'PYX_LEGACY_ANON_KEY' } };
   const legacyRuleFile = join(work, 'legacy.rule.json');
   writeFileSync(legacyRuleFile, JSON.stringify(legacyRule, null, 2));
   check(approve(store, legacyRuleFile).code === 0, 'legacy rule approval failed');
@@ -226,26 +226,26 @@ async function main() {
     check(r.result.freshness.state === 'unknown', 'freshness unknown without observer');
   });
 
-  await scenario('A', 'rowproof init on a customer-shaped table: provision, re-provision, approve, run with HTML/JUnit/Markdown', () => {
+  await scenario('A', 'pyx init on a customer-shaped table: provision, re-provision, approve, run with HTML/JUnit/Markdown', () => {
     // project_notes has an extra NOT NULL column and a foreign key WITHOUT cascade.
     const dir = join(work, 'onboarding');
     mkdirSync(dir);
     const ruleFile = join(dir, 'notes.rule.json');
-    const init = rowproofCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', ruleFile]);
+    const init = pyxCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', ruleFile]);
     check(init.code === 0, `init failed: ${init.stderr}`);
     const envOut = join(dir, 'local.env');
     const fixtureArgs = ['fixture', 'provision', '--rule', ruleFile, '--workdir', repo, '--out', envOut, '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')];
-    const noDefaults = rowproofCli(fixtureArgs);
+    const noDefaults = pyxCli(fixtureArgs);
     check(noDefaults.code === 2 && noDefaults.stderr.includes('--fixture-defaults'), 'missing NOT NULL value is explained with a --fixture-defaults hint');
     const defaults = join(dir, 'defaults.json');
     writeFileSync(defaults, JSON.stringify({ body: 'synthetic note body' }));
     for (let i = 0; i < 2; i++) {
-      const p = rowproofCli([...fixtureArgs, '--fixture-defaults', defaults]);
+      const p = pyxCli([...fixtureArgs, '--fixture-defaults', defaults]);
       check(p.code === 0, `provision ${i + 1} failed (no-cascade FK must not break re-provisioning): ${p.stderr}`);
     }
     rememberEnv(readEnvFile(envOut), 'onboarding');
-    const doctor = rowproofCli(['doctor', '--rule', ruleFile, '--credentials', envOut]);
-    check(doctor.code === 0 && doctor.stdout.includes('Everything RowProof needs is in place.'), `doctor not green: ${doctor.stdout}`);
+    const doctor = pyxCli(['doctor', '--rule', ruleFile, '--credentials', envOut]);
+    check(doctor.code === 0 && doctor.stdout.includes('Everything Pyx needs is in place.'), `doctor not green: ${doctor.stdout}`);
     const notesStore = join(dir, 'store');
     check(approve(notesStore, ruleFile).code === 0, 'approval of the generated rule failed');
     const ruleId = JSON.parse(readFileSync(ruleFile, 'utf8')).ruleId;
@@ -263,9 +263,9 @@ async function main() {
   });
 
   await scenario('A', 'doctor pinpoints a missing token and a wrong target without printing secrets', () => {
-    const r = rowproofCli(['doctor', '--rule', RULE_FILE, '--credentials', writeEnv(henv, { ROWPROOF_USER_B_TOKEN: undefined, ROWPROOF_SUPABASE_URL: 'http://localhost:54321' }, 'doctor-bad')]);
+    const r = pyxCli(['doctor', '--rule', RULE_FILE, '--credentials', writeEnv(henv, { PYX_USER_B_TOKEN: undefined, PYX_SUPABASE_URL: 'http://localhost:54321' }, 'doctor-bad')]);
     check(r.code === 2, `doctor exit ${r.code}`);
-    check(r.stdout.includes('ROWPROOF_USER_B_TOKEN (user-b): missing') && r.stdout.includes('FIX  target http://localhost:54321'), `doctor output: ${r.stdout}`);
+    check(r.stdout.includes('PYX_USER_B_TOKEN (user-b): missing') && r.stdout.includes('FIX  target http://localhost:54321'), `doctor output: ${r.stdout}`);
   });
 
   await scenario('A', 'fixture provisioning refuses to replace a non-synthetic user or row', () => {
@@ -276,7 +276,7 @@ async function main() {
     danger.actors[0].expectedUserId = realUser;
     const dangerFile = join(work, 'danger.rule.json');
     writeFileSync(dangerFile, JSON.stringify(danger));
-    const p = rowproofCli(['fixture', 'provision', '--rule', dangerFile, '--workdir', repo, '--out', join(work, 'danger.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
+    const p = pyxCli(['fixture', 'provision', '--rule', dangerFile, '--workdir', repo, '--out', join(work, 'danger.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
     check(p.code === 2 && p.stderr.includes('non-synthetic account'), `refused user: ${p.stderr}`);
     const still = sh('curl', ['-sS', '-o', '/dev/null', '-w', '%{http_code}', `${ORIGIN}/auth/v1/admin/users/${realUser}`, '-H', `apikey: ${status.SECRET_KEY}`, '-H', `Authorization: Bearer ${status.SECRET_KEY}`]);
     check(still.stdout === '200', 'the real user still exists');
@@ -286,29 +286,29 @@ async function main() {
     const ins = sh('curl', ['-sS', '-o', '/dev/null', '-w', '%{http_code}', '-X', 'POST', `${ORIGIN}/rest/v1/project_notes`, '-H', `apikey: ${status.SECRET_KEY}`, '-H', 'Content-Type: application/json', '-d', JSON.stringify({ id: realRow, author_id: realUser, title: 'Q3 roadmap (customer data)', body: 'real content' })]);
     check(ins.stdout === '201', `precondition: row inserted (${ins.stdout})`);
     const rowFile = join(work, 'danger-row.rule.json');
-    check(rowproofCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', rowFile]).code === 0, 'init');
+    check(pyxCli(['init', '--table', 'project_notes', '--owner-column', 'author_id', '--marker-column', 'title', '--out', rowFile]).code === 0, 'init');
     const rowRule = JSON.parse(readFileSync(rowFile, 'utf8'));
     rowRule.fixtures[0].id = realRow;
     writeFileSync(rowFile, JSON.stringify(rowRule));
-    const p2 = rowproofCli(['fixture', 'provision', '--rule', rowFile, '--workdir', repo, '--out', join(work, 'danger2.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
+    const p2 = pyxCli(['fixture', 'provision', '--rule', rowFile, '--workdir', repo, '--out', join(work, 'danger2.env'), '--supabase-bin', join(repo, 'node_modules', '.bin', 'supabase')]);
     check(p2.code === 2 && p2.stderr.includes('is not a synthetic fixture'), `refused row: ${p2.stderr}`);
   });
 
   await scenario('A', 'runner identity check agrees with supabase-js getUser(jwt)', async () => {
-    const client = createClient(ORIGIN, henv.ROWPROOF_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-    const a = await client.auth.getUser(henv.ROWPROOF_USER_A_TOKEN);
-    const b = await client.auth.getUser(henv.ROWPROOF_USER_B_TOKEN);
+    const client = createClient(ORIGIN, henv.PYX_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const a = await client.auth.getUser(henv.PYX_USER_A_TOKEN);
+    const b = await client.auth.getUser(henv.PYX_USER_B_TOKEN);
     check(!a.error && a.data.user?.id === USER_A, 'getUser(A) returns user A');
     check(!b.error && b.data.user?.id === USER_B, 'getUser(B) returns user B');
     const forged = forgedToken(USER_B, `${ORIGIN}/auth/v1`);
     const f = await client.auth.getUser(forged);
     check(f.error !== null, 'getUser rejects a forged token');
-    const r = run('forged-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_B_TOKEN: forged }, 'forged') });
+    const r = run('forged-token', { store, envFile: writeEnv(henv, { PYX_USER_B_TOKEN: forged }, 'forged') });
     expectRun(r, { exit: 2, controls: { 'identity:user-b': 'failed:token_rejected_by_auth' }, noPass: true });
   });
 
   await scenario('A', 'same-user sessions (B token is A) cannot produce an isolation pass', () => {
-    const r = run('same-user', { store, envFile: writeEnv(henv, { ROWPROOF_USER_B_TOKEN: henv.ROWPROOF_USER_A_TOKEN }, 'same-user') });
+    const r = run('same-user', { store, envFile: writeEnv(henv, { PYX_USER_B_TOKEN: henv.PYX_USER_A_TOKEN }, 'same-user') });
     expectRun(r, {
       exit: 2,
       controls: { 'identity:user-b': 'failed:user_id_mismatch' },
@@ -318,28 +318,28 @@ async function main() {
   });
 
   await scenario('A', 'expired token is rejected by the real Auth service and blocked', () => {
-    const expired = mintFromRealToken(henv.ROWPROOF_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) - 120);
+    const expired = mintFromRealToken(henv.PYX_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) - 120);
     remember('minted:expired', expired);
-    const r = run('expired-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_A_TOKEN: expired }, 'expired') });
+    const r = run('expired-token', { store, envFile: writeEnv(henv, { PYX_USER_A_TOKEN: expired }, 'expired') });
     expectRun(r, { exit: 2, controls: { 'identity:user-a': 'failed:token_rejected_by_auth' }, noPass: true });
   });
 
   await scenario('A', 'token accepted by Auth but about to expire is blocked by the runner', async () => {
-    const soon = mintFromRealToken(henv.ROWPROOF_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) + 30);
+    const soon = mintFromRealToken(henv.PYX_USER_A_TOKEN, status.JWT_SECRET, Math.floor(Date.now() / 1000) + 30);
     remember('minted:expiring', soon);
-    const client = createClient(ORIGIN, henv.ROWPROOF_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const client = createClient(ORIGIN, henv.PYX_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
     const g = await client.auth.getUser(soon);
     check(!g.error && g.data.user?.id === USER_A, 'precondition: Auth accepts the near-expiry token');
-    const r = run('expiring-token', { store, envFile: writeEnv(henv, { ROWPROOF_USER_A_TOKEN: soon }, 'expiring') });
+    const r = run('expiring-token', { store, envFile: writeEnv(henv, { PYX_USER_A_TOKEN: soon }, 'expiring') });
     expectRun(r, { exit: 2, controls: { 'identity:user-a': 'failed:token_expired_or_expiring' }, noPass: true });
   });
 
   await scenario('A', 'elevated credentials are refused in user and application-key contexts', () => {
     const cases = [
-      ['secret-as-user', { ROWPROOF_USER_A_TOKEN: status.SECRET_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
-      ['service-role-as-user', { ROWPROOF_USER_A_TOKEN: status.SERVICE_ROLE_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
-      ['secret-as-app-key', { ROWPROOF_PUBLISHABLE_KEY: status.SECRET_KEY }, 'api-key', 'failed:api_key_elevated'],
-      ['service-role-as-app-key', { ROWPROOF_PUBLISHABLE_KEY: status.SERVICE_ROLE_KEY }, 'api-key', 'failed:api_key_elevated'],
+      ['secret-as-user', { PYX_USER_A_TOKEN: status.SECRET_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
+      ['service-role-as-user', { PYX_USER_A_TOKEN: status.SERVICE_ROLE_KEY }, 'identity:user-a', 'failed:token_elevated_role'],
+      ['secret-as-app-key', { PYX_PUBLISHABLE_KEY: status.SECRET_KEY }, 'api-key', 'failed:api_key_elevated'],
+      ['service-role-as-app-key', { PYX_PUBLISHABLE_KEY: status.SERVICE_ROLE_KEY }, 'api-key', 'failed:api_key_elevated'],
     ];
     for (const [label, change, controlId, want] of cases) {
       const r = run(label, { store, envFile: writeEnv(henv, change, label) });
@@ -351,20 +351,20 @@ async function main() {
   await scenario('A', 'legacy anon key works only when the rule declares it', () => {
     const ok = run('legacy-anon-declared', { store, envFile: healthyEnvFile, rule: legacyRule.ruleId });
     expectRun(ok, { exit: 0, assertions: ALL_PASSED });
-    const bad = run('legacy-anon-undeclared', { store, envFile: writeEnv(henv, { ROWPROOF_PUBLISHABLE_KEY: henv.ROWPROOF_LEGACY_ANON_KEY }, 'legacy-undeclared') });
+    const bad = run('legacy-anon-undeclared', { store, envFile: writeEnv(henv, { PYX_PUBLISHABLE_KEY: henv.PYX_LEGACY_ANON_KEY }, 'legacy-undeclared') });
     expectRun(bad, { exit: 2, controls: { 'api-key': 'failed:api_key_wrong_class' } });
   });
 
   await scenario('A', 'a target URL other than the approved origin is refused before any request', () => {
     for (const [label, url] of [['localhost-alias', 'http://localhost:54321'], ['other-port', 'http://127.0.0.1:54322'], ['remote', 'https://example.com']]) {
-      const r = run(`target-${label}`, { store, envFile: writeEnv(henv, { ROWPROOF_SUPABASE_URL: url }, `target-${label}`) });
+      const r = run(`target-${label}`, { store, envFile: writeEnv(henv, { PYX_SUPABASE_URL: url }, `target-${label}`) });
       expectRun(r, { exit: 2, controls: { target: 'failed:origin_mismatch' } });
       check(r.result.assertions.every((a) => a.diagnostic === 'target_unverified'), 'all assertions blocked as target_unverified');
     }
   });
 
   await scenario('A', 'missing setup channel blocks fixture verification and every pass', () => {
-    const r = run('no-setup-key', { store, envFile: writeEnv(henv, { ROWPROOF_SETUP_SECRET_KEY: undefined }, 'no-setup') });
+    const r = run('no-setup-key', { store, envFile: writeEnv(henv, { PYX_SETUP_SECRET_KEY: undefined }, 'no-setup') });
     expectRun(r, { exit: 2, controls: { 'setup-key': 'failed:setup_key_missing' }, noPass: true });
     check(r.result.summary.counts.passed === 0, 'no assertion passes without fixture verification');
   });
@@ -394,7 +394,7 @@ async function main() {
 
   // ============================================================ Stage B
   log('\nStage B: separate throwaway lab instance');
-  labProjectId = `rowproof-lab-${Math.random().toString(36).slice(2, 10)}`;
+  labProjectId = `pyx-lab-${Math.random().toString(36).slice(2, 10)}`;
   labDir = join(work, 'lab');
   mkdirSync(labDir, { recursive: true });
   cpSync(join(repo, 'supabase'), join(labDir, 'supabase'), {
@@ -453,7 +453,7 @@ async function main() {
     const gitRepo = join(work, 'trusted-repo');
     mkdirSync(gitRepo);
     const git = (...args) => {
-      const r = sh('git', ['-C', gitRepo, '-c', 'user.name=rowproof-it', '-c', 'user.email=it@synthetic.rowproof.test', '-c', 'commit.gpgsign=false', ...args]);
+      const r = sh('git', ['-C', gitRepo, '-c', 'user.name=pyx-it', '-c', 'user.email=it@synthetic.pyx.test', '-c', 'commit.gpgsign=false', ...args]);
       if (r.code !== 0) throw new Error(`git ${args[0]} failed: ${r.stderr}`);
       return r.stdout;
     };
@@ -492,7 +492,7 @@ async function main() {
 
   await scenario('B', 'policy open to anonymous: anonymous disclosures fail', () => {
     resetLab();
-    labSql(labProjectId, 'create policy rowproof_lab_anon_open on public.invoices for select to anon using (true);');
+    labSql(labProjectId, 'create policy pyx_lab_anon_open on public.invoices for select to anon using (true);');
     const r = run('lab-anon-open', { store, envFile: labEnvFile });
     expectRun(r, { exit: 1, assertions: { 'anon-reads-a': 'failed:fixture_disclosed', 'anon-reads-b': 'failed:fixture_disclosed', 'a-reads-b': 'passed:ok' } });
   });
@@ -582,7 +582,7 @@ async function main() {
   for (const f of resultFiles) cpSync(f, join(artifactDir, 'results', f.split(/[\\/]/).pop()));
   const failed = scenarios.filter((s) => s.outcome !== 'as-expected');
   const summary = {
-    kind: 'RowProofIntegrationSummary',
+    kind: 'PyxIntegrationSummary',
     ranAt: new Date().toISOString(),
     environment: env0,
     scenarios,

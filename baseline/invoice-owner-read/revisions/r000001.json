@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "ruleId": "invoice-owner-read",
   "revision": 1,
-  "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
+  "contentHash": "sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b",
   "content": {
     "kind": "RuleContent",
     "schemaVersion": 1,
@@ -22,14 +22,14 @@
         "kind": "publishable",
         "credential": {
           "source": "env",
-          "name": "ROWPROOF_PUBLISHABLE_KEY"
+          "name": "PYX_PUBLISHABLE_KEY"
         }
       },
       "fixtureVerification": {
         "channel": "supabase-secret-key",
         "credential": {
           "source": "env",
-          "name": "ROWPROOF_SETUP_SECRET_KEY"
+          "name": "PYX_SETUP_SECRET_KEY"
         }
       }
     },
@@ -50,7 +50,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
         "credential": {
           "source": "env",
-          "name": "ROWPROOF_USER_A_TOKEN"
+          "name": "PYX_USER_A_TOKEN"
         }
       },
       {
@@ -59,7 +59,7 @@
         "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
         "credential": {
           "source": "env",
-          "name": "ROWPROOF_USER_B_TOKEN"
+          "name": "PYX_USER_B_TOKEN"
         }
       },
       {
@@ -134,18 +134,18 @@
   "approval": {
     "kind": "Approval",
     "schemaVersion": 1,
-    "approvalId": "79c95566-3c11-41eb-882a-93593cc4586f",
+    "approvalId": "45243a07-114c-477c-a851-16f5c0eaa431",
     "ruleId": "invoice-owner-read",
     "revision": 1,
-    "contentHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
-    "acknowledgedHash": "sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3",
-    "proposalId": "933ddc3a-511b-443b-a470-94dcb70cfd00",
+    "contentHash": "sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b",
+    "acknowledgedHash": "sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b",
+    "proposalId": "3b36c87c-9906-432d-b1d0-c3936b7f9686",
     "decision": "approved",
     "approvedBy": {
       "id": "demo-placeholder-not-owner",
       "kind": "local-user"
     },
-    "approvedAt": "2026-11-05T04:55:21.018Z",
+    "approvedAt": "2026-11-05T06:12:23.685Z",
     "provenance": {
       "level": "local-self-attested",
       "statement": "Local self-attested acknowledgment. It separates the approval step from routine edits, but anyone who can write the approval store can bypass it. It is not independent approval."

@@ -1,29 +1,29 @@
-# RowProof
+# Pyx
 
 **Owner-approved access rules for Supabase, checked against real requests on every release.**
 
-RowProof turns "Alice reads Alice's invoices, Bob never sees them" into a versioned rule that the data owner approves. It then checks the rule through the real Supabase Data API, with real Auth tokens, on a disposable local stack. If a policy change exposes one user's rows to another, `rowproof run` exits 1 and names the exact record and rule revision.
+Pyx turns "Alice reads Alice's invoices, Bob never sees them" into a versioned rule that the data owner approves. It then checks the rule through the real Supabase Data API, with real Auth tokens, on a disposable local stack. If a policy change exposes one user's rows to another, `pyx run` exits 1 and names the exact record and rule revision.
 
 ```bash
-npm install -g rowproof
+npm install -g pyx-cli
 ```
 
 ```bash
-rowproof init --table invoices --owner-column owner_id --marker-column title
+pyx init --table invoices --owner-column owner_id --marker-column title
 ```
 
 ```bash
-rowproof fixture provision --rule invoices-owner-read.rule.json
+pyx fixture provision --rule invoices-owner-read.rule.json
 ```
 
 ```bash
-rowproof doctor --rule invoices-owner-read.rule.json --credentials .rowproof/local.env
+pyx doctor --rule invoices-owner-read.rule.json --credentials .pyx/local.env
 ```
 
 Then propose, approve (the owner acknowledges an exact content hash) and run:
 
 ```bash
-rowproof run --store .rowproof/approvals --rule invoices-owner-read --credentials .rowproof/local.env --html report.html --junit junit.xml
+pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --html report.html --junit junit.xml
 ```
 
 Exit codes: `0` every approved expectation held with all controls established, `1` a demonstrated violation, `2` blocked or incomplete (never a pass).

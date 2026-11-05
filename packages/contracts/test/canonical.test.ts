@@ -51,7 +51,7 @@ describe('RFC 8785 canonicalization', () => {
   });
 
   it('keeps the example rule hash stable (golden value guards accidental canonicalization changes)', () => {
-    expect(ruleContentHash(exampleRule())).toBe('sha256:3807c4de60fc4a769b8bf051f9ac146da8b9b6adebe2f832c68fd143352f83f3');
+    expect(ruleContentHash(exampleRule())).toBe('sha256:d46d8274abce816acfed7675bd524849aeb487f6409b49ae1574ad8ce8b8d14b');
   });
 
   it('hashes the parsed document, not the file bytes', () => {

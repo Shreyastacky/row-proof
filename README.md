@@ -1,8 +1,8 @@
-# RowProof
+# Pyx
 
 **Owner-approved access rules for Supabase, checked against real requests on every release.**
 
-RowProof turns *"Alice reads Alice's invoices, Bob never sees them"* into a versioned rule that the person responsible for the data approves. It then proves the rule through the real Supabase Data API, with real Auth tokens, on a disposable local stack built from your migrations. If a policy change, including one an AI coding tool made, exposes one user's rows to another, the run exits **1** and names the exact record, rule revision and commit.
+Pyx turns *"Alice reads Alice's invoices, Bob never sees them"* into a versioned rule that the person responsible for the data approves. It then proves the rule through the real Supabase Data API, with real Auth tokens, on a disposable local stack built from your migrations. If a policy change, including one an AI coding tool made, exposes one user's rows to another, the run exits **1** and names the exact record, rule revision and commit.
 
 - **Approved intent, separate from code.** The owner approves an exact content hash. A pull request can't quietly redefine "correct": CI reads the baseline from your protected branch.
 - **Fails closed.** Owner reads are positive controls. Timeouts, 401/403/404/429, redirects and malformed responses are *blocked*, never a pass.
@@ -16,7 +16,7 @@ Website: [`apps/web`](apps/web) (static, deploy anywhere). Sample report: [`apps
 Requires Node 22.12+, Docker and the Supabase CLI, in a Supabase project.
 
 ```bash
-npm install -g rowproof
+npm install -g pyx-cli
 ```
 
 ```bash
@@ -24,36 +24,36 @@ supabase start
 ```
 
 ```bash
-rowproof init --table invoices --owner-column owner_id --marker-column title
+pyx init --table invoices --owner-column owner_id --marker-column title
 ```
 
 ```bash
-rowproof fixture provision --rule invoices-owner-read.rule.json
+pyx fixture provision --rule invoices-owner-read.rule.json
 ```
 
 ```bash
-rowproof doctor --rule invoices-owner-read.rule.json --credentials .rowproof/local.env
+pyx doctor --rule invoices-owner-read.rule.json --credentials .pyx/local.env
 ```
 
 ```bash
-rowproof propose --rule invoices-owner-read.rule.json --store .rowproof/approvals --proposed-by you --out proposal.json
+pyx propose --rule invoices-owner-read.rule.json --store .pyx/approvals --proposed-by you --out proposal.json
 ```
 
 ```bash
-rowproof diff --proposal proposal.json --store .rowproof/approvals
+pyx diff --proposal proposal.json --store .pyx/approvals
 ```
 
 ```bash
-rowproof approve --proposal proposal.json --store .rowproof/approvals --approver owner --acknowledge <hash printed by diff> --promote
+pyx approve --proposal proposal.json --store .pyx/approvals --approver owner --acknowledge <hash printed by diff> --promote
 ```
 
 ```bash
-rowproof run --store .rowproof/approvals --rule invoices-owner-read --credentials .rowproof/local.env --html report.html --junit junit.xml
+pyx run --store .pyx/approvals --rule invoices-owner-read --credentials .pyx/local.env --html report.html --junit junit.xml
 ```
 
-`init` works for any table with an owner column (uuid of `auth.users`), an id column and a text column that can hold a synthetic marker. If the table has other required columns, pass `--fixture-defaults defaults.json` to `fixture provision`. Provisioning refuses to touch any existing user or row that is not one of RowProof's synthetic records.
+`init` works for any table with an owner column (uuid of `auth.users`), an id column and a text column that can hold a synthetic marker. If the table has other required columns, pass `--fixture-defaults defaults.json` to `fixture provision`. Provisioning refuses to touch any existing user or row that is not one of Pyx's synthetic records.
 
-For CI in your own repository, copy [`examples/ci/rowproof.yml`](examples/ci/rowproof.yml).
+For CI in your own repository, copy [`examples/ci/pyx.yml`](examples/ci/pyx.yml).
 
 **Exit codes:** `0` every approved expectation held with all controls established · `1` at least one demonstrated violation (even if other checks are blocked) · `2` blocked or incomplete, never a pass.
 
@@ -77,9 +77,9 @@ Supported today: SELECT through the Supabase Data API (PostgREST) on single-owne
 
 ```text
 packages/contracts/     JSON Schema bundle (authoritative), RFC 8785 hashing, approval semantics, read-only baseline
-packages/runner/        rowproof CLI source: engine, bounded transport, approvals, reports, design system
+packages/runner/        pyx CLI source: engine, bounded transport, approvals, reports, design system
 packages/local-fixture/ privileged local-only fixture setup and verification
-packages/cli/           the published `rowproof` npm package (single-file bundle)
+packages/cli/           the published `pyx` npm package (single-file bundle)
 supabase/               disposable demo stack: migrations, lab-only broken policy
 tests/integration/      real-HTTP harness: healthy and throwaway broken-policy instances (27 scenarios)
 apps/web/               the website
@@ -106,6 +106,6 @@ pnpm package
 
 ## License
 
-[FSL-1.1-ALv2](LICENSE.md). You may use, modify and run RowProof for free for any purpose except a competing commercial product or service, including professional services you provide to your own clients. Each release becomes Apache-2.0 two years after it is published.
+[FSL-1.1-ALv2](LICENSE.md). You may use, modify and run Pyx for free for any purpose except a competing commercial product or service, including professional services you provide to your own clients. Each release becomes Apache-2.0 two years after it is published.
 
-Security reports: see [SECURITY.md](SECURITY.md). Earlier, unrelated products by the same author (the Ship Safe checklist/kit and `ship-safe-check`) are not part of RowProof.
+Security reports: see [SECURITY.md](SECURITY.md). Earlier, unrelated products by the same author (the Ship Safe checklist/kit and `ship-safe-check`) are not part of Pyx.

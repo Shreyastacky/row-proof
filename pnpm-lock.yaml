@@ -23,7 +23,7 @@ importers:
 
   packages/cli:
     devDependencies:
-      '@rowproof/runner':
+      '@pyx/runner':
         specifier: workspace:*
         version: link:../runner
       esbuild:
@@ -42,7 +42,7 @@ importers:
 
   packages/local-fixture:
     dependencies:
-      '@rowproof/contracts':
+      '@pyx/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@supabase/supabase-js':
@@ -51,16 +51,16 @@ importers:
 
   packages/runner:
     dependencies:
-      '@rowproof/contracts':
+      '@pyx/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@rowproof/local-fixture':
+      '@pyx/local-fixture':
         specifier: workspace:*
         version: link:../local-fixture
 
   tests/integration:
     dependencies:
-      '@rowproof/contracts':
+      '@pyx/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@supabase/supabase-js':

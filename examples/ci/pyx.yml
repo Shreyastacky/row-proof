@@ -1,4 +1,4 @@
-# RowProof for YOUR Supabase repository. Copy to .github/workflows/rowproof.yml.
+# Pyx for YOUR Supabase repository. Copy to .github/workflows/pyx.yml.
 #
 # What it does on every pull request:
 #   1. starts a disposable local Supabase stack from YOUR migrations (no production access);
@@ -8,11 +8,11 @@
 #   5. posts a summary to the job page and uploads an HTML evidence report.
 #
 # Before you rely on it:
-#   - Commit your approval store (e.g. `.rowproof/approvals/`) to the default branch.
+#   - Commit your approval store (e.g. `.pyx/approvals/`) to the default branch.
 #   - Protect that path: CODEOWNERS + "require review from code owners" for the data owner.
-#   - Set RULES below to your rule ids (and keep each rule file at rowproof/<rule-id>.rule.json).
-#   - Pin RowProof to the version you evaluated, and review upgrades like any other dependency.
-name: rowproof
+#   - Set RULES below to your rule ids (and keep each rule file at pyx/<rule-id>.rule.json).
+#   - Pin Pyx to the version you evaluated, and review upgrades like any other dependency.
+name: pyx
 
 on:
   pull_request:
@@ -23,13 +23,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: rowproof-${{ github.ref }}
+  group: pyx-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  ROWPROOF_VERSION: 0.1.0
+  PYX_VERSION: 0.1.0
   RULES: invoices-owner-read
-  APPROVAL_STORE: .rowproof/approvals
+  APPROVAL_STORE: .pyx/approvals
   BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.sha }}
 
 jobs:
@@ -48,8 +48,8 @@ jobs:
         with:
           version: 2.122.1
 
-      - name: Install RowProof
-        run: npm install --global "rowproof@${ROWPROOF_VERSION}"
+      - name: Install Pyx
+        run: npm install --global "pyx-cli@${PYX_VERSION}"
 
       - name: Materialize the approved baseline from the base branch
         run: |
@@ -66,20 +66,20 @@ jobs:
       - name: Start a disposable local stack from your migrations
         run: supabase start -x studio,postgres-meta,imgproxy,vector,logflare,supavisor,storage-api,edge-runtime,realtime,mailpit > /dev/null
 
-      - name: Run RowProof
+      - name: Run Pyx
         run: |
           status=0
           for rule in $RULES; do
-            rowproof fixture provision --rule "rowproof/${rule}.rule.json" --out ".rowproof/${rule}.env"
+            pyx fixture provision --rule "pyx/${rule}.rule.json" --out ".pyx/${rule}.env"
             set +e
-            rowproof run \
+            pyx run \
               --store "$RUNNER_TEMP/baseline/$APPROVAL_STORE" \
               --rule "$rule" \
-              --credentials ".rowproof/${rule}.env" \
+              --credentials ".pyx/${rule}.env" \
               --execution-context ci-development \
-              --out "rowproof-results/${rule}.json" \
-              --html "rowproof-results/${rule}.html" \
-              --junit "rowproof-results/${rule}.junit.xml" \
+              --out "pyx-results/${rule}.json" \
+              --html "pyx-results/${rule}.html" \
+              --junit "pyx-results/${rule}.junit.xml" \
               --summary-md "$GITHUB_STEP_SUMMARY"
             code=$?
             set -e
@@ -92,8 +92,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: rowproof-evidence
-          path: rowproof-results/
+          name: pyx-evidence
+          path: pyx-results/
           if-no-files-found: warn
           retention-days: 30
 
@@ -101,4 +101,4 @@ jobs:
         if: always()
         run: |
           supabase stop --no-backup || true
-          rm -f .rowproof/*.env
+          rm -f .pyx/*.env

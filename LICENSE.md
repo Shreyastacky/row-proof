@@ -6,7 +6,7 @@ FSL-1.1-ALv2
 
 ## Notice
 
-Copyright 2026 Shreyastacky (RowProof)
+Copyright 2026 Shreyastacky (Pyx)
 
 ## Terms and Conditions
 

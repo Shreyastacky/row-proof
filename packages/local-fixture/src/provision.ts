@@ -9,7 +9,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { AuthenticatedActor, RuleContent } from '@rowproof/contracts';
+import type { AuthenticatedActor, RuleContent } from '@pyx/contracts';
 import { assertLocalTarget, StackError, type StackInfo } from './stack.js';
 
 const CLIENT_OPTS = {
@@ -24,7 +24,7 @@ export interface ProvisionResult {
 }
 
 export function syntheticEmail(ruleId: string, actorRef: string): string {
-  return `${actorRef}.${ruleId}@synthetic.rowproof.test`;
+  return `${actorRef}.${ruleId}@synthetic.pyx.test`;
 }
 
 function fail(step: string, error: { status?: number | undefined; code?: string | undefined } | null): never {
@@ -101,8 +101,8 @@ async function assertOnlySyntheticRecordsWillBeReplaced(admin: SupabaseClient, r
       fail(`look up existing user ${a.ref}`, error);
     }
     const email = data.user?.email ?? '';
-    if (data.user && (email !== syntheticEmail(rule.ruleId, a.ref) || data.user.user_metadata?.rowproof_synthetic !== true)) {
-      throw new StackError(`refusing: user id for ${a.ref} already belongs to a non-synthetic account; choose new ids (rowproof init generates random ones)`);
+    if (data.user && (email !== syntheticEmail(rule.ruleId, a.ref) || data.user.user_metadata?.pyx_synthetic !== true)) {
+      throw new StackError(`refusing: user id for ${a.ref} already belongs to a non-synthetic account; choose new ids (pyx init generates random ones)`);
     }
   }
   const r = rule.resource;
@@ -143,7 +143,7 @@ export async function provision(rule: RuleContent, stack: StackInfo, defaultsInp
       email: syntheticEmail(rule.ruleId, a.ref),
       password,
       email_confirm: true,
-      user_metadata: { rowproof_synthetic: true, actor_ref: a.ref },
+      user_metadata: { pyx_synthetic: true, actor_ref: a.ref },
     });
     if (error || !data.user) fail(`create user ${a.ref}`, error);
     if (data.user.id !== a.expectedUserId) throw new StackError(`created user ${a.ref} has an unexpected id`);
@@ -157,12 +157,12 @@ export async function provision(rule: RuleContent, stack: StackInfo, defaultsInp
 
   // 4. Sign each user in with an isolated client to obtain an access token.
   const env: Record<string, string> = {
-    ROWPROOF_SUPABASE_URL: rule.target.allowedOrigin,
+    PYX_SUPABASE_URL: rule.target.allowedOrigin,
     [rule.target.fixtureVerification.credential.name]: stack.secretKey,
   };
   if (rule.target.apiKey.kind === 'publishable') env[rule.target.apiKey.credential.name] = stack.publishableKey;
   else if (stack.legacyAnonKey) env[rule.target.apiKey.credential.name] = stack.legacyAnonKey;
-  if (stack.legacyAnonKey) env.ROWPROOF_LEGACY_ANON_KEY = stack.legacyAnonKey;
+  if (stack.legacyAnonKey) env.PYX_LEGACY_ANON_KEY = stack.legacyAnonKey;
 
   for (const a of actors) {
     const client = createClient(stack.apiUrl, stack.publishableKey, CLIENT_OPTS);

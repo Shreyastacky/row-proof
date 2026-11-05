@@ -44,6 +44,6 @@ describe('stack status parsing', () => {
   });
 
   it('uses reserved synthetic email addresses', () => {
-    expect(syntheticEmail('invoice-owner-read', 'user-a')).toBe('user-a.invoice-owner-read@synthetic.rowproof.test');
+    expect(syntheticEmail('invoice-owner-read', 'user-a')).toBe('user-a.invoice-owner-read@synthetic.pyx.test');
   });
 });

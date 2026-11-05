@@ -5,7 +5,7 @@ import { ABORT_CANCELLED } from '../src/transport.js';
 
 function onAssertionReads(fake: ReturnType<typeof createFake>, respond: () => Response | Promise<Response>) {
   fake.override = (req) =>
-    req.url.pathname === '/rest/v1/invoices' && req.headers.apikey !== baseEnv(fake).ROWPROOF_SETUP_SECRET_KEY ? respond() : undefined;
+    req.url.pathname === '/rest/v1/invoices' && req.headers.apikey !== baseEnv(fake).PYX_SETUP_SECRET_KEY ? respond() : undefined;
 }
 
 const json = (status: number, body: unknown, extra: Record<string, string> = {}) =>
@@ -63,7 +63,7 @@ describe('transport failures are blocked, never a denial pass', () => {
     const fake = createFake();
     const inner = fake.fetch;
     fake.fetch = async (url, init) => {
-      if (url.pathname === '/rest/v1/invoices' && new Headers(init.headers).get('apikey') !== baseEnv(fake).ROWPROOF_SETUP_SECRET_KEY) {
+      if (url.pathname === '/rest/v1/invoices' && new Headers(init.headers).get('apikey') !== baseEnv(fake).PYX_SETUP_SECRET_KEY) {
         await new Promise<void>((resolve, reject) => {
           const t = setTimeout(resolve, 2_000);
           init.signal?.addEventListener('abort', () => {

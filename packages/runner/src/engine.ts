@@ -34,7 +34,7 @@ import {
   type RunLimits,
   type RunResult,
   type VerifiedBaseline,
-} from '@rowproof/contracts';
+} from '@pyx/contracts';
 import { classifyApiKey, decodeJwtUnverified, isElevated, isHeaderSafe, precheckUserToken } from './credentials.js';
 import type { HttpOutcome, Transport, TransportFailureCode } from './transport.js';
 
@@ -164,7 +164,7 @@ export async function executeRun(ctx: RunContext): Promise<RunOutput> {
         revision: rev?.revision ?? null,
         contentHash: rev?.contentHash ?? null,
       },
-      runner: { name: 'rowproof-runner', version: ctx.runnerVersion },
+      runner: { name: 'pyx-runner', version: ctx.runnerVersion },
       source: ctx.source,
       scope: content?.scope ?? null,
       target: {

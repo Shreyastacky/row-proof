@@ -1,6 +1,6 @@
 // Progressive enhancement only: the page is complete and readable without JavaScript.
 (function () {
-  var cfg = window.ROWPROOF_CONFIG || {};
+  var cfg = window.PYX_CONFIG || {};
   var email = cfg.contactEmail || '';
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -9,21 +9,21 @@
     return 'mailto:' + encodeURIComponent(email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   }
   var BRIEF =
-    'Hello RowProof,\n\n' +
+    'Hello Pyx,\n\n' +
     'Application:\n' +
     'Supabase (hosted or self-hosted):\n' +
     'Tables holding per-customer data:\n' +
     'Who should be able to read what (one line per rule is fine):\n' +
     'Next release date:\n' +
     'Existing RLS tests (pgTAP, app tests, none):\n\n' +
-    'Please do not include credentials or customer data; RowProof never needs them.\n';
+    'Please do not include credentials or customer data; Pyx never needs them.\n';
   var offers = { boundaryCheck: 'Boundary Check', releaseAssurance: 'Release Assurance', agency: 'Agency plan', book: 'Call request' };
 
   document.querySelectorAll('[data-cta]').forEach(function (el) {
     var key = el.getAttribute('data-cta');
     var link = (cfg.checkout && cfg.checkout[key]) || '';
     if (key === 'book' && cfg.bookingUrl) link = cfg.bookingUrl;
-    if (!link && email) link = mailto('RowProof: ' + (offers[key] || 'Boundary Check'), BRIEF);
+    if (!link && email) link = mailto('Pyx: ' + (offers[key] || 'Boundary Check'), BRIEF);
     if (link) el.setAttribute('href', link);
     if (/^https?:/.test(link)) el.setAttribute('rel', 'noopener');
   });

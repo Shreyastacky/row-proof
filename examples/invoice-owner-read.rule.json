@@ -14,11 +14,11 @@
     "allowedOrigin": "http://127.0.0.1:54321",
     "apiKey": {
       "kind": "publishable",
-      "credential": { "source": "env", "name": "ROWPROOF_PUBLISHABLE_KEY" }
+      "credential": { "source": "env", "name": "PYX_PUBLISHABLE_KEY" }
     },
     "fixtureVerification": {
       "channel": "supabase-secret-key",
-      "credential": { "source": "env", "name": "ROWPROOF_SETUP_SECRET_KEY" }
+      "credential": { "source": "env", "name": "PYX_SETUP_SECRET_KEY" }
     }
   },
   "resource": {
@@ -36,13 +36,13 @@
       "ref": "user-a",
       "kind": "authenticated",
       "expectedUserId": "5a1e0000-0000-4000-8000-00000000000a",
-      "credential": { "source": "env", "name": "ROWPROOF_USER_A_TOKEN" }
+      "credential": { "source": "env", "name": "PYX_USER_A_TOKEN" }
     },
     {
       "ref": "user-b",
       "kind": "authenticated",
       "expectedUserId": "5a1e0000-0000-4000-8000-00000000000b",
-      "credential": { "source": "env", "name": "ROWPROOF_USER_B_TOKEN" }
+      "credential": { "source": "env", "name": "PYX_USER_B_TOKEN" }
     },
     { "ref": "anonymous", "kind": "anonymous" }
   ],

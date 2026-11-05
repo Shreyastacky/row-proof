@@ -1,7 +1,7 @@
-// RowProof site configuration. Edit these, redeploy, done.
+// Pyx site configuration. Edit these, redeploy, done.
 // Every CTA falls back to an email if its link is empty, so the site works before payments are set up.
-window.ROWPROOF_CONFIG = {
-  // Where buyers reach you. Use a domain address (e.g. hello@rowproof.dev) once you own one.
+window.PYX_CONFIG = {
+  // Where buyers reach you. Use a domain address (e.g. hello@pyx.dev) once you own one.
   contactEmail: 'stackdrawn@gmail.com',
 
   // Optional: a scheduling page (Cal.com, SavvyCal, Calendly) for buyers who want a call.

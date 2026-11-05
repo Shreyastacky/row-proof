@@ -1,6 +1,6 @@
-# RowProof website
+# Pyx website
 
-A static site with no framework, build step, cookies, analytics or third-party requests. It is styled by the same design system as RowProof's HTML evidence reports.
+A static site with no framework, build step, cookies, analytics or third-party requests. It is styled by the same design system as Pyx's HTML evidence reports.
 
 | File | Purpose |
 | --- | --- |

@@ -1,5 +1,5 @@
 {
-  "name": "rowproof",
+  "name": "pyx-cli",
   "version": "0.1.0",
   "description": "Owner-approved access rules for Supabase, checked against real requests on every release. Cross-user data leaks fail the build.",
   "keywords": ["supabase", "rls", "row-level-security", "authorization", "access-control", "security-testing", "ci", "postgrest"],
@@ -8,7 +8,7 @@
   "repository": { "type": "git", "url": "git+https://github.com/Shreyastacky/row-proof.git", "directory": "packages/cli" },
   "bugs": "https://github.com/Shreyastacky/row-proof/issues",
   "type": "module",
-  "bin": { "rowproof": "./dist/rowproof.mjs" },
+  "bin": { "pyx": "./dist/pyx.mjs" },
   "files": ["dist", "schemas", "README.md", "LICENSE.md"],
   "engines": { "node": ">=22.12.0" },
   "scripts": {
@@ -16,7 +16,7 @@
     "smoke": "node build.mjs --smoke"
   },
   "devDependencies": {
-    "@rowproof/runner": "workspace:*",
+    "@pyx/runner": "workspace:*",
     "esbuild": "0.28.2"
   }
 }

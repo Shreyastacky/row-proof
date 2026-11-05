@@ -12,7 +12,7 @@ Initial plan: 5 November 2026. Updated 5 November 2026 after implementing Phases
 | 4 Sensitivity and failure tests | **complete** | `pnpm integration`: 27/27 scenarios as expected, real local Supabase |
 | 5 Reproducible CI | **implemented; locally reproduced; GitHub-hosted run pending** | Workflow steps executed from a fresh clone in this environment; the workflow has not yet run on GitHub (it triggers on PRs and on `main`) |
 | First technical milestone (1–5 from a fresh checkout) | **met locally**; confirm on GitHub Actions | See "Milestone gate" below |
-| Product pass (RowProof) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
+| Product pass (Pyx) | **complete; see below** | rename, audit fixes, onboarding, reports, npm package, website |
 | 6–9 | not started | — |
 
 ### Milestone gate (run 5 November 2026)
@@ -21,9 +21,9 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 **Not yet verified:** the same workflow on GitHub-hosted runners (default ECR image registry, Node 24). Open a PR to trigger it.
 
-### Product pass: RowProof (5 November 2026)
+### Product pass: Pyx (5 November 2026)
 
-- **Renamed to RowProof** ([D8](docs/DECISIONS.md)); licensed FSL-1.1-ALv2 ([D9](docs/DECISIONS.md)).
+- **Renamed to Pyx** ([D8](docs/DECISIONS.md)); licensed FSL-1.1-ALv2 ([D9](docs/DECISIONS.md)).
 - **Audit fixes:**
   - a lost exit-1 when the output file existed;
   - fixture setup that could delete a real user or row, now refused;
@@ -35,13 +35,13 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
   - a bundling auto-run bug.
 - **Onboarding:** `init` for any user-owned table, `fixture provision --fixture-defaults`, and `doctor` with fixes.
 - **Outputs:** HTML evidence report (white-label, print-ready), JUnit, Markdown step summary, `report` across runs, and a plain-language meaning and next step for every diagnostic.
-- **Distribution:** single-file npm package `rowproof` (`pnpm package` smoke-tests a clean install; the installed tarball was also run end to end against a real stack), and a customer CI template at `examples/ci/rowproof.yml`.
+- **Distribution:** single-file npm package `pyx-cli` (`pnpm package` smoke-tests a clean install; the installed tarball was also run end to end against a real stack), and a customer CI template at `examples/ci/pyx.yml`.
 - **Website:** `apps/web`, a static site with a liquid-glass dark design shared with the reports, services pricing, CTAs configured in `config.js`, and strict security headers.
 - **Verified:** `pnpm verify` (147 + 11 + 63 tests), `pnpm integration` 27/27, `pnpm package`.
 
 ### Maintainer actions this work cannot do
 
-0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark search on "RowProof".
+0. Publish: `npm publish` from `packages/cli` (needs your npm account and 2FA), deploy `apps/web`, buy a domain, and set `contactEmail` / checkout links in `apps/web/config.js`. Replace the licensor name in `LICENSE.md`. Run a trademark search on "Pyx".
 
 1. Replace the placeholder approval in `baseline/` with the designated owner's own approval ([baseline/README.md](baseline/README.md)).
 2. Protect `main`: a ruleset or branch protection requiring the owner's review for `baseline/` (for example CODEOWNERS plus required code-owner review). Until then, CI results are development tests, not independent assessments.
@@ -70,7 +70,7 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 ## 1. Freeze the first rule contract — complete (5 November 2026)
 
-**Verified:** `pnpm verify` includes the contract suite (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/rowproof.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
+**Verified:** `pnpm verify` includes the contract suite (147 tests) and `pnpm check:generated` pass. Schema bundle: `packages/contracts/schemas/pyx.v1.schema.json`. Canonical rule: `examples/invoice-owner-read.rule.json`. Corpus: 27 valid, invalid and unsupported cases in `examples/contracts/cases.json`. Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) D1–D4.
 
 - [x] Schemas for RuleContent, RuleProposal, Approval, ApprovedRevision, Promotion, ActiveBaseline and RunResult; types generated from the same file with a drift check.
 - [x] RFC 8785 canonicalization and SHA-256 content hash; RFC sample vector and golden hash pinned; strict parser rejects duplicate keys.
@@ -151,7 +151,7 @@ From `git clone --branch claude/happy-gauss-8cs58v` into an empty directory: `pn
 
 ## 5. Make customer-run CI reproducible — implemented; locally reproduced; GitHub-hosted run pending
 
-**Implemented:** [.github/workflows/rowproof.yml](.github/workflows/rowproof.yml) with jobs `verify`, `integration` (the harness, with redacted artifacts uploaded) and `assess-with-base-branch-baseline` (baseline materialized from the base branch by `scripts/fetch-trusted-baseline.mjs`; edits to `baseline/` in a PR are flagged and ignored). Actions pinned to full SHAs (checkout v7.0.1, setup-node v7.1.0, pnpm/action-setup v6.1.0, upload-artifact v7.0.2), `contents: read`, no persisted credentials, no secrets, no `pull_request_target`, teardown always runs. Instructions: [docs/INTEGRATION.md](docs/INTEGRATION.md).
+**Implemented:** [.github/workflows/pyx.yml](.github/workflows/pyx.yml) with jobs `verify`, `integration` (the harness, with redacted artifacts uploaded) and `assess-with-base-branch-baseline` (baseline materialized from the base branch by `scripts/fetch-trusted-baseline.mjs`; edits to `baseline/` in a PR are flagged and ignored). Actions pinned to full SHAs (checkout v7.0.1, setup-node v7.1.0, pnpm/action-setup v6.1.0, upload-artifact v7.0.2), `contents: read`, no persisted credentials, no secrets, no `pull_request_target`, teardown always runs. Instructions: [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 - [x] Healthy demo green, broken-policy demo red, setup failures blocked (harness, fresh clone).
 - [x] Approved baseline is an explicit input from a separate ref, not the PR tree (harness boundary scenario plus the CI job).

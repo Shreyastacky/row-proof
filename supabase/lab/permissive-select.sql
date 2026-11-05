@@ -2,7 +2,7 @@
 -- Never apply to the demo stack you keep, to remote staging, or to production.
 -- Policies are permissive (OR-ed), so this exposes every invoice to every
 -- authenticated user, the regression an AI-assisted edit could introduce.
-create policy rowproof_lab_permissive_select
+create policy pyx_lab_permissive_select
   on public.invoices
   for select
   to authenticated
