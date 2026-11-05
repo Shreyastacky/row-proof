@@ -186,6 +186,10 @@ const ALL_PASSED = Object.fromEntries(RULE.expectations.map((e) => [e.id, 'passe
 
 // ---------------------------------------------------------------- main
 async function main() {
+  if (!exists(runnerCli) || !exists(fixtureCli)) {
+    log('UNRUN: build output is missing. Run `pnpm build` first (or use `pnpm integration`, which builds).');
+    return 2;
+  }
   const docker = sh('docker', ['info', '--format', '{{.ServerVersion}}'], { timeout: 30_000 });
   if (docker.code !== 0) {
     log('UNRUN: Docker is not available. Real integration tests did not execute. See docs/INTEGRATION.md.');
